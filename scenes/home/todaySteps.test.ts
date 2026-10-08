@@ -102,7 +102,7 @@ describe('kartu Hari ini', () => {
       rework: [],
     });
     expect(m1.next.kind).toBe('hand_over');
-    expect(m1.steps[1].detail).toBe('500 gr disetujui');
+    expect(m1.steps[1].detail).toBe('500\u00a0gr disetujui');
     const m2 = buildToday({
       attendance: a,
       work: day([

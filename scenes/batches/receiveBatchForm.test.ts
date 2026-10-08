@@ -36,7 +36,7 @@ describe('terima batch', () => {
   it('requires a note when there is a difference', () => {
     const res = validateReceiveBatch({ ...empty, gram: '5900' }, '6000.00', null);
     expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.errors.notes).toMatch(/selisih 100 gr/);
+    if (!res.ok) expect(res.errors.notes).toMatch(/selisih 100\u00a0gr/);
     const ok = validateReceiveBatch(
       { ...empty, gram: '5900', notes: 'Tercecer saat bongkar' },
       '6000.00',

@@ -36,7 +36,7 @@ describe('<WeighingCard /> konfirmasi hasil timbang', () => {
   it('shows the result, the API status label, and the time left', () => {
     renderWithProviders(<WeighingCard card={card} />);
     expect(screen.getByText('Menunggu')).toBeTruthy();
-    expect(screen.getByText('8.518 gr')).toBeTruthy();
+    expect(screen.getByText('8.518\u00a0gr')).toBeTruthy();
     expect(screen.getByText(/dianggap setuju otomatis/)).toBeTruthy();
   });
 

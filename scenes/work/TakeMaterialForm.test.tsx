@@ -30,7 +30,7 @@ describe('validateTakeMaterial', () => {
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.errors.gram).toBe(
-        'Gram (10.000,01 gr) melebihi sisa jatah (10.000 gr). Kurangi gramnya.',
+        'Gram (10.000,01\u00a0gr) melebihi sisa jatah (10.000\u00a0gr). Kurangi gramnya.',
       );
     }
   });

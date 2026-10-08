@@ -62,18 +62,18 @@ jest.mock('@/services', () => ({
 describe('<Earnings /> Pendapatan', () => {
   it('shows money strings from the API as-is (formatted, never recalculated)', () => {
     renderWithProviders(<Earnings />);
-    expect(screen.getByLabelText('Rp 9.007.199.254.740.993,01')).toBeTruthy();
-    expect(screen.getByTestId('money-Upah sudah dihitung')).toHaveTextContent('Rp 31.520.200');
-    expect(screen.getByTestId('money-Upah tertahan')).toHaveTextContent('Rp 0,10');
-    expect(screen.getByTestId('money-Upah belum dihitung')).toHaveTextContent('Rp 0,20');
-    expect(screen.getByTestId('money-Total')).toHaveTextContent('Rp 9.007.199.254.740.993,01');
+    expect(screen.getByLabelText('Rp\u00a09.007.199.254.740.993,01')).toBeTruthy();
+    expect(screen.getByTestId('money-Upah sudah dihitung')).toHaveTextContent('Rp\u00a031.520.200');
+    expect(screen.getByTestId('money-Upah tertahan')).toHaveTextContent('Rp\u00a00,10');
+    expect(screen.getByTestId('money-Upah belum dihitung')).toHaveTextContent('Rp\u00a00,20');
+    expect(screen.getByTestId('money-Total')).toHaveTextContent('Rp\u00a09.007.199.254.740.993,01');
   });
 
   it('shows the balance buckets with glossary names', () => {
     renderWithProviders(<Earnings />);
-    expect(screen.getByTestId('money-Saldo Dapat Dicairkan')).toHaveTextContent('Rp 280.000');
-    expect(screen.getByTestId('money-Bonus Pending')).toHaveTextContent('Rp 100.000');
-    expect(screen.getByTestId('money-THR Ditahan')).toHaveTextContent('Rp 22.400');
+    expect(screen.getByTestId('money-Saldo Dapat Dicairkan')).toHaveTextContent('Rp\u00a0280.000');
+    expect(screen.getByTestId('money-Bonus Pending')).toHaveTextContent('Rp\u00a0100.000');
+    expect(screen.getByTestId('money-THR Ditahan')).toHaveTextContent('Rp\u00a022.400');
     expect(screen.getByText('Capai')).toBeTruthy();
   });
 });

@@ -2,23 +2,23 @@ import { formatGram, formatPcs, formatPercent, formatRupiah, progressRatio } fro
 
 describe('formatRupiah', () => {
   it('formats API strings with dot thousands, without ,00', () => {
-    expect(formatRupiah('1250000.00')).toBe('Rp 1.250.000');
-    expect(formatRupiah('30000.00')).toBe('Rp 30.000');
+    expect(formatRupiah('1250000.00')).toBe('Rp\u00a01.250.000');
+    expect(formatRupiah('30000.00')).toBe('Rp\u00a030.000');
   });
 
   it('shows decimals only when there are cents', () => {
-    expect(formatRupiah('1234.50')).toBe('Rp 1.234,50');
-    expect(formatRupiah('41.05')).toBe('Rp 41,05');
+    expect(formatRupiah('1234.50')).toBe('Rp\u00a01.234,50');
+    expect(formatRupiah('41.05')).toBe('Rp\u00a041,05');
   });
 
   it('supports the Beranda and compact styles from the web', () => {
-    expect(formatRupiah('1250000.00', { style: 'whole' })).toBe('Rp 1.250.000');
+    expect(formatRupiah('1250000.00', { style: 'whole' })).toBe('Rp\u00a01.250.000');
     expect(formatRupiah('6450.00', { style: 'compact' })).toBe('Rp6.450');
     expect(formatRupiah('41.05', { style: 'compact' })).toBe('Rp41,05');
   });
 
   it('puts the minus sign before Rp', () => {
-    expect(formatRupiah('-0.16')).toBe('-Rp 0,16');
+    expect(formatRupiah('-0.16')).toBe('-Rp\u00a00,16');
   });
 
   it('shows a dash for empty values, never zero', () => {
@@ -28,20 +28,20 @@ describe('formatRupiah', () => {
   });
 
   it('keeps precision of large amounts without float rounding', () => {
-    expect(formatRupiah('31520200.00')).toBe('Rp 31.520.200');
-    expect(formatRupiah('9007199254740993.01')).toBe('Rp 9.007.199.254.740.993,01');
+    expect(formatRupiah('31520200.00')).toBe('Rp\u00a031.520.200');
+    expect(formatRupiah('9007199254740993.01')).toBe('Rp\u00a09.007.199.254.740.993,01');
   });
 });
 
 describe('formatGram', () => {
   it('drops ,00 in summaries but keeps real decimals', () => {
-    expect(formatGram('1224.00')).toBe('1.224 gr');
-    expect(formatGram('1250.50')).toBe('1.250,50 gr');
-    expect(formatGram('1250.5')).toBe('1.250,50 gr');
+    expect(formatGram('1224.00')).toBe('1.224\u00a0gr');
+    expect(formatGram('1250.50')).toBe('1.250,50\u00a0gr');
+    expect(formatGram('1250.5')).toBe('1.250,50\u00a0gr');
   });
 
   it('never shows ,00 for whole grams', () => {
-    expect(formatGram('2000.00')).toBe('2.000 gr');
+    expect(formatGram('2000.00')).toBe('2.000\u00a0gr');
   });
 
   it('can omit the unit', () => {

@@ -6,6 +6,8 @@ import { toCents } from './decimal';
  */
 
 const EMPTY = '-';
+/** spasi tak terputus: "Rp" dan "gr" tidak pernah terpisah dari angkanya saat teks turun baris */
+export const NBSP = '\u00a0';
 
 function groupThousands(int: string): string {
   return int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -40,8 +42,8 @@ export function formatRupiah(
   if (!p) return EMPTY;
   const sign = p.neg ? '-' : '';
   if (style === 'compact') return `${sign}Rp${p.int}${p.whole ? '' : `,${p.frac}`}`;
-  if (style === 'whole') return `${sign}Rp ${p.int}`;
-  return `${sign}Rp ${p.int}${p.whole ? '' : `,${p.frac}`}`;
+  if (style === 'whole') return `${sign}Rp${NBSP}${p.int}`;
+  return `${sign}Rp${NBSP}${p.int}${p.whole ? '' : `,${p.frac}`}`;
 }
 
 /** "1.224 gr" / "1.224,50 gr": desimal hanya bila tidak bulat. */
@@ -52,7 +54,7 @@ export function formatGram(
   const p = split(value);
   if (!p) return EMPTY;
   const num = `${p.neg ? '-' : ''}${p.int}${p.whole ? '' : `,${p.frac}`}`;
-  return unit ? `${num} gr` : num;
+  return unit ? `${num}${NBSP}gr` : num;
 }
 
 export function formatPcs(value: number | string | null | undefined): string {

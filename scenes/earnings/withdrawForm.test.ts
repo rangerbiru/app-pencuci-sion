@@ -16,7 +16,7 @@ describe('validateWithdrawAmount', () => {
     expect(validateWithdrawAmount('280.001', '50000.00', '280000.00')).toMatchObject({ ok: false });
     expect(validateWithdrawAmount('49.999', '50000.00', '280000.00')).toMatchObject({
       ok: false,
-      error: 'Nominal paling sedikit Rp 50.000.',
+      error: 'Nominal paling sedikit Rp\u00a050.000.',
     });
   });
 });
