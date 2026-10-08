@@ -60,18 +60,26 @@ function MemberRow({ m, last }: { m: TeamMember; last: boolean }) {
         <Text variant="small" color="textSecondary">
           Sisa jatah <Text variant="smallStrong">{formatGram(remaining)}</Text>
         </Text>
-        <Text variant="small" color="textSecondary">
-          Bahan hari ini <Text variant="smallStrong">{formatGram(card?.material_gram)}</Text>
-        </Text>
-        <Text variant="small" color="textSecondary">
-          Lembab{' '}
-          <Text variant="smallStrong">
-            {card?.pcs_lembab == null ? '-' : `${formatPcs(card.pcs_lembab)} pcs`}
+        {card ? (
+          <>
+            <Text variant="small" color="textSecondary">
+              Bahan <Text variant="smallStrong">{formatGram(card.material_gram)}</Text>
+            </Text>
+            <Text variant="small" color="textSecondary">
+              Lembab{' '}
+              <Text variant="smallStrong">
+                {card.pcs_lembab == null ? '-' : `${formatPcs(card.pcs_lembab)} pcs`}
+              </Text>
+            </Text>
+            <Text variant="small" color="textSecondary">
+              Hasil <Text variant="smallStrong">{formatGram(card.result_gram)}</Text>
+            </Text>
+          </>
+        ) : (
+          <Text variant="small" color="textSecondary">
+            Belum ada kartu hari ini
           </Text>
-        </Text>
-        <Text variant="small" color="textSecondary">
-          Hasil <Text variant="smallStrong">{formatGram(card?.result_gram)}</Text>
-        </Text>
+        )}
       </View>
       <View style={styles.badges}>
         {m.attendance_today?.location_flag ? (

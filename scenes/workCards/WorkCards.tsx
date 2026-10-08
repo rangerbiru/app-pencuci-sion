@@ -41,6 +41,7 @@ function CardRows({ cards, showDate }: { cards: WorkCard[]; showDate: boolean })
                   status={c.weighing_confirmation.status}
                   kind="weighing_confirmation"
                   icon="clipboard"
+                  prefix="Timbang"
                 />
               ) : null}
             </View>

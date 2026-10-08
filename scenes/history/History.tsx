@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
@@ -47,6 +47,13 @@ function History() {
   const todayKey = today.format('YYYY-MM-DD');
   // satu hari terbuka; hari ini terbuka bawaan
   const days = useSingleOpen(todayKey);
+  const firstDate = history.data?.[0]?.date;
+  const hasToday = !!history.data?.some(d => d.date === todayKey);
+  const { setOpenKey } = days;
+  // hari ini belum ada catatan: buka hari terakhir yang ada
+  useEffect(() => {
+    if (firstDate && !hasToday) setOpenKey(k => (k === todayKey ? firstDate : k));
+  }, [firstDate, hasToday, todayKey, setOpenKey]);
 
   return (
     <Screen
@@ -121,6 +128,7 @@ function History() {
                           status={d.card.weighing_confirmation.status}
                           kind="weighing_confirmation"
                           icon="clipboard"
+                          prefix="Timbang"
                         />
                       ) : null}
                       {d.card?.wage ? (

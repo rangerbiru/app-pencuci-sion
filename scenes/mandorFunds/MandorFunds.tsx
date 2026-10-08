@@ -76,13 +76,19 @@ function MandorFunds() {
                       {!w.in_team ? <Badge label="Sudah pindah tim" tone="neutral" /> : null}
                     </View>
                     <MoneyRow label="Dapat dicairkan" amount={w.dapat_dicairkan} />
-                    <MoneyRow label="THR ditahan" amount={w.thr_ditahan} />
                     <MoneyRow
-                      label="Pengajuan aktif"
-                      amount={w.withdrawal_active}
-                      note="Diajukan atau disetujui, belum dibayar"
-                      divider={false}
+                      label="THR ditahan"
+                      amount={w.thr_ditahan}
+                      divider={compareDecimal(w.withdrawal_active, '0') > 0}
                     />
+                    {compareDecimal(w.withdrawal_active, '0') > 0 ? (
+                      <MoneyRow
+                        label="Pengajuan aktif"
+                        amount={w.withdrawal_active}
+                        note="Diajukan atau disetujui, belum dibayar"
+                        divider={false}
+                      />
+                    ) : null}
                   </View>
                 ))}
               </Card>
