@@ -5,7 +5,7 @@ import useTheme from '@/hooks/useTheme';
 import { space } from '@/theme';
 import { WorkDay } from '@/types';
 import { toApiError, useGetWorkHistoryQuery } from '@/services';
-import { formatDayShort, jakarta } from '@/utils/date';
+import { formatDayShort, formatTime, jakarta } from '@/utils/date';
 import { addDecimal } from '@/utils/decimal';
 import { formatGram, formatPcs } from '@/utils/format';
 import Screen from '@/components/layouts/Screen';
@@ -13,7 +13,7 @@ import Card from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
-import ListRow from '@/components/elements/ListRow';
+import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
 import Segmented from '@/components/elements/Segmented';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
@@ -44,6 +44,9 @@ function History() {
     to: today.format('YYYY-MM-DD'),
   };
   const history = useGetWorkHistoryQuery(args);
+  const todayKey = today.format('YYYY-MM-DD');
+  // satu hari terbuka; hari ini terbuka bawaan
+  const days = useSingleOpen(todayKey);
 
   return (
     <Screen
@@ -80,17 +83,20 @@ function History() {
         <Card padded={false}>
           {history.data.map((d, i) => {
             const f = dayFacts(d);
+            const last = i === (history.data?.length ?? 0) - 1;
             return (
-              <ListRow
+              <AccordionItem
                 key={d.date}
-                title={formatDayShort(d.date)}
-                divider={i < (history.data?.length ?? 0) - 1}
-                onPress={() =>
-                  router.push({ pathname: '/riwayat/[date]', params: { date: d.date } })
-                }
+                open={days.openKey === d.date}
+                onToggle={() => days.toggle(d.date)}
+                divider={!last}
                 accessibilityLabel={`${formatDayShort(d.date)}. Bahan ${formatGram(f.material)}, lembab ${formatPcs(f.lembab)} pcs, hasil ${formatGram(f.result)}`}
-                below={
-                  <View style={styles.below}>
+                header={
+                  <View style={styles.head}>
+                    <Text variant="bodyStrong">
+                      {formatDayShort(d.date)}
+                      {d.date === todayKey ? ' (hari ini)' : ''}
+                    </Text>
                     <View style={styles.facts}>
                       <Text variant="small" color="textSecondary">
                         Bahan <Text variant="smallStrong">{formatGram(f.material)}</Text>
@@ -130,8 +136,46 @@ function History() {
                       ) : null}
                     </View>
                   </View>
-                }
-              />
+                }>
+                <View style={styles.body}>
+                  {d.submissions.length === 0 ? (
+                    <Text variant="small" color="textSecondary">
+                      Tidak ada pengajuan di hari ini.
+                    </Text>
+                  ) : (
+                    d.submissions.map(sub => (
+                      <View key={sub.id} style={styles.sub}>
+                        <View style={styles.flex}>
+                          <Text variant="smallStrong">{sub.type.label}</Text>
+                          <Text variant="small" color="textSecondary">
+                            {[
+                              sub.gram ? formatGram(sub.gram) : null,
+                              sub.pcs != null ? `${formatPcs(sub.pcs)} pcs` : null,
+                            ]
+                              .filter(Boolean)
+                              .join(', ') || '-'}
+                            {`, jam ${formatTime(sub.submitted_at)}`}
+                          </Text>
+                          {sub.reject_reason ? (
+                            <Text variant="small" color="danger">
+                              Ditolak: {sub.reject_reason}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <Badge status={sub.status} kind="work_submission" />
+                      </View>
+                    ))
+                  )}
+                  <Button
+                    title="Lihat rincian dan foto"
+                    variant="secondary"
+                    icon="image"
+                    onPress={() =>
+                      router.push({ pathname: '/riwayat/[date]', params: { date: d.date } })
+                    }
+                  />
+                </View>
+              </AccordionItem>
             );
           })}
         </Card>
@@ -149,7 +193,10 @@ function History() {
 }
 
 const styles = StyleSheet.create({
-  below: { gap: space.sm, marginTop: space.xs },
+  flex: { flex: 1 },
+  head: { flex: 1, gap: space.xs },
+  body: { gap: space.md },
+  sub: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.md },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
 });

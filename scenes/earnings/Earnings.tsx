@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import useTheme from '@/hooks/useTheme';
 import { sizes, space } from '@/theme';
 import { isFeatureEnabled } from '@/utils/config';
 import {
@@ -29,7 +28,7 @@ import Amount from '@/components/elements/Amount';
 import Badge from '@/components/elements/Badge';
 import Button, { IconButton } from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
-import Icon from '@/components/elements/Icon';
+import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
 import ProgressBar from '@/components/elements/ProgressBar';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
@@ -39,56 +38,60 @@ function weekNumber(week: string) {
   return week.split('-W')[1]?.replace(/^0/, '') ?? week;
 }
 
-function DayRow({ day }: { day: EarningsDay }) {
-  const { colors } = useTheme();
-  const [open, setOpen] = useState(false);
+function DayRow({
+  day,
+  open,
+  onToggle,
+  divider,
+}: {
+  day: EarningsDay;
+  open: boolean;
+  onToggle: () => void;
+  divider: boolean;
+}) {
   return (
-    <View style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
-      <Pressable
-        onPress={() => setOpen(o => !o)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={`${formatDayShort(day.date)}, ${day.attendance?.label ?? 'tanpa absen'}. Ketuk untuk ${open ? 'menutup' : 'melihat'} rincian`}
-        style={styles.dayRow}>
-        <View style={styles.flex}>
-          <Text variant="bodyStrong">{formatDayShort(day.date)}</Text>
-          <Text variant="small" color="textSecondary">
-            Bahan {formatGram(day.material_gram)}
+    <AccordionItem
+      open={open}
+      onToggle={onToggle}
+      divider={divider}
+      accessibilityLabel={`${formatDayShort(day.date)}, ${day.attendance?.label ?? 'tanpa absen'}, bahan ${formatGram(day.material_gram)}`}
+      header={
+        <>
+          <View style={styles.flex}>
+            <Text variant="bodyStrong">{formatDayShort(day.date)}</Text>
+            <Text variant="small" color="textSecondary">
+              Bahan {formatGram(day.material_gram)}
+            </Text>
+          </View>
+          {day.attendance ? <Badge status={day.attendance} kind="attendance" /> : null}
+        </>
+      }>
+      <MoneyRow label="Gaji harian" amount={day.gaji_harian} />
+      <MoneyRow
+        label="Upah sudah dihitung"
+        amount={day.upah_sudah_dihitung}
+        divider={day.cards.length > 0}
+      />
+      {day.cards.map(c => (
+        <View key={c.id} style={styles.cardRow}>
+          <View style={styles.flex}>
+            <Text variant="small">Kartu kerja</Text>
+            <View style={styles.badges}>
+              <Badge status={c.status} kind="daily_work" />
+              {c.wage ? <Badge status={c.wage.status} kind="card_wage" prefix="Upah" /> : null}
+            </View>
+            {c.wage?.reason ? (
+              <Text variant="small" color="textSecondary">
+                {c.wage.reason}
+              </Text>
+            ) : null}
+          </View>
+          <Text variant="bodyStrong" style={styles.tabular}>
+            {formatRupiah(c.wage?.amount)}
           </Text>
         </View>
-        {day.attendance ? <Badge status={day.attendance} kind="attendance" /> : null}
-        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
-      </Pressable>
-      {open ? (
-        <View style={styles.dayDetail}>
-          <MoneyRow label="Gaji harian" amount={day.gaji_harian} />
-          <MoneyRow
-            label="Upah sudah dihitung"
-            amount={day.upah_sudah_dihitung}
-            divider={day.cards.length > 0}
-          />
-          {day.cards.map(c => (
-            <View key={c.id} style={styles.cardRow}>
-              <View style={styles.flex}>
-                <Text variant="small">Kartu kerja</Text>
-                <View style={styles.badges}>
-                  <Badge status={c.status} kind="daily_work" />
-                  {c.wage ? <Badge status={c.wage.status} kind="card_wage" prefix="Upah" /> : null}
-                </View>
-                {c.wage?.reason ? (
-                  <Text variant="small" color="textSecondary">
-                    {c.wage.reason}
-                  </Text>
-                ) : null}
-              </View>
-              <Text variant="bodyStrong" style={styles.tabular}>
-                {formatRupiah(c.wage?.amount)}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-    </View>
+      ))}
+    </AccordionItem>
   );
 }
 
@@ -149,6 +152,13 @@ function Earnings({ back = false }: { back?: boolean }) {
   const [week, setWeek] = useState(() => isoWeekKey());
   const currentWeek = isoWeekKey();
   const earnings = useGetEarningsQuery(week);
+  const todayKey = jakarta().format('YYYY-MM-DD');
+  // satu hari terbuka; hari ini terbuka bawaan, minggu lain mulai tertutup
+  const days = useSingleOpen(todayKey);
+  const { setOpenKey } = days;
+  useEffect(() => {
+    setOpenKey(week === currentWeek ? todayKey : null);
+  }, [week, currentWeek, todayKey, setOpenKey]);
   const balance = useGetBalanceQuery();
   const today = jakarta();
   const profit = useGetMyDailyProfitQuery(
@@ -275,13 +285,21 @@ function Earnings({ back = false }: { back?: boolean }) {
           </Section>
 
           <Section title="Per hari" description="Ketuk hari untuk melihat kartu dan status upah.">
-            <Card style={styles.tight}>
+            <Card padded={false}>
               {e.days.length === 0 ? (
-                <Text variant="body" color="textSecondary" style={styles.pad}>
+                <Text variant="body" color="textSecondary" style={styles.empty}>
                   Belum ada hari kerja di minggu ini.
                 </Text>
               ) : (
-                e.days.map(d => <DayRow key={d.date} day={d} />)
+                e.days.map((d, i) => (
+                  <DayRow
+                    key={d.date}
+                    day={d}
+                    open={days.openKey === d.date}
+                    onToggle={() => days.toggle(d.date)}
+                    divider={i < e.days.length - 1}
+                  />
+                ))
               )}
             </Card>
           </Section>
@@ -390,14 +408,7 @@ const styles = StyleSheet.create({
   noteRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center' },
   tight: { paddingVertical: space.xs },
   pad: { paddingVertical: space.md },
-  dayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    minHeight: sizes.primaryButton,
-    paddingVertical: space.sm,
-  },
-  dayDetail: { paddingBottom: space.sm, paddingLeft: space.md },
+  empty: { padding: sizes.gutter },
   cardRow: { flexDirection: 'row', gap: space.md, paddingVertical: space.sm },
   tabular: { fontVariant: ['tabular-nums'], textAlign: 'right' },
   pending: { paddingVertical: space.md, gap: space.sm },
