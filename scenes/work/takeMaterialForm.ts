@@ -27,7 +27,7 @@ export function validateTakeMaterial(
   else if (weight === null) errors.gram = 'Gram harus berupa angka, mis. 1.250,5.';
   else if (compareDecimal(weight, '0') <= 0) errors.gram = 'Gram harus lebih dari 0.';
   else if (compareDecimal(weight, remainingGram) > 0)
-    errors.gram = `Gram (${formatGram(weight, { style: 'table' })}) melebihi sisa jatah (${formatGram(remainingGram, { style: 'table' })}). Kurangi gramnya.`;
+    errors.gram = `Gram (${formatGram(weight)}) melebihi sisa jatah (${formatGram(remainingGram)}). Kurangi gramnya.`;
 
   let pcs: number | null = null;
   if (input.pcs.trim()) {

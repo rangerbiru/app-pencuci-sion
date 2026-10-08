@@ -16,7 +16,7 @@ import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
-import TextField from '@/components/elements/TextField';
+import { GramInput } from '@/components/elements/NumberInput';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
@@ -172,15 +172,14 @@ function RationForm({ batchId }: { batchId: number }) {
             {lines.map((l, i) => {
               const w = workers.find(x => x.id === l.workerId);
               return (
-                <TextField
+                <GramInput
                   key={l.workerId ?? i}
                   label={w?.name ?? 'Pencuci'}
                   value={l.gram}
-                  onChangeText={g =>
+                  onChangeValue={g =>
                     setLines(prev => prev.map((x, j) => (j === i ? { ...x, gram: g } : x)))
                   }
-                  keyboardType="decimal-pad"
-                  unit="gr"
+                  placeholder="0"
                   error={shown ? result.errors[i] : undefined}
                 />
               );

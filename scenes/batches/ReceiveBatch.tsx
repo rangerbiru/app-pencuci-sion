@@ -22,6 +22,7 @@ import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
 import TextField from '@/components/elements/TextField';
+import { GramInput, PcsInput } from '@/components/elements/NumberInput';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Badge from '@/components/elements/Badge';
@@ -325,22 +326,18 @@ function ReceiveBatch({ batchId }: { batchId: number }) {
       <View style={styles.gap}>
         {container ? (
           <>
-            <TextField
+            <GramInput
               label="Bruto (wadah + isi)"
               value={input.bruto}
-              onChangeText={set('bruto')}
-              keyboardType="decimal-pad"
-              unit="gr"
+              onChangeValue={set('bruto')}
               error={errors.bruto}
               hint="Gram diterima = bruto - tara."
             />
-            <TextField
+            <GramInput
               label="Tara wadah"
               value={input.tare}
-              onChangeText={set('tare')}
-              keyboardType="decimal-pad"
-              unit="gr"
-              placeholder={container.tara_gram.replace('.', ',')}
+              onChangeValue={set('tare')}
+              placeholder={formatGram(container.tara_gram, { unit: false })}
               hint="Kosongkan untuk memakai tara wadah."
               error={errors.tare}
             />
@@ -354,22 +351,21 @@ function ReceiveBatch({ batchId }: { batchId: number }) {
             ) : null}
           </>
         ) : (
-          <TextField
+          <GramInput
             label="Gram diterima"
             value={input.gram}
-            onChangeText={set('gram')}
-            keyboardType="decimal-pad"
-            unit="gr"
+            onChangeValue={set('gram')}
+            placeholder="0"
             hint={`Tidak boleh lebih dari ${formatGram(batch.sent_gram)}.`}
+            max={batch.sent_gram}
+            maxMessage={`Melebihi gram kiriman (${formatGram(batch.sent_gram)}).`}
             error={errors.gram}
           />
         )}
-        <TextField
+        <PcsInput
           label="Pcs diterima (boleh kosong)"
           value={input.pcs}
-          onChangeText={set('pcs')}
-          keyboardType="number-pad"
-          unit="pcs"
+          onChangeValue={set('pcs')}
           error={errors.pcs}
         />
         <TextField
@@ -377,7 +373,8 @@ function ReceiveBatch({ batchId }: { batchId: number }) {
           value={input.notes}
           onChangeText={set('notes')}
           multiline
-          placeholder="Wajib bila gram diterima kurang dari kiriman"
+          placeholder="Contoh: tercecer saat bongkar"
+          hint="Wajib bila gram diterima kurang dari kiriman, minimal 5 huruf."
           error={errors.notes}
         />
       </View>

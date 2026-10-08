@@ -30,7 +30,7 @@ describe('validateTakeMaterial', () => {
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.errors.gram).toBe(
-        'Gram (10.000,01 gr) melebihi sisa jatah (10.000,00 gr). Kurangi gramnya.',
+        'Gram (10.000,01 gr) melebihi sisa jatah (10.000 gr). Kurangi gramnya.',
       );
     }
   });
@@ -61,6 +61,19 @@ describe('<TakeMaterialForm />', () => {
     expect(screen.getByText(/melebihi sisa jatah/)).toBeTruthy();
   });
 
+  it('shows dot thousands while typing', () => {
+    render(
+      <TakeMaterialForm
+        ration={ration}
+        photoUri="file:///p.jpg"
+        onRetakePhoto={jest.fn()}
+        onValid={jest.fn()}
+      />,
+    );
+    fireEvent.changeText(screen.getByTestId('input-gram'), '1250,5');
+    expect(screen.getByTestId('input-gram').props.value).toBe('1.250,5');
+  });
+
   it('passes parsed values when valid', () => {
     const onValid = jest.fn();
     render(
@@ -76,7 +89,7 @@ describe('<TakeMaterialForm />', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Periksa' }));
     expect(onValid).toHaveBeenCalledWith(
       { weight: '1250.50', pcs: 100 },
-      { gram: '1.250,5', pcs: '100' },
+      { gram: '1250.5', pcs: '100' },
     );
   });
 });

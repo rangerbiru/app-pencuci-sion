@@ -18,6 +18,9 @@ import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
 import TextField from '@/components/elements/TextField';
+import { MoneyInput } from '@/components/elements/NumberInput';
+import Chip from '@/components/elements/Chip';
+import { toCents } from '@/utils/decimal';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Badge from '@/components/elements/Badge';
@@ -104,6 +107,9 @@ function Withdraw() {
     b?.withdrawal.active ??
     history.data?.data.find(w => w.status.code === 'diajukan' || w.status.code === 'disetujui') ??
     null;
+  // rupiah dicairkan utuh: sen (bila ada) tidak ikut ditarik
+  const availableCents = toCents(available) ?? 0n;
+  const wholeAvailable = availableCents > 0n ? (availableCents / 100n).toString() : null;
   const canWithdraw = !!b && (b.withdrawal.can_withdraw || paidByMandor) && !active;
 
   function review() {
@@ -196,16 +202,31 @@ function Withdraw() {
             </View>
           ) : (
             <View style={styles.gap}>
-              <TextField
+              <MoneyInput
                 label="Nominal"
                 value={amountText}
-                onChangeText={setAmountText}
-                keyboardType="number-pad"
-                inputMode="numeric"
+                onChangeValue={v => {
+                  setAmountText(v);
+                  setFieldError(undefined);
+                }}
                 placeholder="100.000"
-                hint={`Maksimal ${formatRupiah(available, { style: 'whole' })}`}
+                hint={`Minimal ${formatRupiah(b.withdrawal.min_amount, { style: 'whole' })}, maksimal ${formatRupiah(available, { style: 'whole' })}.`}
+                max={available}
+                maxMessage={`Melebihi saldo (${formatRupiah(available, { style: 'whole' })}). Kurangi nominalnya.`}
                 error={fieldError}
               />
+              {wholeAvailable && wholeAvailable !== '0' ? (
+                <Chip
+                  label="Tarik semua"
+                  icon="maximize-2"
+                  selected={amountText === wholeAvailable}
+                  accessibilityLabel={`Tarik semua, ${formatRupiah(wholeAvailable, { style: 'whole' })}`}
+                  onPress={() => {
+                    setAmountText(wholeAvailable);
+                    setFieldError(undefined);
+                  }}
+                />
+              ) : null}
               <TextField
                 label="Catatan (boleh kosong)"
                 value={notes}

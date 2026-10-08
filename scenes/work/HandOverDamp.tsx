@@ -18,7 +18,7 @@ import Screen from '@/components/layouts/Screen';
 import CameraCapture from '@/components/elements/CameraCapture';
 import Card from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
-import TextField from '@/components/elements/TextField';
+import { PcsInput } from '@/components/elements/NumberInput';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
@@ -219,13 +219,10 @@ function HandOverDamp({ mode, reworkId }: { mode: PcsHandOverMode; reworkId?: nu
           </SummaryRow>
         </Card>
       ) : null}
-      <TextField
+      <PcsInput
         label="Jumlah pcs"
         value={pcsText}
-        onChangeText={setPcsText}
-        keyboardType="number-pad"
-        inputMode="numeric"
-        unit="pcs"
+        onChangeValue={setPcsText}
         placeholder={defaultPcs != null ? String(defaultPcs) : '0'}
         hint={
           defaultPcs != null

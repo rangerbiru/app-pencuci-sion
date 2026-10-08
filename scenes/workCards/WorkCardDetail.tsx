@@ -16,6 +16,7 @@ import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
 import TextField from '@/components/elements/TextField';
+import { GramInput, PcsInput } from '@/components/elements/NumberInput';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Segmented from '@/components/elements/Segmented';
@@ -186,10 +187,10 @@ function WorkCardDetail({ id }: { id: number }) {
                     </View>
                     <View style={styles.inputs}>
                       <View style={styles.flex}>
-                        <TextField
+                        <GramInput
                           label="Gram bersih"
                           value={input.rows[i]?.gram ?? ''}
-                          onChangeText={v =>
+                          onChangeValue={v =>
                             setInput(p =>
                               p
                                 ? {
@@ -199,15 +200,13 @@ function WorkCardDetail({ id }: { id: number }) {
                                 : p,
                             )
                           }
-                          keyboardType="decimal-pad"
-                          unit="gr"
                         />
                       </View>
                       <View style={styles.pcs}>
-                        <TextField
+                        <PcsInput
                           label="Pcs bersih"
                           value={input.rows[i]?.pcs ?? ''}
-                          onChangeText={v =>
+                          onChangeValue={v =>
                             setInput(p =>
                               p
                                 ? {
@@ -217,7 +216,6 @@ function WorkCardDetail({ id }: { id: number }) {
                                 : p,
                             )
                           }
-                          keyboardType="number-pad"
                         />
                       </View>
                     </View>

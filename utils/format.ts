@@ -25,7 +25,10 @@ function split(value: string | number | null | undefined) {
 }
 
 export interface RupiahOptions {
-  /** 'full' = Rp 1.234,50; 'whole' = Rp 1.234 (Beranda); 'compact' = Rp6.450 / Rp41,05 */
+  /**
+   * 'full' = Rp 30.000, atau Rp 1.234,50 bila memang ada sen (tidak pernah ",00");
+   * 'whole' = selalu tanpa sen, Rp 1.234 (saldo besar); 'compact' = Rp6.450 / Rp41,05
+   */
   style?: 'full' | 'whole' | 'compact';
 }
 
@@ -38,17 +41,17 @@ export function formatRupiah(
   const sign = p.neg ? '-' : '';
   if (style === 'compact') return `${sign}Rp${p.int}${p.whole ? '' : `,${p.frac}`}`;
   if (style === 'whole') return `${sign}Rp ${p.int}`;
-  return `${sign}Rp ${p.int},${p.frac}`;
+  return `${sign}Rp ${p.int}${p.whole ? '' : `,${p.frac}`}`;
 }
 
-/** Ringkas: "1.224 gr" / "1.224,50 gr". Tabel: "2.000,00 gr". */
+/** "1.224 gr" / "1.224,50 gr": desimal hanya bila tidak bulat. */
 export function formatGram(
   value: string | number | null | undefined,
-  { style = 'summary', unit = true }: { style?: 'summary' | 'table'; unit?: boolean } = {},
+  { unit = true }: { unit?: boolean } = {},
 ): string {
   const p = split(value);
   if (!p) return EMPTY;
-  const num = `${p.neg ? '-' : ''}${p.int}${style === 'table' || !p.whole ? `,${p.frac}` : ''}`;
+  const num = `${p.neg ? '-' : ''}${p.int}${p.whole ? '' : `,${p.frac}`}`;
   return unit ? `${num} gr` : num;
 }
 

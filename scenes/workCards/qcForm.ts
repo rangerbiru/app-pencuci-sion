@@ -22,7 +22,8 @@ export function initialQcInput(card: WorkCard): QcInput {
     reworkDate: card.rework_date ?? '',
     rows: card.result.rows.map(r => ({
       itemId: r.item_id,
-      gram: r.gram ? r.gram.replace(/\.00$/, '').replace('.', ',') : '',
+      // nilai polos untuk GramInput ("300", "300.5"); titik ribuan ditambahkan isiannya
+      gram: r.gram ? r.gram.replace(/\.00$/, '') : '',
       pcs: r.pcs != null ? String(r.pcs) : '',
     })),
   };

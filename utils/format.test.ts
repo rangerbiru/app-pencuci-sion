@@ -1,9 +1,14 @@
 import { formatGram, formatPcs, formatPercent, formatRupiah, progressRatio } from './format';
 
 describe('formatRupiah', () => {
-  it('formats API strings with dot thousands and comma decimals', () => {
-    expect(formatRupiah('1250000.00')).toBe('Rp 1.250.000,00');
+  it('formats API strings with dot thousands, without ,00', () => {
+    expect(formatRupiah('1250000.00')).toBe('Rp 1.250.000');
+    expect(formatRupiah('30000.00')).toBe('Rp 30.000');
+  });
+
+  it('shows decimals only when there are cents', () => {
     expect(formatRupiah('1234.50')).toBe('Rp 1.234,50');
+    expect(formatRupiah('41.05')).toBe('Rp 41,05');
   });
 
   it('supports the Beranda and compact styles from the web', () => {
@@ -23,7 +28,7 @@ describe('formatRupiah', () => {
   });
 
   it('keeps precision of large amounts without float rounding', () => {
-    expect(formatRupiah('31520200.00')).toBe('Rp 31.520.200,00');
+    expect(formatRupiah('31520200.00')).toBe('Rp 31.520.200');
     expect(formatRupiah('9007199254740993.01')).toBe('Rp 9.007.199.254.740.993,01');
   });
 });
@@ -35,8 +40,8 @@ describe('formatGram', () => {
     expect(formatGram('1250.5')).toBe('1.250,50 gr');
   });
 
-  it('always shows 2 decimals in tables', () => {
-    expect(formatGram('2000.00', { style: 'table' })).toBe('2.000,00 gr');
+  it('never shows ,00 for whole grams', () => {
+    expect(formatGram('2000.00')).toBe('2.000 gr');
   });
 
   it('can omit the unit', () => {

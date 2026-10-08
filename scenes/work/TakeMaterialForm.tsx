@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { space } from '@/theme';
 import { MyRation } from '@/types';
 import { formatGram } from '@/utils/format';
-import TextField from '@/components/elements/TextField';
+import { GramInput, PcsInput } from '@/components/elements/NumberInput';
 import Text from '@/components/elements/Text';
 import Button from '@/components/elements/Button';
 import { PhotoThumb } from '@/components/elements/Photo';
@@ -59,25 +59,21 @@ function TakeMaterialForm({
           />
         </View>
       </View>
-      <TextField
+      <GramInput
         label="Gram di timbangan"
         value={gram}
-        onChangeText={setGram}
-        keyboardType="decimal-pad"
-        inputMode="decimal"
-        unit="gr"
+        onChangeValue={setGram}
         placeholder="0"
         hint={`Sisa jatah ${formatGram(ration.remaining_gram)}`}
+        max={ration.remaining_gram}
+        maxMessage={`Melebihi sisa jatah (${formatGram(ration.remaining_gram)}). Kurangi gramnya.`}
         error={errors.gram ?? serverErrors?.gram}
         testID="input-gram"
       />
-      <TextField
+      <PcsInput
         label="Jumlah pcs (boleh kosong)"
         value={pcs}
-        onChangeText={setPcs}
-        keyboardType="number-pad"
-        inputMode="numeric"
-        unit="pcs"
+        onChangeValue={setPcs}
         placeholder="0"
         error={errors.pcs ?? serverErrors?.pcs}
         testID="input-pcs"
