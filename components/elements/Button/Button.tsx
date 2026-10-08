@@ -1,65 +1,117 @@
 import {
+  ActivityIndicator,
   Pressable,
   PressableProps,
-  Text,
-  ActivityIndicator,
-  GestureResponderEvent,
-  ImageSourcePropType,
   StyleProp,
-  ViewStyle,
-  ImageStyle,
-  TextStyle,
   StyleSheet,
+  View,
+  ViewStyle,
 } from 'react-native';
-import { colors } from '@/theme';
-import Image from '../Image';
+import useTheme from '@/hooks/useTheme';
+import { radius, sizes, space } from '@/theme';
+import Text from '../Text';
+import Icon, { IconName } from '../Icon';
 
-const styles = StyleSheet.create({
-  root: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
-export interface ButtonProps extends PressableProps {
-  title?: string;
-  image?: ImageSourcePropType;
-  imageStyle?: StyleProp<ImageStyle>;
-  titleStyle?: StyleProp<TextStyle>;
-  onPress?: (event: GestureResponderEvent) => void;
-  onLongPress?: (event: GestureResponderEvent) => void;
+export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
+  title: string;
+  variant?: ButtonVariant;
+  icon?: IconName;
   isLoading?: boolean;
-  loaderColor?: string;
-  children?: React.ReactNode;
+  /** tombol utama 56 dp; selain itu 48 dp */
+  size?: 'large' | 'regular';
   style?: StyleProp<ViewStyle>;
 }
 
+/**
+ * Tombol SION. Utama: emas dengan teks navy (sama dengan web). Tanpa panah di teks.
+ */
 function Button({
   title,
-  titleStyle,
-  image,
-  style,
+  variant = 'primary',
+  icon,
+  isLoading = false,
+  size,
   disabled,
-  isLoading,
-  loaderColor = colors.palette.white,
-  imageStyle,
-  children,
+  style,
   ...others
 }: ButtonProps) {
-  const opacityStyle = { opacity: disabled ? 0.6 : 1 };
+  const { colors } = useTheme();
+  const height =
+    (size ?? (variant === 'primary' ? 'large' : 'regular')) === 'large'
+      ? sizes.primaryButton
+      : sizes.button;
+  const inactive = disabled || isLoading;
+
+  const palette = {
+    primary: {
+      bg: colors.accent,
+      pressed: colors.accentPressed,
+      fg: colors.onAccent,
+      border: colors.accent,
+    },
+    secondary: {
+      bg: colors.surface,
+      pressed: colors.surfaceSunken,
+      fg: colors.text,
+      border: colors.borderStrong,
+    },
+    danger: {
+      bg: colors.surface,
+      pressed: colors.dangerBg,
+      fg: colors.danger,
+      border: colors.danger,
+    },
+    ghost: {
+      bg: 'transparent',
+      pressed: colors.surfaceSunken,
+      fg: colors.link,
+      border: 'transparent',
+    },
+  }[variant];
+
   return (
     <Pressable
-      style={[styles.root, opacityStyle, style]}
-      disabled={disabled ?? isLoading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!inactive, busy: isLoading }}
+      disabled={inactive}
+      style={({ pressed }) => [
+        styles.root,
+        {
+          minHeight: height,
+          backgroundColor: pressed ? palette.pressed : palette.bg,
+          borderColor: palette.border,
+          opacity: disabled && !isLoading ? 0.5 : 1,
+        },
+        style,
+      ]}
       {...others}>
-      {children}
-      {isLoading && <ActivityIndicator size="small" color={loaderColor} />}
-      {!isLoading && image && <Image source={image} style={imageStyle} />}
-      {!isLoading && title && <Text style={titleStyle}>{title}</Text>}
+      {isLoading ? (
+        <ActivityIndicator color={palette.fg} />
+      ) : (
+        <View style={styles.content}>
+          {icon ? <Icon name={icon} size={20} color={palette.fg} /> : null}
+          <Text variant="button" style={{ color: palette.fg }} numberOfLines={2} align="center">
+            {title}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    borderRadius: radius.button,
+    borderWidth: 1,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+});
 
 export default Button;

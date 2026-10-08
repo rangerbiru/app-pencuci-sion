@@ -1,0 +1,1 @@
+export { PhotoThumb } from './Photo';

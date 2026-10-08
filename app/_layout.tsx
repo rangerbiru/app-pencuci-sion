@@ -1,21 +1,34 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { loadImages, loadFonts } from '@/theme';
+import { loadFonts, loadImages } from '@/theme';
 import Provider from '@/providers';
+import useAppBootstrap from '@/hooks/useAppBootstrap';
+import { useAppSlice } from '@/slices';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
-function Router() {
+function Root() {
+  useAppBootstrap();
+  const { status } = useAppSlice();
+  const [assetsReady, setAssetsReady] = useState(false);
+
   useEffect(() => {
-    Promise.all([loadImages(), loadFonts()]).finally(() => SplashScreen.hideAsync());
+    // huruf gagal dimuat = pakai huruf sistem, aplikasi tetap jalan
+    Promise.allSettled([loadFonts(), loadImages()]).then(() => setAssetsReady(true));
   }, []);
+
+  useEffect(() => {
+    if (assetsReady && status !== 'checking') SplashScreen.hideAsync().catch(() => undefined);
+  }, [assetsReady, status]);
+
+  if (!assetsReady) return null;
 
   return (
     <>
-      <Slot />
-      <StatusBar style="auto" />
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      <StatusBar style="light" />
     </>
   );
 }
@@ -23,7 +36,7 @@ function Router() {
 export default function RootLayout() {
   return (
     <Provider>
-      <Router />
+      <Root />
     </Provider>
   );
 }

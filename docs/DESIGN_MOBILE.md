@@ -391,3 +391,28 @@ brief:
   "Belum ada pengajuan untuk diverifikasi." (tombol Muat ulang).
 - Error: dari API apa adanya bila ada (`message`/`errors`), selain itu pesan per kode di
   `services/api/errors.ts`.
+
+## 8. Swa-kritik pratinjau web
+
+Pratinjau `npx expo start --web` dengan API tiruan (data contoh sesuai bentuk `docs/API_MOBILE.md`),
+kamera palsu Chrome, dan Playwright di 360 x 800 dan 412 x 915. Tiga putaran; yang diperbaiki:
+
+| Putaran | Temuan | Perbaikan |
+|---|---|---|
+| 1 | Badge "Menunggu" dan "Tertahan" di Riwayat tidak jelas milik apa | Badge diberi konteks di depan label API: "Timbang: Menunggu", "Upah: Tertahan", "QC: Standard". Label API tetap utuh |
+| 1 | Label tab Mandor terpotong ("Verifik...", "Kartu K...") | "Kartu Kerja" jadi "Kartu" di tab, label tab mengecil otomatis (`adjustsFontSizeToFit`), 6 tab memakai huruf 10 |
+| 1 | Isian sempit (gram/pcs bersih) meluap dan satuan "gr" hilang | `minWidth: 0` pada isian |
+| 1 | Tombol "Lanjut foto timbangan" abu-abu mati sebelum memilih jatah | Jatah tunggal terpilih otomatis; tombol selalu aktif dan memberi pesan "Pilih jatah yang diambil dulu." |
+| 1 | Tombol kerja ulang terlalu panjang dan membungkus dua baris | "Ambil kerja ulang, 20 pcs" |
+| 2 | Kartu kerja mengulang nama pekerja di header dan kartu | Header = nama, kartu = "Kartu dd/mm/yyyy" |
+| 2 | Foto verifikasi dipotong (cover); angka timbangan bisa terpotong | Foto lebar memakai `contain` di latar abu muda |
+| 3 | "Sisa setelah ini" merah padahal belum ada isian; tombol simpan mati | Merah hanya bila melebihi sisa; tombol aktif dan menjelaskan isian yang kurang |
+| 3 | Tombol "Cari wadah" mati saat kode kosong | Tombol muncul setelah kode diketik |
+
+Tangkapan akhir ada di `docs/screenshots/` (`360-*` dan `412-*`): layar Masuk; Pencuci: Beranda, Ambil
+bahan, Absen pulang (kamera), Serah hasil, Pendapatan, Tarik dana, Riwayat, Detail hari, Profil, Belum
+terkirim; Kepala Pencuci: Beranda, Tim, Verifikasi; Mandor: Beranda, Batch, Terima batch, Penjatahan,
+Verifikasi, Detail pengajuan, Kartu Kerja, Detail kartu dan QC, Penarikan Borongan, Detail penarikan.
+
+Catatan: di web label tab 6 kolom pada 360 dp masih bisa terpotong satu huruf ("Pendap...") karena
+`adjustsFontSizeToFit` hanya bekerja di Android/iOS. Web bukan target rilis.
