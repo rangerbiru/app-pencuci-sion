@@ -64,7 +64,7 @@ export function PhotoThumb({ uri, label, size = 72, wide }: PhotoThumbProps) {
             accessibilityLabel={label}
           />
           <View style={[styles.viewerBar, { paddingTop: insets.top + space.sm }]}>
-            <Text variant="bodyStrong" style={styles.viewerTitle} numberOfLines={1}>
+            <Text variant="bodyStrong" style={styles.viewerTitle} numberOfLines={2}>
               {label}
             </Text>
             <Pressable

@@ -44,7 +44,7 @@ function AppHeader({ title, subtitle, back, right }: AppHeaderProps) {
           {title}
         </Text>
         {subtitle ? (
-          <Text variant="small" style={{ color: colors.onHeaderMuted }} numberOfLines={1}>
+          <Text variant="small" style={{ color: colors.onHeaderMuted }} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
