@@ -41,6 +41,12 @@ export interface ThemeColors {
   /** pil di belakang ikon tab aktif */
   navIndicator: string;
   onNavIndicator: string;
+  /** isian form: latar sama dengan kartu, garis 1 px yang tetap terlihat (3:1) */
+  fieldBackground: string;
+  fieldBorder: string;
+  /** garis fokus emas 2 px; mode terang memakai gold-600 karena gold-500 hanya 2,4:1 di putih */
+  fieldFocus: string;
+  placeholder: string;
 }
 
 export const lightColors: ThemeColors = {
@@ -74,6 +80,10 @@ export const lightColors: ThemeColors = {
   pressed: palette.gray['100'],
   navIndicator: palette.gold['100'],
   onNavIndicator: palette.primary['600'],
+  fieldBackground: light.surface,
+  fieldBorder: palette.gray['500'],
+  fieldFocus: palette.gold['600'],
+  placeholder: light.textSecondary,
 };
 
 export const darkColors: ThemeColors = {
@@ -107,6 +117,10 @@ export const darkColors: ThemeColors = {
   pressed: palette.gray['800'],
   navIndicator: tokens.badge.colors.gold.dark.bg,
   onNavIndicator: palette.gold['300'],
+  fieldBackground: dark.surfaceSolid,
+  fieldBorder: palette.gray['500'],
+  fieldFocus: palette.gold['500'],
+  placeholder: dark.textSecondary,
 };
 
 export type BadgeTone = 'primary' | 'gold' | 'accent' | 'error' | 'neutral';

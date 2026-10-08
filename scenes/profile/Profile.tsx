@@ -3,8 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import useTheme from '@/hooks/useTheme';
+import useSetThemePreference from '@/hooks/useSetThemePreference';
 import { sizes, space } from '@/theme';
-import { useAppSlice, useQueueItems } from '@/slices';
+import { ThemePreference, useAppSlice, useQueueItems } from '@/slices';
 import { useGetBalanceQuery, useGetMeQuery } from '@/services';
 import { signOut } from '@/services/session';
 import config, { isFeatureEnabled } from '@/utils/config';
@@ -19,6 +20,7 @@ import Button from '@/components/elements/Button';
 import ListRow from '@/components/elements/ListRow';
 import Emblem from '@/components/elements/Emblem';
 import Amount from '@/components/elements/Amount';
+import Segmented from '@/components/elements/Segmented';
 import { Dialog } from '@/components/elements/Dialog';
 
 const COMPONENT_LABEL: Record<string, string> = {
@@ -69,7 +71,8 @@ function EarningsSummary() {
  * `account` = tab Akun Mandor: Pendapatan ditampilkan di atas.
  */
 function Profile({ account = false }: { account?: boolean }) {
-  const { colors } = useTheme();
+  const { colors, preference } = useTheme();
+  const setTheme = useSetThemePreference();
   const dispatch = useDispatch<Dispatch>();
   const { user: cached } = useAppSlice();
   const me = useGetMeQuery();
@@ -141,6 +144,19 @@ function Profile({ account = false }: { account?: boolean }) {
             </Text>
           )}
         </Card>
+      </Section>
+
+      <Section title="Tampilan" description="Terang cocok untuk ruang cuci yang terang.">
+        <Segmented<ThemePreference>
+          accessibilityLabel="Tampilan"
+          value={preference}
+          onChange={setTheme}
+          options={[
+            { value: 'light', label: 'Terang' },
+            { value: 'dark', label: 'Gelap' },
+            { value: 'system', label: 'Ikuti sistem' },
+          ]}
+        />
       </Section>
 
       <Card padded={false} style={styles.links}>

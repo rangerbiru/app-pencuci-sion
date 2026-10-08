@@ -5,6 +5,9 @@ import { Me } from '@/types';
 
 export type AuthStatus = 'checking' | 'signedOut' | 'signedIn';
 
+/** Tampilan: terang (bawaan, ruang cuci terang), gelap, atau ikuti sistem. */
+export type ThemePreference = 'light' | 'dark' | 'system';
+
 export interface AppState {
   status: AuthStatus;
   user?: Me;
@@ -15,6 +18,7 @@ export interface AppState {
   serverOffsetMs: number;
   /** pesan sekali tampil di layar masuk, mis. "Sesi Anda berakhir" */
   loginNotice?: string;
+  themePreference: ThemePreference;
 }
 
 const initialState: AppState = {
@@ -22,6 +26,7 @@ const initialState: AppState = {
   user: undefined,
   updateRequired: false,
   serverOffsetMs: 0,
+  themePreference: 'light',
 };
 
 const slice = createSlice({
@@ -37,6 +42,9 @@ const slice = createSlice({
       state.status = 'signedOut';
       state.user = undefined;
       state.loginNotice = payload;
+    },
+    setThemePreference: (state, { payload }: PayloadAction<ThemePreference>) => {
+      state.themePreference = payload;
     },
     setUser: (state, { payload }: PayloadAction<Me>) => {
       state.user = payload;

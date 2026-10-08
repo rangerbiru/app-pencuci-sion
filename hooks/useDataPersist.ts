@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export enum DataPersistKeys {
   USER = 'USER',
+  THEME_PREFERENCE = 'THEME_PREFERENCE',
   // add more keys here
 }
 

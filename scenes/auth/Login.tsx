@@ -13,7 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import useTheme from '@/hooks/useTheme';
-import { images, sizes, space } from '@/theme';
+import { images, lightColors, radius, sizes, space } from '@/theme';
 import { signIn } from '@/services/session';
 import { useAppSlice } from '@/slices';
 import Text from '@/components/elements/Text';
@@ -32,7 +32,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function Login() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch<Dispatch>();
   const { loginNotice } = useAppSlice();
@@ -72,11 +72,14 @@ function Login() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Image
-            source={images.logoFull}
-            style={styles.logo}
-            accessibilityLabel="SION, Sarang Integra Oase Nature"
-          />
+          {/* logo raster bertulisan navy: di mode gelap diberi alas terang supaya terbaca */}
+          <View style={[styles.logoPlate, isDark && { backgroundColor: lightColors.background }]}>
+            <Image
+              source={images.logoFull}
+              style={styles.logo}
+              accessibilityLabel="SION, Sarang Integra Oase Nature"
+            />
+          </View>
           <View style={styles.heading}>
             <Text variant="title" accessibilityRole="header">
               Masuk
@@ -170,7 +173,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  logo: { width: 168, height: 181, alignSelf: 'center' },
+  logoPlate: { alignSelf: 'center', borderRadius: radius.card, padding: space.sm },
+  logo: { width: 168, height: 181 },
   heading: { gap: space.xs, marginTop: space.sm },
   notice: {
     flexDirection: 'row',

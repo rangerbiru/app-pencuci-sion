@@ -22,7 +22,7 @@ function Segmented<T extends string>({
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.root, { borderColor: colors.borderStrong, backgroundColor: colors.surface }]}>
+      style={[styles.root, { borderColor: colors.border, backgroundColor: colors.surface }]}>
       {options.map(o => {
         const active = o.value === value;
         return (
@@ -32,11 +32,16 @@ function Segmented<T extends string>({
             accessibilityState={{ checked: active }}
             accessibilityLabel={o.label}
             onPress={() => onChange(o.value)}
-            style={[styles.option, active && { backgroundColor: colors.header }]}>
+            style={({ pressed }) => [
+              styles.option,
+              active
+                ? { backgroundColor: colors.navIndicator, borderColor: colors.fieldFocus }
+                : pressed && { backgroundColor: colors.pressed },
+            ]}>
             <Text
               variant="smallStrong"
               align="center"
-              style={{ color: active ? colors.onHeader : colors.text }}>
+              style={{ color: active ? colors.onNavIndicator : colors.textSecondary }}>
               {o.label}
             </Text>
           </Pressable>
@@ -58,6 +63,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: sizes.touch - space.sm,
     borderRadius: radius.button - 2,
+    borderWidth: 1,
+    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.sm,
