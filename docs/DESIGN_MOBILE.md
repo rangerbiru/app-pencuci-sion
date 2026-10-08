@@ -409,10 +409,26 @@ kamera palsu Chrome, dan Playwright di 360 x 800 dan 412 x 915. Tiga putaran; ya
 | 3 | "Sisa setelah ini" merah padahal belum ada isian; tombol simpan mati | Merah hanya bila melebihi sisa; tombol aktif dan menjelaskan isian yang kurang |
 | 3 | Tombol "Cari wadah" mati saat kode kosong | Tombol muncul setelah kode diketik |
 
-Tangkapan akhir ada di `docs/screenshots/` (`360-*` dan `412-*`): layar Masuk; Pencuci: Beranda, Ambil
-bahan, Absen pulang (kamera), Serah hasil, Pendapatan, Tarik dana, Riwayat, Detail hari, Profil, Belum
-terkirim; Kepala Pencuci: Beranda, Tim, Verifikasi; Mandor: Beranda, Batch, Terima batch, Penjatahan,
-Verifikasi, Detail pengajuan, Kartu Kerja, Detail kartu dan QC, Penarikan Borongan, Detail penarikan.
+## Tahap 14C-R: tangkapan layar data asli
 
-Catatan: di web label tab 6 kolom pada 360 dp masih bisa terpotong satu huruf ("Pendap...") karena
-`adjustsFontSizeToFit` hanya bekerja di Android/iOS. Web bukan target rilis.
+Tangkapan di `docs/screenshots/` diambil dari pratinjau web dengan API asli (database demo
+`sion_wms_mobile`, 09/10/2026), nama berkas `{lebar}-{mode}-{peran}-{nn}-{layar}.png`:
+lebar 360 x 800 dan 412 x 915, mode `light` dan `dark`. Layar: Masuk; Pencuci: Beranda, Ambil bahan,
+Pendapatan, Tarik dana, Riwayat, Profil; Kepala Pencuci: Beranda, Verifikasi, Tim, Progres bonus
+tim, Pendapatan; Mandor: Beranda, Batch (penjatahan), Verifikasi, Kartu Kerja (semua), Detail kartu
+dan QC, Akun, Dana Mandor, Penarikan Borongan. Foto di tangkapan berasal dari kamera uji (gambar
+buatan), bukan foto orang.
+
+Tinjauan (frontend-design, design-taste-frontend, ui-ux-pro-max), putaran 1 lalu diperbaiki:
+
+| Temuan | Perbaikan |
+|---|---|
+| Label tab terpotong di 360 dp | Bilah tab sendiri; ukuran label mengikuti besar huruf, dipecah dua baris atau dikecilkan |
+| Garis putih kedua di dalam isian (outline web) | Outline web dan garis bawah Android dimatikan; satu garis 1 px, fokus emas 2 px |
+| Efek tekan baris menyisakan tepi kiri/kanan | Baris membawa padding sendiri; kartu memotong efek tekan di sudutnya |
+| "Rp" terpisah dari angka saat turun baris | Spasi tak terputus di format rupiah dan gram |
+| Petunjuk kamera tertutup tombol Ambil foto (360 dp) | Bingkai kamera mengisi sisa tinggi, bukan rasio tetap |
+| Tim: "Bahan hari ini - Lembab - Hasil -" pecah tak rapi | "Belum ada kartu hari ini" bila belum ada kartu |
+| Dana Mandor: "Pengajuan aktif Rp 0" di setiap pencuci | Baris hanya tampil bila ada nominal |
+| Badge "Menunggu" di Riwayat tanpa konteks | Awalan "Timbang: Menunggu" |
+| Logo bertulisan navy tidak terbaca di mode gelap | Alas terang di belakang logo layar masuk |
