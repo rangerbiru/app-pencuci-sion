@@ -1,6 +1,6 @@
 import { preparationTotals, validatePreparation } from './preparationForm';
 
-const at = '2026-10-08T13:00:00+07:00';
+const at = '2026-10-08';
 
 describe('preparation form', () => {
   it('computes output and shrinkage without floats', () => {

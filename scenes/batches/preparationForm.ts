@@ -47,6 +47,7 @@ export function preparationTotals(inputGram: string, lines: PreparationLine[]): 
 export function validatePreparation(
   input: PreparationInput,
   inputGram: string,
+  /** tanggal "YYYY-MM-DD" (server: tidak boleh setelah hari ini) */
   preparedAt: string,
 ): { ok: true; body: PreparationPayload } | { ok: false; errors: PreparationErrors } {
   const errors: PreparationErrors = { rows: {} };

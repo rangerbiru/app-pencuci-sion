@@ -90,12 +90,21 @@ function Preparation({ batchId }: { batchId: number }) {
 
   const inputGram = batch.received_gram ?? batch.remaining_gram ?? '0.00';
   const totals = preparationTotals(inputGram, input.lines);
-  const setLine = (key: string, change: Partial<PreparationLine>) =>
+  const setLine = (key: string, change: Partial<PreparationLine>) => {
     setInput(p => ({ ...p, lines: p.lines.map(l => (l.key === key ? { ...l, ...change } : l)) }));
+    // pesan error baris hilang begitu baris itu diubah
+    setErrors(e => {
+      if (!e.rows[key] && !e.lines) return e;
+      const rows = { ...e.rows };
+      delete rows[key];
+      return { ...e, rows, lines: undefined };
+    });
+  };
 
   function review() {
     setServerError(null);
-    const res = validatePreparation(input, inputGram, jakarta().format('YYYY-MM-DDTHH:mm:ssZ'));
+    // server memvalidasi prepared_at <= today (tanggal), jadi kirim tanggal Jakarta tanpa jam
+    const res = validatePreparation(input, inputGram, jakarta().format('YYYY-MM-DD'));
     if (!res.ok) {
       setErrors(res.errors);
       return;
@@ -153,7 +162,10 @@ function Preparation({ batchId }: { batchId: number }) {
         <Segmented<'kering' | 'basah'>
           accessibilityLabel="Jenis proses"
           value={input.processType ?? ('' as 'kering')}
-          onChange={v => setInput(p => ({ ...p, processType: v }))}
+          onChange={v => {
+            setInput(p => ({ ...p, processType: v }));
+            setErrors(e => ({ ...e, processType: undefined }));
+          }}
           options={[
             { value: 'kering', label: 'Kering' },
             { value: 'basah', label: 'Basah' },
