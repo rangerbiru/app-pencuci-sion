@@ -220,10 +220,10 @@ function TakeMaterial() {
                   setSelected(r);
                   setPickError(null);
                 }}
-                style={[
+                style={({ pressed }) => [
                   styles.option,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: pressed ? colors.pressed : colors.surface,
                     borderColor: active ? colors.accent : colors.border,
                     borderWidth: active ? 2 : 1,
                   },

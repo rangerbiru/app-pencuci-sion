@@ -53,7 +53,7 @@ function Button({
     },
     secondary: {
       bg: colors.surface,
-      pressed: colors.surfaceSunken,
+      pressed: colors.pressed,
       fg: colors.text,
       border: colors.borderStrong,
     },
@@ -65,7 +65,7 @@ function Button({
     },
     ghost: {
       bg: 'transparent',
-      pressed: colors.surfaceSunken,
+      pressed: colors.pressed,
       fg: colors.link,
       border: 'transparent',
     },

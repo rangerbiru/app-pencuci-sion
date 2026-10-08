@@ -25,7 +25,7 @@ function IconButton({ icon, accessibilityLabel, onPress, disabled }: IconButtonP
         styles.root,
         {
           borderColor: colors.borderStrong,
-          backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
+          backgroundColor: pressed ? colors.pressed : colors.surface,
           opacity: disabled ? 0.4 : 1,
         },
       ]}>

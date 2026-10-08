@@ -210,7 +210,10 @@ function Approvals({ back }: { back?: boolean }) {
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked }}
                   accessibilityLabel={`Pilih ${s.worker.name}, ${s.type.label}, ${quantity(s)}`}
-                  style={styles.check}>
+                  style={({ pressed }) => [
+                    styles.check,
+                    pressed && { backgroundColor: colors.pressed },
+                  ]}>
                   <Icon
                     name={checked ? 'check-square' : 'square'}
                     size={26}
@@ -218,7 +221,10 @@ function Approvals({ back }: { back?: boolean }) {
                   />
                 </Pressable>
                 <Pressable
-                  style={styles.itemBody}
+                  style={({ pressed }) => [
+                    styles.itemBody,
+                    pressed && { backgroundColor: colors.pressed },
+                  ]}
                   onPress={() =>
                     router.push({ pathname: '/verifikasi/[id]', params: { id: String(s.id) } })
                   }
@@ -248,7 +254,7 @@ function Approvals({ back }: { back?: boolean }) {
       )}
 
       {isMandor && isFeatureEnabled('teamWithdrawals') ? (
-        <Card padded={false} style={styles.disputed}>
+        <Card padded={false}>
           <ListRow
             title="Penarikan pencuci Borongan"
             subtitle={
@@ -266,7 +272,7 @@ function Approvals({ back }: { back?: boolean }) {
         <Section
           title="Hasil timbang ditolak pencuci"
           description="Timbang ulang lalu simpan hasil standar lagi.">
-          <Card padded={false} style={styles.disputed}>
+          <Card padded={false}>
             {disputedCards.map((c, i) => (
               <ListRow
                 key={c.id}
@@ -315,7 +321,6 @@ const styles = StyleSheet.create({
     paddingRight: space.md,
   },
   tabular: { fontVariant: ['tabular-nums'] },
-  disputed: { paddingHorizontal: sizes.gutter },
 });
 
 export default Approvals;

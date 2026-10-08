@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
-import { sizes, space } from '@/theme';
+import { space } from '@/theme';
 import { useAppSlice } from '@/slices';
 import { TeamMember } from '@/types';
 import {
@@ -124,7 +124,7 @@ function Team({ back }: { back?: boolean }) {
         profit.refetch();
       }}>
       {isKepala ? (
-        <Card padded={false} style={styles.links}>
+        <Card padded={false}>
           {isFeatureEnabled('approvals') ? (
             <ListRow
               title="Verifikasi"
@@ -236,7 +236,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   gap: { gap: space.sm },
   tight: { paddingVertical: space.xs },
-  links: { paddingHorizontal: sizes.gutter },
   member: { paddingVertical: space.md, gap: space.sm },
   memberHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.md, rowGap: 2 },

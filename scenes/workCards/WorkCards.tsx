@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { sizes, space } from '@/theme';
+import { space } from '@/theme';
 import { toApiError, useGetWorkCardsQuery } from '@/services';
 import { formatDayLong, jakarta } from '@/utils/date';
 import { formatGram } from '@/utils/format';
@@ -67,7 +67,7 @@ function WorkCards({ back }: { back?: boolean }) {
           />
         </Card>
       ) : (
-        <Card padded={false} style={styles.list}>
+        <Card padded={false}>
           {cards.map((c, i) => (
             <ListRow
               key={c.id}
@@ -103,7 +103,6 @@ function WorkCards({ back }: { back?: boolean }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   datePicker: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  list: { paddingHorizontal: sizes.gutter },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
 });
 

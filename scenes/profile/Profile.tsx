@@ -46,7 +46,7 @@ function EarningsSummary() {
   const b = balance.data;
   return (
     <Section title="Pendapatan">
-      <Card padded={false} style={styles.links}>
+      <Card padded={false}>
         <View style={styles.balance}>
           <Text variant="small" color="textSecondary">
             Saldo dapat dicairkan
@@ -159,7 +159,7 @@ function Profile({ account = false }: { account?: boolean }) {
         />
       </Section>
 
-      <Card padded={false} style={styles.links}>
+      <Card padded={false}>
         <ListRow
           title="Ganti password"
           onPress={() => router.push('/ganti-password')}
@@ -208,8 +208,12 @@ const styles = StyleSheet.create({
   fields: { gap: space.md },
   field: { gap: 2 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
-  links: { paddingHorizontal: sizes.gutter },
-  balance: { paddingTop: space.lg, paddingBottom: space.sm, gap: space.xxs },
+  balance: {
+    paddingTop: space.lg,
+    paddingBottom: space.sm,
+    paddingHorizontal: sizes.gutter,
+    gap: space.xxs,
+  },
 });
 
 export default Profile;

@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
-import { sizes } from '@/theme';
 import { toApiError, useGetTeamWithdrawalsQuery } from '@/services';
 import { formatDateTime } from '@/utils/date';
 import { formatRupiah } from '@/utils/format';
@@ -51,7 +50,7 @@ function TeamWithdrawals() {
           />
         </Card>
       ) : (
-        <Card padded={false} style={styles.list}>
+        <Card padded={false}>
           {items.map((w, i) => (
             <ListRow
               key={w.id}
@@ -73,9 +72,5 @@ function TeamWithdrawals() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  list: { paddingHorizontal: sizes.gutter },
-});
 
 export default TeamWithdrawals;

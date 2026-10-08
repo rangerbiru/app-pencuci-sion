@@ -106,7 +106,7 @@ function WorkerHome() {
       ))}
 
       {isKepala && isFeatureEnabled('team') ? (
-        <Card padded={false} style={styles.listCard}>
+        <Card padded={false}>
           <ListRow
             title="Tim saya"
             subtitle="Absen, jatah, dan setoran anggota hari ini"
@@ -197,7 +197,7 @@ function WorkerHome() {
       ) : null}
 
       {mine.length > 0 ? (
-        <Card padded={false} style={styles.listCard}>
+        <Card padded={false}>
           <ListRow
             title={`Belum terkirim: ${mine.length}`}
             subtitle="Dikirim otomatis saat ada sinyal. Ketuk untuk melihat."
@@ -213,7 +213,6 @@ function WorkerHome() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   tight: { paddingVertical: space.xs },
-  listCard: { paddingHorizontal: space.lg },
   balance: { gap: space.md },
   balanceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
 });

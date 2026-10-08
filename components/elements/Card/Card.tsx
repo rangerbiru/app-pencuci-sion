@@ -16,7 +16,8 @@ function Card({ raised = false, padded = true, style, ...others }: CardProps) {
       style={[
         styles.root,
         { backgroundColor: colors.surface, borderColor: colors.border },
-        padded && styles.padded,
+        // tanpa padding = kartu berisi baris sentuh: efek tekan dipotong sudut kartu
+        padded ? styles.padded : styles.clip,
         raised && shadow.xs,
         style,
       ]}
@@ -28,6 +29,7 @@ function Card({ raised = false, padded = true, style, ...others }: CardProps) {
 const styles = StyleSheet.create({
   root: { borderRadius: radius.card, borderWidth: 1 },
   padded: { padding: space.lg },
+  clip: { overflow: 'hidden' },
 });
 
 export default Card;

@@ -44,7 +44,7 @@ function FigureRow({ icon, value, label, attention, onPress }: FigureProps) {
       style={({ pressed }) => [
         styles.figure,
         { borderBottomColor: colors.border },
-        pressed && { backgroundColor: colors.surfaceSunken },
+        pressed && { backgroundColor: colors.pressed },
       ]}>
       <View
         style={[

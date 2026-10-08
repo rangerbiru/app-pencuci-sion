@@ -146,17 +146,21 @@ function RationForm({ batchId }: { batchId: number }) {
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: active }}
                   accessibilityLabel={w.name}
-                  style={[
+                  style={({ pressed }) => [
                     styles.chip,
                     {
-                      borderColor: active ? colors.accent : colors.borderStrong,
-                      backgroundColor: active ? colors.warningBg : colors.surface,
+                      borderColor: active ? colors.fieldFocus : colors.fieldBorder,
+                      backgroundColor: active
+                        ? colors.navIndicator
+                        : pressed
+                          ? colors.pressed
+                          : colors.surface,
                     },
                   ]}>
                   <Icon
                     name={active ? 'check-square' : 'square'}
                     size={18}
-                    color={active ? colors.warning : colors.textSecondary}
+                    color={active ? colors.onNavIndicator : colors.textSecondary}
                   />
                   <Text variant="bodyStrong">{w.name}</Text>
                 </Pressable>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
-import { sizes, space } from '@/theme';
+import { space } from '@/theme';
 import { WorkDay } from '@/types';
 import { toApiError, useGetWorkHistoryQuery } from '@/services';
 import { formatDayShort, jakarta } from '@/utils/date';
@@ -77,7 +77,7 @@ function History() {
           />
         </Card>
       ) : (
-        <Card padded={false} style={styles.list}>
+        <Card padded={false}>
           {history.data.map((d, i) => {
             const f = dayFacts(d);
             return (
@@ -149,7 +149,6 @@ function History() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingHorizontal: sizes.gutter },
   below: { gap: space.sm, marginTop: space.xs },
   facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.md },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
