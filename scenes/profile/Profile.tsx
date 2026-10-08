@@ -5,9 +5,9 @@ import { useDispatch } from 'react-redux';
 import useTheme from '@/hooks/useTheme';
 import { sizes, space } from '@/theme';
 import { useAppSlice, useQueueItems } from '@/slices';
-import { useGetMeQuery } from '@/services';
+import { useGetBalanceQuery, useGetMeQuery } from '@/services';
 import { signOut } from '@/services/session';
-import config from '@/utils/config';
+import config, { isFeatureEnabled } from '@/utils/config';
 import { formatDate } from '@/utils/date';
 import type { Dispatch } from '@/utils/store';
 import Screen from '@/components/layouts/Screen';
@@ -18,6 +18,7 @@ import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
 import ListRow from '@/components/elements/ListRow';
 import Emblem from '@/components/elements/Emblem';
+import Amount from '@/components/elements/Amount';
 import { Dialog } from '@/components/elements/Dialog';
 
 const COMPONENT_LABEL: Record<string, string> = {
@@ -37,8 +38,37 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
-/** Profil: data diri, kontrak berlaku, ganti password, belum terkirim, keluar, versi. */
-function Profile() {
+/** Ringkasan saldo dan pintu ke Pendapatan, untuk tab Akun Mandor. */
+function EarningsSummary() {
+  const balance = useGetBalanceQuery();
+  const b = balance.data;
+  return (
+    <Section title="Pendapatan">
+      <Card padded={false} style={styles.links}>
+        <View style={styles.balance}>
+          <Text variant="small" color="textSecondary">
+            Saldo dapat dicairkan
+          </Text>
+          <Amount value={b?.dapat_dicairkan ?? null} unit="rupiah" whole size="l" />
+        </View>
+        <ListRow
+          title="Pendapatan dan bonus"
+          subtitle="Rincian per minggu, bonus berjalan, dan saldo"
+          onPress={() => router.push('/pendapatan-saya')}
+        />
+        {isFeatureEnabled('withdrawals') ? (
+          <ListRow title="Tarik dana" onPress={() => router.push('/tarik-dana')} divider={false} />
+        ) : null}
+      </Card>
+    </Section>
+  );
+}
+
+/**
+ * Profil: data diri, kontrak berlaku, ganti password, belum terkirim, keluar, versi.
+ * `account` = tab Akun Mandor: Pendapatan ditampilkan di atas.
+ */
+function Profile({ account = false }: { account?: boolean }) {
   const { colors } = useTheme();
   const dispatch = useDispatch<Dispatch>();
   const { user: cached } = useAppSlice();
@@ -54,7 +84,10 @@ function Profile() {
   }
 
   return (
-    <Screen title="Profil" refreshing={me.isFetching && !me.isLoading} onRefresh={me.refetch}>
+    <Screen
+      title={account ? 'Akun' : 'Profil'}
+      refreshing={me.isFetching && !me.isLoading}
+      onRefresh={me.refetch}>
       <Card style={styles.head}>
         <Emblem size={56} />
         <View style={styles.flex}>
@@ -62,6 +95,8 @@ function Profile() {
           {user ? <Badge status={user.role} kind="role" icon="user" /> : null}
         </View>
       </Card>
+
+      {account && isFeatureEnabled('earnings') ? <EarningsSummary /> : null}
 
       <Section title="Data diri">
         <Card style={styles.fields}>
@@ -158,6 +193,7 @@ const styles = StyleSheet.create({
   field: { gap: 2 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
   links: { paddingHorizontal: sizes.gutter },
+  balance: { paddingTop: space.lg, paddingBottom: space.sm, gap: space.xxs },
 });
 
 export default Profile;

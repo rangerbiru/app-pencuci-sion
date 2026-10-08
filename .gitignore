@@ -44,3 +44,4 @@ app-example
 /.cursor
 /.github
 CLAUDE.md
+/.playwright-mcp

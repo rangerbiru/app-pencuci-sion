@@ -36,6 +36,11 @@ export interface ThemeColors {
   focusRing: string;
   overlay: string;
   skeleton: string;
+  /** latar sentuh (baris, pil tab) */
+  pressed: string;
+  /** pil di belakang ikon tab aktif */
+  navIndicator: string;
+  onNavIndicator: string;
 }
 
 export const lightColors: ThemeColors = {
@@ -66,6 +71,9 @@ export const lightColors: ThemeColors = {
   focusRing: light.focusRing,
   overlay: 'rgba(11,20,32,0.55)',
   skeleton: palette.gray['200'],
+  pressed: palette.gray['100'],
+  navIndicator: palette.gold['100'],
+  onNavIndicator: palette.primary['600'],
 };
 
 export const darkColors: ThemeColors = {
@@ -96,6 +104,9 @@ export const darkColors: ThemeColors = {
   focusRing: dark.focusRing,
   overlay: 'rgba(0,0,0,0.6)',
   skeleton: palette.gray['800'],
+  pressed: palette.gray['800'],
+  navIndicator: tokens.badge.colors.gold.dark.bg,
+  onNavIndicator: palette.gold['300'],
 };
 
 export type BadgeTone = 'primary' | 'gold' | 'accent' | 'error' | 'neutral';

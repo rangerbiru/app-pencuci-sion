@@ -144,7 +144,7 @@ function PendingRow({ item }: { item: PendingItem }) {
 }
 
 /** Pendapatan: pilih minggu, total, rincian per hari, bonus berjalan, profit harian, saldo. */
-function Earnings() {
+function Earnings({ back = false }: { back?: boolean }) {
   const { user } = useAppSlice();
   const [week, setWeek] = useState(() => isoWeekKey());
   const currentWeek = isoWeekKey();
@@ -169,11 +169,12 @@ function Earnings() {
   return (
     <Screen
       title="Pendapatan"
+      back={back}
       refreshing={(earnings.isFetching || balance.isFetching) && !earnings.isLoading}
       onRefresh={refresh}
       footer={
         isFeatureEnabled('withdrawals') ? (
-          <BottomBar inTabs>
+          <BottomBar inTabs={!back}>
             <Button
               title="Tarik dana"
               icon="dollar-sign"
