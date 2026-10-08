@@ -31,6 +31,9 @@ export const tagTypes = [
   'Batches',
   'RationBatches',
   'TeamWithdrawals',
+  'Items',
+  'BonusProgress',
+  'MandorFunds',
 ] as const;
 
 export const api = createApi({

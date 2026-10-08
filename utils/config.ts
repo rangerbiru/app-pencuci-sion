@@ -26,24 +26,34 @@ export const allFeatures = [
 
 export type Feature = (typeof allFeatures)[number];
 
-/**
- * 'preparation' dimatikan: POST /batches/{id}/preparation butuh item_id hasil utama dan
- * sampingan, tetapi API belum punya daftar item dan objek batch tidak membawa item_id.
- */
-const enabledFeatures: readonly Feature[] = allFeatures.filter(f => f !== 'preparation');
+/** Semua modul aktif sejak Tahap 15C (GET /items membuka Penyiapan dan tambah baris kartu). */
+const enabledFeatures: readonly Feature[] = allFeatures;
 
-const apiUrl = ((Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? '').replace(
-  /\/+$/,
-  '',
-);
+/**
+ * Saklar perilaku yang menunggu keputusan klien.
+ * kepalaWashing: Kepala Pencuci ikut ambil bahan, serah hasil, dan kerja ulang. Mati sampai
+ * klien memutuskan siapa yang menyetujui pengajuan Kepala dan bagaimana upahnya
+ * (API_MOBILE.md bagian 10, "Kepala Pencuci yang ikut mencuci").
+ */
+export const flags = {
+  kepalaWashing: false,
+} as const;
+
+/** API_URL boleh dengan atau tanpa akhiran /api/v1. */
+export function apiBaseFrom(raw: string | undefined): string {
+  const url = (raw ?? '').trim().replace(/\/+$/, '');
+  return /\/api\/v1$/.test(url) ? url : `${url}/api/v1`;
+}
+
+const apiBase = apiBaseFrom(Constants.expoConfig?.extra?.apiUrl as string | undefined);
 
 const config = {
   env: (Constants.expoConfig?.extra?.env as Env | undefined) ?? Env.dev,
-  apiUrl,
   /** Semua endpoint ada di bawah /api/v1 */
-  apiBase: `${apiUrl}/api/v1`,
+  apiBase,
   appVersion: Constants.expoConfig?.version ?? '1.0.0',
   features: enabledFeatures,
+  flags,
   timezone: 'Asia/Jakarta',
   requestTimeoutMs: 30000,
   photo: { maxSide: 1280, quality: 0.7 },

@@ -6,11 +6,11 @@ import { space } from '@/theme';
 import {
   toApiError,
   useApproveSubmissionMutation,
-  useGetApprovalsQuery,
+  useGetApprovalDetailQuery,
   useRejectSubmissionMutation,
 } from '@/services';
 import { formatDate, formatDateTime } from '@/utils/date';
-import { formatPcs } from '@/utils/format';
+import { formatGram, formatPcs } from '@/utils/format';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
@@ -27,8 +27,9 @@ import { SummaryRow } from '@/scenes/work/SummaryRows';
 /** Detail pengajuan: foto besar (ketuk = layar penuh), data, Setujui / Tolak dengan alasan. */
 function ApprovalDetail({ id }: { id: number }) {
   const toast = useToast();
-  const approvals = useGetApprovalsQuery();
-  const s = approvals.data?.data.find(x => x.id === id);
+  const detail = useGetApprovalDetailQuery(id);
+  const s = detail.data;
+  const waiting = s?.status.code === 'menunggu';
   const [approve, approveState] = useApproveSubmissionMutation();
   const [reject, rejectState] = useRejectSubmissionMutation();
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -58,17 +59,17 @@ function ApprovalDetail({ id }: { id: number }) {
     }
   }
 
-  if (approvals.isLoading) {
+  if (detail.isLoading) {
     return (
       <Screen title="Detail pengajuan" back>
         <SkeletonList rows={3} />
       </Screen>
     );
   }
-  if (approvals.error) {
+  if (detail.error && !s) {
     return (
       <Screen title="Detail pengajuan" back>
-        <ErrorState error={toApiError(approvals.error)} onRetry={approvals.refetch} />
+        <ErrorState error={toApiError(detail.error)} onRetry={detail.refetch} />
       </Screen>
     );
   }
@@ -76,39 +77,44 @@ function ApprovalDetail({ id }: { id: number }) {
     return (
       <Screen title="Detail pengajuan" back>
         <EmptyState
-          icon="check-circle"
-          title="Pengajuan sudah diputuskan"
-          message="Pengajuan ini tidak lagi menunggu verifikasi."
+          icon="inbox"
+          title="Pengajuan tidak ditemukan"
           actionLabel="Kembali ke Verifikasi"
           onAction={() => router.back()}
         />
       </Screen>
     );
   }
+  const photoUrl = s.photo?.url ?? s.photo_url;
+  const decidedBy = typeof s.decided_by === 'string' ? s.decided_by : s.decided_by?.name;
 
   return (
     <Screen
       title={s.worker.name}
       subtitle={s.type.label}
       back
+      refreshing={detail.isFetching && !detail.isLoading}
+      onRefresh={detail.refetch}
       footer={
-        <BottomBar>
-          <Button
-            title="Tolak"
-            variant="danger"
-            size="large"
-            onPress={() => setRejectOpen(true)}
-            style={styles.flexHalf}
-          />
-          <Button
-            title="Setujui"
-            onPress={doApprove}
-            isLoading={approveState.isLoading}
-            style={styles.flex}
-          />
-        </BottomBar>
+        waiting ? (
+          <BottomBar>
+            <Button
+              title="Tolak"
+              variant="danger"
+              size="large"
+              onPress={() => setRejectOpen(true)}
+              style={styles.flexHalf}
+            />
+            <Button
+              title="Setujui"
+              onPress={doApprove}
+              isLoading={approveState.isLoading}
+              style={styles.flex}
+            />
+          </BottomBar>
+        ) : undefined
       }>
-      <PhotoThumb uri={s.photo_url} label={`Foto ${s.type.label} ${s.worker.name}`} wide />
+      <PhotoThumb uri={photoUrl} label={`Foto ${s.type.label} ${s.worker.name}`} wide />
       <Card>
         {s.gram ? (
           <SummaryRow label="Gram">
@@ -122,13 +128,41 @@ function ApprovalDetail({ id }: { id: number }) {
         <SummaryRow label="Tanggal kerja">{formatDate(s.work_date)}</SummaryRow>
         <SummaryRow label="Dikirim">{formatDateTime(s.submitted_at)}</SummaryRow>
         <SummaryRow label="Foto diambil" last>
-          {formatDateTime(s.photo_taken_at)}
+          {formatDateTime(s.photo?.taken_at ?? s.photo_taken_at)}
         </SummaryRow>
       </Card>
+      {s.ration ? (
+        <Card>
+          <SummaryRow label="Target jatah">{formatGram(s.ration.target_gram)}</SummaryRow>
+          <SummaryRow label="Sudah masuk kartu">{formatGram(s.ration.taken_gram)}</SummaryRow>
+          {s.ration.pending_other_gram && s.ration.pending_other_gram !== '0.00' ? (
+            <SummaryRow label="Pengajuan lain menunggu">
+              {formatGram(s.ration.pending_other_gram)}
+            </SummaryRow>
+          ) : null}
+          <SummaryRow label="Sisa sebelum pengajuan ini" last>
+            {formatGram(s.ration.remaining_gram)}
+          </SummaryRow>
+        </Card>
+      ) : null}
+      {s.rework ? (
+        <Card>
+          <SummaryRow label="Kerja ulang dari kartu">{formatDate(s.rework.card_date)}</SummaryRow>
+          <SummaryRow label="Jumlah kerja ulang" last>
+            {s.rework.pcs == null ? '-' : `${formatPcs(s.rework.pcs)} pcs`}
+          </SummaryRow>
+        </Card>
+      ) : null}
       <View style={styles.badges}>
         <Badge status={s.type} kind="work_submission_type" icon="tag" />
         <Badge status={s.status} kind="work_submission" />
       </View>
+      {!waiting && decidedBy && s.decided_at ? (
+        <Text variant="small" color="textSecondary">
+          Diputuskan {decidedBy}, {formatDateTime(s.decided_at)}
+          {s.reject_reason ? `. Alasan: ${s.reject_reason}` : ''}
+        </Text>
+      ) : null}
       {error ? (
         <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
           {error}

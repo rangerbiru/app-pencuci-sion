@@ -21,7 +21,13 @@ import ListRow from '@/components/elements/ListRow';
 import Emblem from '@/components/elements/Emblem';
 import Amount from '@/components/elements/Amount';
 import Segmented from '@/components/elements/Segmented';
+import ContactAdmin from '@/components/elements/ContactAdmin';
 import { Dialog } from '@/components/elements/Dialog';
+
+const SKEMA_LABEL: Record<string, string> = {
+  borongan: 'Borongan, dibayar Mandor',
+  mandiri: 'Mandiri, dibayar SION',
+};
 
 const COMPONENT_LABEL: Record<string, string> = {
   upah_bahan: 'Upah bahan',
@@ -59,7 +65,22 @@ function EarningsSummary() {
           onPress={() => router.push('/pendapatan-saya')}
         />
         {isFeatureEnabled('withdrawals') ? (
-          <ListRow title="Tarik dana" onPress={() => router.push('/tarik-dana')} divider={false} />
+          <ListRow title="Tarik dana" onPress={() => router.push('/tarik-dana')} />
+        ) : null}
+        {isFeatureEnabled('teamWithdrawals') ? (
+          <ListRow
+            title="Dana Mandor"
+            subtitle="Saldo pencuci Borongan yang dibayar dari dana Anda"
+            onPress={() => router.push('/dana-mandor')}
+          />
+        ) : null}
+        {isFeatureEnabled('teamWithdrawals') ? (
+          <ListRow
+            title="Penarikan Borongan"
+            subtitle="Setujui, tolak, dan bayar pengajuan pencuci"
+            onPress={() => router.push('/penarikan-tim')}
+            divider={false}
+          />
         ) : null}
       </Card>
     </Section>
@@ -120,7 +141,10 @@ function Profile({ account = false }: { account?: boolean }) {
               <Field label="Berlaku sejak" value={formatDate(user.contract.effective_date)} />
               <Field label="Lokasi" value={user.contract.location} />
               {user.contract.skema ? (
-                <Field label="Skema" value={user.contract.skema.label} />
+                <Field
+                  label="Skema"
+                  value={SKEMA_LABEL[user.contract.skema] ?? user.contract.skema}
+                />
               ) : null}
               <View style={styles.field}>
                 <Text variant="small" color="textSecondary">
@@ -172,6 +196,10 @@ function Profile({ account = false }: { account?: boolean }) {
           divider={false}
         />
       </Card>
+
+      <ContactAdmin
+        message={`Halo Admin SION, saya ${user?.name ?? ''} (${user?.role.label ?? ''}). `}
+      />
 
       <Button
         title="Keluar"

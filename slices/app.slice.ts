@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { State, Dispatch } from '@/utils/store';
-import { Me } from '@/types';
+import { Me, Meta } from '@/types';
 
 export type AuthStatus = 'checking' | 'signedOut' | 'signedIn';
 
@@ -19,6 +19,9 @@ export interface AppState {
   /** pesan sekali tampil di layar masuk, mis. "Sesi Anda berakhir" */
   loginNotice?: string;
   themePreference: ThemePreference;
+  /** dari /meta; null/undefined = tombol Hubungi Admin disembunyikan */
+  company?: Meta['company'];
+  settings?: Meta['settings'];
 }
 
 const initialState: AppState = {
@@ -53,8 +56,16 @@ const slice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ updateRequired: boolean; minAppVersion: string; serverOffsetMs: number }>,
+      }: PayloadAction<{
+        updateRequired: boolean;
+        minAppVersion: string;
+        serverOffsetMs: number;
+        company?: Meta['company'];
+        settings?: Meta['settings'];
+      }>,
     ) => {
+      state.company = payload.company;
+      state.settings = payload.settings;
       state.updateRequired = payload.updateRequired;
       state.minAppVersion = payload.minAppVersion;
       state.serverOffsetMs = payload.serverOffsetMs;

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import useTheme from '@/hooks/useTheme';
-import { BadgeTone, radius, space, StatusKind, statusTone } from '@/theme';
+import { BadgeTone, radius, space, StatusKind, statusLabel, statusTone } from '@/theme';
 import { Status } from '@/types';
 import Text from '../Text';
 import Icon, { IconName } from '../Icon';
@@ -26,10 +26,24 @@ const TONE_ICON: Record<BadgeTone, IconName> = {
   neutral: 'minus',
 };
 
+/**
+ * Label tampilan untuk status API. Sebagian respons mengirim kode mentah sebagai label
+ * (mis. "belum_dihitung", "pending"); saat itu label diambil dari tokens, atau kode dirapikan.
+ */
+export function displayStatusLabel(status: Status, kind?: StatusKind): string {
+  const raw = status.label?.trim();
+  if (raw && raw !== status.code) return raw;
+  const fromTokens = kind ? statusLabel(kind, status.code) : status.code;
+  if (fromTokens !== status.code) return fromTokens;
+  if (status.code === 'pending') return 'Menunggu';
+  const words = status.code.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** Badge status: teks + ikon, warna dari tokens (bukan warna saja). */
 function Badge({ status, kind, label, tone, icon, prefix }: BadgeProps) {
   const { badges } = useTheme();
-  const text = label ?? status?.label;
+  const text = label ?? (status ? displayStatusLabel(status, kind) : undefined);
   if (!text) return null;
   const resolved: BadgeTone = tone ?? (kind ? statusTone(kind, status?.code) : 'neutral');
   const c = badges[resolved];

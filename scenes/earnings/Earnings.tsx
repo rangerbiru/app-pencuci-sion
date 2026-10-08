@@ -361,12 +361,12 @@ function Earnings({ back = false }: { back?: boolean }) {
                     <MoneyRow
                       label="Dapat dicairkan"
                       amount={f.dapat_dicairkan}
-                      note={`Sumber dana: Mandor ${typeof f.mandor === 'string' ? f.mandor : f.mandor.name}`}
+                      note={`Sumber dana: Mandor ${f.mandor.name}`}
                     />
                     <MoneyRow
                       label="THR Ditahan"
                       amount={f.thr_ditahan}
-                      note={`Mandor ${typeof f.mandor === 'string' ? f.mandor : f.mandor.name}`}
+                      note={`Mandor ${f.mandor.name}`}
                     />
                   </View>
                 ))}

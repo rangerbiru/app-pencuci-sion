@@ -1,6 +1,15 @@
 import { api, unwrapData } from './api/api';
 import { buildFormData, UploadFile } from './api/multipart';
-import { DailyProfitResponse, Paginated, Submission, TeamMember, Withdrawal } from '@/types';
+import {
+  DailyProfitResponse,
+  MandorFunds,
+  Paginated,
+  Submission,
+  SubmissionDetail,
+  TeamBonusProgress,
+  TeamMember,
+  Withdrawal,
+} from '@/types';
 
 export const teamApi = api.injectEndpoints({
   endpoints: build => ({
@@ -19,10 +28,25 @@ export const teamApi = api.injectEndpoints({
       }),
       providesTags: ['Approvals'],
     }),
+    getApprovalDetail: build.query<SubmissionDetail, number>({
+      query: id => ({ path: `/approvals/${id}` }),
+      transformResponse: unwrapData<SubmissionDetail>,
+      providesTags: (_r, _e, id) => [{ type: 'Approvals', id }],
+    }),
+    getTeamBonusProgress: build.query<TeamBonusProgress, { week?: string; month?: string } | void>({
+      query: args => ({ path: '/team/bonus-progress', params: args ?? undefined }),
+      transformResponse: unwrapData<TeamBonusProgress>,
+      providesTags: ['BonusProgress'],
+    }),
+    getMandorFunds: build.query<MandorFunds, void>({
+      query: () => ({ path: '/mandor/funds' }),
+      transformResponse: unwrapData<MandorFunds>,
+      providesTags: ['MandorFunds'],
+    }),
     approveSubmission: build.mutation<Submission, number>({
       query: id => ({ path: `/approvals/${id}/approve`, method: 'POST' }),
       transformResponse: unwrapData<Submission>,
-      invalidatesTags: ['Approvals', 'Team', 'WorkCards'],
+      invalidatesTags: ['Approvals', 'Team', 'WorkCards', 'BonusProgress'],
     }),
     rejectSubmission: build.mutation<Submission, { id: number; reason: string }>({
       query: ({ id, reason }) => ({
@@ -66,7 +90,7 @@ export const teamApi = api.injectEndpoints({
         timeoutMs: 60000,
       }),
       transformResponse: unwrapData<Withdrawal>,
-      invalidatesTags: ['TeamWithdrawals'],
+      invalidatesTags: ['TeamWithdrawals', 'MandorFunds'],
     }),
   }),
 });
@@ -74,6 +98,9 @@ export const teamApi = api.injectEndpoints({
 export const {
   useGetTeamQuery,
   useGetApprovalsQuery,
+  useGetApprovalDetailQuery,
+  useGetTeamBonusProgressQuery,
+  useGetMandorFundsQuery,
   useApproveSubmissionMutation,
   useRejectSubmissionMutation,
   useGetTeamDailyProfitQuery,

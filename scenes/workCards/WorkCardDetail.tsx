@@ -4,6 +4,7 @@ import useTheme from '@/hooks/useTheme';
 import { useToast } from '@/components/elements/Toast';
 import { space } from '@/theme';
 import {
+  useGetItemsQuery,
   toApiError,
   useGetWorkCardQuery,
   useSubmitQcMutation,
@@ -17,7 +18,9 @@ import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
 import TextField from '@/components/elements/TextField';
 import { GramInput, PcsInput } from '@/components/elements/NumberInput';
-import Button from '@/components/elements/Button';
+import Button, { IconButton } from '@/components/elements/Button';
+import ItemPicker from '@/components/elements/ItemPicker';
+import { isFeatureEnabled } from '@/utils/config';
 import BottomBar from '@/components/elements/BottomBar';
 import Segmented from '@/components/elements/Segmented';
 import Icon from '@/components/elements/Icon';
@@ -25,7 +28,7 @@ import { Dialog } from '@/components/elements/Dialog';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import WorkCardSummary from './WorkCardSummary';
-import { initialQcInput, QcErrors, QcInput, validateQc } from './qcForm';
+import { emptyQcRow, initialQcInput, QcErrors, QcInput, QcRowInput, validateQc } from './qcForm';
 
 const GROUP_LABEL: Record<string, string> = {
   utuh: 'Utuh',
@@ -46,6 +49,7 @@ function WorkCardDetail({ id }: { id: number }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmVerify, setConfirmVerify] = useState(false);
   const card = q.data;
+  const items = useGetItemsQuery({ purpose: 'kartu_kerja' }, { skip: !card || card.verified });
 
   useEffect(() => {
     if (card) setInput(initialQcInput(card));
@@ -165,57 +169,73 @@ function WorkCardDetail({ id }: { id: number }) {
           <Section
             title="Hasil bersih per baris"
             description="Isi gram dan pcs bersih setelah ditimbang.">
-            {card.result.rows.length === 0 ? (
-              <Card>
-                <Text variant="body" color="textSecondary">
-                  Kartu ini belum punya baris hasil. Tambahkan baris hasil per item di Kartu Kerja
-                  web, lalu isi QC di sini.
-                </Text>
-              </Card>
-            ) : (
-              <View style={styles.rows}>
-                {card.result.rows.map((r, i) => (
-                  <Card key={`${r.item_id}-${i}`} style={styles.rowCard}>
-                    <View style={styles.rowHead}>
-                      <Text variant="bodyStrong" style={styles.flex}>
-                        {r.item}
-                      </Text>
-                      <Text variant="small" color="textSecondary">
-                        {GROUP_LABEL[r.group] ?? r.group}
-                        {r.pcs_lembab != null ? `, lembab ${formatPcs(r.pcs_lembab)} pcs` : ''}
-                      </Text>
-                    </View>
+            <View style={styles.rows}>
+              {input.rows.length === 0 ? (
+                <Card>
+                  <Text variant="body" color="textSecondary">
+                    Kartu ini belum punya baris hasil. Tambahkan baris per item hasil di bawah.
+                  </Text>
+                </Card>
+              ) : null}
+              {input.rows.map((row, i) => {
+                const r = card.result.rows[i];
+                const added = !r;
+                const setRow = (change: Partial<QcRowInput>) =>
+                  setInput(p =>
+                    p
+                      ? { ...p, rows: p.rows.map((x, j) => (j === i ? { ...x, ...change } : x)) }
+                      : p,
+                  );
+                return (
+                  <Card key={row.key} style={styles.rowCard}>
+                    {r ? (
+                      <View style={styles.rowHead}>
+                        <Text variant="bodyStrong" style={styles.flex}>
+                          {r.item}
+                        </Text>
+                        <Text variant="small" color="textSecondary">
+                          {GROUP_LABEL[r.group] ?? r.group}
+                          {r.pcs_lembab != null ? `, lembab ${formatPcs(r.pcs_lembab)} pcs` : ''}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.rowHead}>
+                        <View style={styles.flex}>
+                          <ItemPicker
+                            label="Item hasil"
+                            items={items.data?.data ?? []}
+                            loading={items.isLoading}
+                            value={row.itemId || null}
+                            usedIds={input.rows.map(x => x.itemId).filter(Boolean)}
+                            onChange={it => setRow({ itemId: it.id })}
+                          />
+                        </View>
+                        <IconButton
+                          icon="trash-2"
+                          accessibilityLabel="Hapus baris ini"
+                          onPress={() =>
+                            setInput(p =>
+                              p ? { ...p, rows: p.rows.filter((_x, j) => j !== i) } : p,
+                            )
+                          }
+                        />
+                      </View>
+                    )}
                     <View style={styles.inputs}>
                       <View style={styles.flex}>
                         <GramInput
                           label="Gram bersih"
-                          value={input.rows[i]?.gram ?? ''}
-                          onChangeValue={v =>
-                            setInput(p =>
-                              p
-                                ? {
-                                    ...p,
-                                    rows: p.rows.map((x, j) => (j === i ? { ...x, gram: v } : x)),
-                                  }
-                                : p,
-                            )
-                          }
+                          value={row.gram}
+                          onChangeValue={v => setRow({ gram: v })}
+                          placeholder="0"
                         />
                       </View>
                       <View style={styles.pcs}>
                         <PcsInput
                           label="Pcs bersih"
-                          value={input.rows[i]?.pcs ?? ''}
-                          onChangeValue={v =>
-                            setInput(p =>
-                              p
-                                ? {
-                                    ...p,
-                                    rows: p.rows.map((x, j) => (j === i ? { ...x, pcs: v } : x)),
-                                  }
-                                : p,
-                            )
-                          }
+                          value={row.pcs}
+                          onChangeValue={v => setRow({ pcs: v })}
+                          placeholder="0"
                         />
                       </View>
                     </View>
@@ -224,14 +244,29 @@ function WorkCardDetail({ id }: { id: number }) {
                         {errors.rows[i]}
                       </Text>
                     ) : null}
+                    {added ? (
+                      <Text variant="small" color="textSecondary">
+                        Baris baru, tersimpan bersama hasil QC.
+                      </Text>
+                    ) : null}
                   </Card>
-                ))}
+                );
+              })}
+              {isFeatureEnabled('workCards') ? (
+                <Button
+                  title="Tambah baris hasil"
+                  variant="secondary"
+                  icon="plus"
+                  onPress={() => setInput(p => (p ? { ...p, rows: [...p.rows, emptyQcRow()] } : p))}
+                />
+              ) : null}
+              {card.result.rows.length > 0 ? (
                 <Text variant="small" color="textSecondary">
                   Total sekarang {formatGram(card.result.gram)}. Hasil yang diubah meminta
                   konfirmasi timbang ulang ke pencuci.
                 </Text>
-              </View>
-            )}
+              ) : null}
+            </View>
           </Section>
 
           <Section title="Hasil QC">

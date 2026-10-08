@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useAppSlice, useQueueItems } from '@/slices';
 import useNow from '@/hooks/useNow';
 import { space } from '@/theme';
-import { isFeatureEnabled } from '@/utils/config';
+import { flags, isFeatureEnabled } from '@/utils/config';
 import { formatDayLong, greeting } from '@/utils/date';
 import {
   toApiError,
@@ -28,6 +28,7 @@ import TodayCard from './TodayCard';
 import WeighingCard from './WeighingCard';
 import RationList from './RationList';
 import { buildToday } from './todaySteps';
+import AttendanceCard from './AttendanceCard';
 
 /** Beranda Pencuci (juga Kepala Pencuci, ditambah pintasan tim). */
 function WorkerHome() {
@@ -36,18 +37,20 @@ function WorkerHome() {
   const now = useNow(60000);
   const isPencuci = user?.role.code === 'pencuci';
   const isKepala = user?.role.code === 'kepala_pencuci';
+  // Kepala Pencuci tidak ikut alur cuci sampai klien memutuskan (flags.kepalaWashing)
+  const washes = isPencuci || (isKepala && flags.kepalaWashing);
 
   const attendance = useGetAttendanceTodayQuery(undefined, {
     skip: !isFeatureEnabled('attendance'),
   });
-  const work = useGetWorkTodayQuery(undefined, { skip: !isFeatureEnabled('work') });
+  const work = useGetWorkTodayQuery(undefined, { skip: !isFeatureEnabled('work') || !washes });
   const rework = useGetMyReworkQuery(undefined, {
     skip: !isFeatureEnabled('rework') || !isPencuci,
   });
   const weighings = useGetMyWeighingsQuery(undefined, {
     skip: !isFeatureEnabled('weighing') || !isPencuci,
   });
-  const rations = useGetMyRationsQuery(undefined, { skip: !isFeatureEnabled('work') });
+  const rations = useGetMyRationsQuery(undefined, { skip: !isFeatureEnabled('work') || !washes });
   const balance = useGetBalanceQuery(undefined, { skip: !isFeatureEnabled('earnings') });
   const approvals = useGetApprovalsQuery(undefined, {
     skip: !isKepala || !isFeatureEnabled('approvals'),
@@ -61,12 +64,14 @@ function WorkerHome() {
     rations.isFetching;
   const refresh = () => {
     attendance.refetch();
-    work.refetch();
+    if (washes) {
+      work.refetch();
+      rations.refetch();
+    }
     if (isPencuci) {
       rework.refetch();
       weighings.refetch();
     }
-    rations.refetch();
     balance.refetch();
     if (isKepala) approvals.refetch();
   };
@@ -93,7 +98,11 @@ function WorkerHome() {
       subtitle={formatDayLong(now.format('YYYY-MM-DD'))}
       refreshing={refreshing && !loadingToday}
       onRefresh={refresh}>
-      {loadingToday ? (
+      {!washes ? (
+        isFeatureEnabled('attendance') ? (
+          <AttendanceCard />
+        ) : null
+      ) : loadingToday ? (
         <SkeletonList rows={3} />
       ) : todayError && !attendance.data && !work.data ? (
         <ErrorState error={toApiError(todayError)} onRetry={refresh} />
@@ -123,13 +132,18 @@ function WorkerHome() {
                   : 'Pengajuan anggota tim'
               }
               onPress={() => router.push('/tim-verifikasi')}
-              divider={false}
             />
           ) : null}
+          <ListRow
+            title="Progres bonus tim"
+            subtitle="Target gram mingguan dan PPE bulanan per anggota"
+            onPress={() => router.push('/bonus-tim')}
+            divider={false}
+          />
         </Card>
       ) : null}
 
-      {isFeatureEnabled('work') ? (
+      {isFeatureEnabled('work') && washes ? (
         <Section title="Jatah aktif" description="Sisa gram yang masih bisa diambil.">
           {rations.isLoading ? (
             <SkeletonList rows={1} />
@@ -162,8 +176,7 @@ function WorkerHome() {
                   <View key={i} style={styles.balanceRow}>
                     <View style={styles.flex}>
                       <Text variant="small" color="textSecondary">
-                        Dapat dicairkan, dana Mandor{' '}
-                        {typeof f.mandor === 'string' ? f.mandor : f.mandor.name}
+                        Dapat dicairkan, dana Mandor {f.mandor.name}
                       </Text>
                       <Amount value={f.dapat_dicairkan} unit="rupiah" whole size="l" />
                     </View>

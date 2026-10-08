@@ -123,36 +123,39 @@ function Team({ back }: { back?: boolean }) {
         approvals.refetch();
         profit.refetch();
       }}>
-      {isKepala ? (
-        <Card padded={false}>
-          {isFeatureEnabled('approvals') ? (
-            <ListRow
-              title="Verifikasi"
-              subtitle={
-                approvals.data
-                  ? `${approvals.data.meta.total} pengajuan menunggu`
-                  : 'Pengajuan anggota tim'
-              }
-              onPress={() => router.push('/tim-verifikasi')}
-            />
-          ) : null}
-          {isFeatureEnabled('workCards') ? (
-            <ListRow
-              title="Kartu Kerja"
-              subtitle="Hasil standar dan QC"
-              onPress={() => router.push('/tim-kartu')}
-            />
-          ) : null}
-          {isFeatureEnabled('batches') ? (
-            <ListRow
-              title="Batch dan penjatahan"
-              subtitle="Bila diizinkan Mandor dan Admin"
-              onPress={() => router.push('/tim-batch')}
-              divider={false}
-            />
-          ) : null}
-        </Card>
-      ) : null}
+      <Card padded={false}>
+        {isKepala && isFeatureEnabled('approvals') ? (
+          <ListRow
+            title="Verifikasi"
+            subtitle={
+              approvals.data
+                ? `${approvals.data.meta.total} pengajuan menunggu`
+                : 'Pengajuan anggota tim'
+            }
+            onPress={() => router.push('/tim-verifikasi')}
+          />
+        ) : null}
+        {isKepala && isFeatureEnabled('workCards') ? (
+          <ListRow
+            title="Kartu Kerja"
+            subtitle="Hasil standar dan QC"
+            onPress={() => router.push('/tim-kartu')}
+          />
+        ) : null}
+        {isKepala && isFeatureEnabled('batches') ? (
+          <ListRow
+            title="Batch dan penjatahan"
+            subtitle="Bila diizinkan Mandor dan Admin"
+            onPress={() => router.push('/tim-batch')}
+          />
+        ) : null}
+        <ListRow
+          title="Progres bonus tim"
+          subtitle="Target gram mingguan dan PPE bulanan per anggota"
+          onPress={() => router.push('/bonus-tim')}
+          divider={false}
+        />
+      </Card>
 
       {teamBonus?.progress?.achieved !== undefined && teamBonus.progress.target !== undefined ? (
         <Section

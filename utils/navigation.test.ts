@@ -22,6 +22,15 @@ describe('tabs per role', () => {
     expect(tabsForRole('mandor', all)).toEqual(['beranda', 'batch', 'verifikasi', 'kartu', 'akun']);
   });
 
+  it('hides Riwayat for Kepala Pencuci while kepalaWashing is off', () => {
+    expect(tabsForRole('kepala_pencuci', all, { kepalaWashing: false })).toEqual([
+      'beranda',
+      'tim',
+      'pendapatan',
+      'profil',
+    ]);
+  });
+
   it('never shows more than five tabs', () => {
     for (const role of ['pencuci', 'kepala_pencuci', 'mandor'] as const) {
       expect(tabsForRole(role, all).length).toBeLessThanOrEqual(MAX_TABS);

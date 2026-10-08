@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...config.extra,
       ...(expoProjectId ? { eas: { projectId: expoProjectId } } : {}),
       env,
-      apiUrl: process.env.API_URL ?? 'http://localhost:8000',
+      apiUrl: process.env.API_URL ?? 'http://127.0.0.1:8000/api/v1',
     },
     plugins: [
       'expo-router',

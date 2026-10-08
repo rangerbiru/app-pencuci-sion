@@ -100,9 +100,7 @@ function Withdraw() {
   const available = paidByMandor
     ? (fund?.dapat_dicairkan ?? '0.00')
     : (b?.dapat_dicairkan ?? '0.00');
-  const sourceLabel = paidByMandor
-    ? `Mandor ${fund ? (typeof fund.mandor === 'string' ? fund.mandor : fund.mandor.name) : ''}`.trim()
-    : 'SION';
+  const sourceLabel = paidByMandor ? `Mandor ${fund ? fund.mandor.name : ''}`.trim() : 'SION';
   const active =
     b?.withdrawal.active ??
     history.data?.data.find(w => w.status.code === 'diajukan' || w.status.code === 'disetujui') ??

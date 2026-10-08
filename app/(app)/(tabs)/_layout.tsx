@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useAppSlice } from '@/slices';
-import config from '@/utils/config';
+import config, { flags } from '@/utils/config';
 import { ALL_TABS, TabName, tabsForRole } from '@/utils/navigation';
 import { IconName } from '@/components/elements/Icon';
 import TabBar from '@/components/layouts/TabBar';
@@ -20,7 +20,7 @@ const TAB_META: Record<TabName, { title: string; icon: IconName }> = {
 /** Tab menyesuaikan peran dari /me (maksimal 5, tanpa drawer). */
 export default function TabsLayout() {
   const { user } = useAppSlice();
-  const visible = tabsForRole(user?.role.code, config.features);
+  const visible = tabsForRole(user?.role.code, config.features, flags);
   const items = visible.map(name => ({ name, ...TAB_META[name] }));
 
   return (

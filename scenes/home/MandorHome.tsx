@@ -5,7 +5,7 @@ import useNow from '@/hooks/useNow';
 import { sizes, space } from '@/theme';
 import { useAppSlice } from '@/slices';
 import { isFeatureEnabled } from '@/utils/config';
-import { formatDayLong, formatTime, greeting } from '@/utils/date';
+import { formatDayLong, greeting } from '@/utils/date';
 import {
   toApiError,
   useGetApprovalsQuery,
@@ -19,11 +19,11 @@ import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
-import Button from '@/components/elements/Button';
 import Icon, { IconName } from '@/components/elements/Icon';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import { isPresent } from '@/scenes/team/Team';
+import AttendanceCard from './AttendanceCard';
 
 interface FigureProps {
   icon: IconName;
@@ -94,9 +94,6 @@ function MandorHome() {
     attendance.refetch();
   };
 
-  const checkedIn = !!attendance.data?.check_in.at;
-  const checkedOut = !!attendance.data?.check_out.at;
-
   return (
     <Screen
       title={`${greeting(now)}, ${user?.name ?? ''}`}
@@ -159,27 +156,7 @@ function MandorHome() {
         )}
       </Section>
 
-      {isFeatureEnabled('attendance') ? (
-        <Section title="Absen saya">
-          <Card style={styles.attendance}>
-            <Text variant="body" color="textSecondary">
-              {checkedOut
-                ? `Masuk ${formatTime(attendance.data?.check_in.at)}, pulang ${formatTime(attendance.data?.check_out.at)}.`
-                : checkedIn
-                  ? `Masuk jam ${formatTime(attendance.data?.check_in.at)}.`
-                  : 'Belum absen masuk hari ini.'}
-            </Text>
-            {!checkedOut ? (
-              <Button
-                title={checkedIn ? 'Absen pulang' : 'Absen masuk'}
-                variant={checkedIn ? 'secondary' : 'primary'}
-                icon="camera"
-                onPress={() => router.push(checkedIn ? '/absen?mode=pulang' : '/absen?mode=masuk')}
-              />
-            ) : null}
-          </Card>
-        </Section>
-      ) : null}
+      {isFeatureEnabled('attendance') ? <AttendanceCard /> : null}
     </Screen>
   );
 }
@@ -202,7 +179,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  attendance: { gap: space.md },
 });
 
 export default MandorHome;

@@ -47,6 +47,23 @@ export interface Meta {
     photo_types: string[];
     attendance_radius_m: number;
     week_starts_on: string;
+    photo_url_minutes?: number;
+    show_daily_profit?: boolean;
+    weighing_confirm_hours?: number;
+    min_withdrawal?: Decimal;
+    thr_percent?: Decimal;
+    work_days_per_week?: number;
+    monthly_accrual_days?: number;
+    history_max_days?: number;
+    per_page_max?: number;
+    idempotency_header?: string;
+    idempotency_ttl_hours?: number;
+  };
+  /** Tahap 15C: identitas perusahaan; admin_whatsapp null = sembunyikan Hubungi Admin */
+  company?: {
+    name: string;
+    phone: string | null;
+    admin_whatsapp: string | null;
   };
 }
 
@@ -68,7 +85,8 @@ export interface Me {
     effective_date: IsoDate;
     location: string | null;
     components: Record<string, boolean>;
-    skema?: Status | null;
+    /** GET /me mengirim kode polos: 'borongan' atau 'mandiri' */
+    skema?: 'borongan' | 'mandiri' | string | null;
   } | null;
 }
 
@@ -313,16 +331,18 @@ export interface Balance {
     description: string | null;
   }[];
   withdrawal: { can_withdraw: boolean; min_amount: Decimal; active: Withdrawal | null };
-  mandor_funds?: { mandor: Ref | string; dapat_dicairkan: Decimal; thr_ditahan: Decimal }[];
+  mandor_funds?: { mandor: Ref; dapat_dicairkan: Decimal; thr_ditahan: Decimal }[];
 }
 
 export interface BonusesSummary {
-  weekly: (BonusInfo & { week: string })[];
+  paid_by?: Status<'sion' | 'mandor'>;
+  weekly: (BonusInfo & { week: string; from?: IsoDate })[];
   monthly: (BonusInfo & {
     month: string;
     rule?: string | null;
     ppe?: Decimal | null;
     complete?: boolean;
+    finished?: boolean;
   })[];
 }
 
@@ -352,15 +372,17 @@ export interface TeamMember {
   atasan: Ref | string | null;
   attendance_today: {
     status: Status | null;
+    /** "HH:MM" */
+    check_in?: string | null;
+    check_out?: string | null;
     check_in_at: IsoDateTime | null;
     check_out_at: IsoDateTime | null;
     location_flag: Status | null;
   } | null;
+  /** jatah aktif: hanya kode batch dan sisa gram (tanpa item/target) */
   rations: {
     batch_assignment_id: number;
     batch_code: string;
-    item: string;
-    target_gram: Decimal;
     remaining_gram: Decimal;
   }[];
   card_today: {
@@ -413,4 +435,117 @@ export interface Container {
   status: Status;
   usable: boolean;
   isi_kode_stok: string | null;
+}
+
+// ---------- Tahap 15C ----------
+
+export type ItemJenis = 'bahan_baku' | 'hasil_produksi' | 'sampingan' | 'bahan_kotor';
+
+/** GET /items: item aktif ringkas. Item tidak punya grade. */
+export interface Item {
+  id: number;
+  kode: string | null;
+  name: string;
+  jenis: Status<ItemJenis>;
+  /** hanya hasil produksi: utuh / kecil / hancur */
+  grup_hasil: Status<'utuh' | 'kecil' | 'hancur'> | null;
+  warna: string | null;
+  unit: string;
+}
+
+/** GET /approvals/{id}: objek pengajuan + foto, jatah, kerja ulang, kartu. */
+export interface SubmissionDetail extends Submission {
+  photo: { url: string | null; taken_at: IsoDateTime | null } | null;
+  ration: {
+    batch_assignment_id: number;
+    target_gram: Decimal;
+    taken_gram: Decimal;
+    pending_other_gram: Decimal;
+    remaining_gram: Decimal;
+  } | null;
+  rework: Rework | null;
+  card: WorkCard | null;
+}
+
+export interface MemberBonusProgress {
+  user: Ref;
+  kepala_pencuci: Ref | null;
+  paid_by: Status<'sion' | 'mandor'>;
+  target_gram_per_day: Decimal | null;
+  weekly: {
+    status: BonusInfo['status'];
+    amount: Decimal | null;
+    target_gram: Decimal | null;
+    achieved_gram: Decimal | null;
+    achieved: boolean;
+    finished: boolean;
+  };
+  monthly: {
+    status: BonusInfo['status'];
+    amount: Decimal | null;
+    ppe: Decimal | null;
+    cards: number;
+    complete: boolean;
+    notes: string[];
+    finished: boolean;
+  };
+}
+
+export interface KepalaBonusProgress {
+  user: Ref;
+  weekly: {
+    status: BonusInfo['status'];
+    amount: Decimal | null;
+    members_achieved: number;
+    members_active: number;
+    finished: boolean;
+  };
+  monthly: {
+    status: BonusInfo['status'];
+    amount: Decimal | null;
+    team_ppe: Decimal | null;
+    members: number;
+    members_positive: number;
+    complete: boolean;
+    finished: boolean;
+  };
+}
+
+/** GET /team/bonus-progress */
+export interface TeamBonusProgress {
+  week: string;
+  from: IsoDate;
+  to: IsoDate;
+  week_finished: boolean;
+  month: string;
+  month_finished: boolean;
+  members: MemberBonusProgress[];
+  kepala: KepalaBonusProgress[];
+}
+
+/** GET /mandor/funds: saldo dana Mandor per pencuci Borongan. */
+export interface MandorFunds {
+  workers: {
+    worker: Ref;
+    in_team: boolean;
+    dapat_dicairkan: Decimal;
+    thr_ditahan: Decimal;
+    /** nominal pengajuan Diajukan atau Disetujui */
+    withdrawal_active: Decimal;
+  }[];
+  total: {
+    dapat_dicairkan: Decimal;
+    thr_ditahan: Decimal;
+    withdrawal_active: Decimal;
+    workers: number;
+  };
+}
+
+/** POST /batches/{id}/preparation (201) */
+export interface PreparationResult {
+  preparation_id: number;
+  input_gram: Decimal;
+  output_gram: Decimal;
+  susut_gram: Decimal;
+  batches: Batch[];
 }

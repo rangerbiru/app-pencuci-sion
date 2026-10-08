@@ -1,5 +1,6 @@
-import { http } from '../api/http';
-import { buildFormData, FieldValue } from '../api/multipart';
+import { http, HttpResult } from '../api/http';
+import { Platform } from 'react-native';
+import { buildFormData, FieldValue, resolveUploadFiles } from '../api/multipart';
 import { ApiError, isRetryable } from '../api/errors';
 import { newIdempotencyKey } from '@/utils/id';
 import { deleteFiles, loadQueue, persistFile, saveQueue } from './storage';
@@ -76,13 +77,28 @@ export function getQueue(): QueueItem[] {
   return items;
 }
 
-async function send(item: QueueItem) {
-  const body = item.json
-    ? item.fields
-    : buildFormData(
-        item.fields,
-        Object.fromEntries(Object.entries(item.files).map(([k, uri]) => [k, { uri }])),
-      );
+async function send(item: QueueItem): Promise<HttpResult<unknown>> {
+  let files: Awaited<ReturnType<typeof resolveUploadFiles>> = {};
+  try {
+    files = item.json
+      ? {}
+      : await resolveUploadFiles(
+          Object.fromEntries(Object.entries(item.files).map(([k, uri]) => [k, { uri }])),
+          Platform.OS === 'web',
+        );
+  } catch {
+    // web: foto blob: hilang setelah halaman dimuat ulang; tidak bisa dikirim lagi
+    return {
+      ok: false,
+      error: {
+        kind: 'http',
+        status: 400,
+        message: 'Foto tidak bisa dibaca lagi. Ulangi aksinya.',
+        fieldErrors: {},
+      },
+    };
+  }
+  const body = item.json ? item.fields : buildFormData(item.fields, files);
   return http<unknown>({
     path: item.path,
     method: 'POST',

@@ -27,6 +27,19 @@ export const workCardsApi = api.injectEndpoints({
       query: params => ({ path: '/work-cards', params: { per_page: 50, ...params } }),
       providesTags: ['WorkCards'],
     }),
+    /** Semua kartu yang boleh dilihat, terbaru dulu, per halaman 20 (GET /work-cards tanpa date). */
+    getAllWorkCards: build.infiniteQuery<Paginated<WorkCard>, { worker?: number } | void, number>({
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: last =>
+          last.meta.current_page < last.meta.last_page ? last.meta.current_page + 1 : undefined,
+      },
+      query: ({ queryArg, pageParam }) => ({
+        path: '/work-cards',
+        params: { per_page: 20, page: pageParam, ...(queryArg ?? {}) },
+      }),
+      providesTags: ['WorkCards'],
+    }),
     getWorkCard: build.query<WorkCard, number>({
       query: id => ({ path: `/work-cards/${id}` }),
       transformResponse: unwrapData<WorkCard>,
@@ -47,6 +60,7 @@ export const workCardsApi = api.injectEndpoints({
 
 export const {
   useGetWorkCardsQuery,
+  useGetAllWorkCardsInfiniteQuery,
   useGetWorkCardQuery,
   useSubmitQcMutation,
   useVerifyCardMutation,

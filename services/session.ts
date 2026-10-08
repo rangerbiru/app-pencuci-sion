@@ -44,6 +44,8 @@ export async function checkMeta(dispatch: Dispatch) {
       updateRequired: isBelowMinVersion(config.appVersion, meta.min_app_version),
       minAppVersion: meta.min_app_version,
       serverOffsetMs: Number.isNaN(serverMs) ? 0 : serverMs - Date.now(),
+      company: meta.company,
+      settings: meta.settings,
     }),
   );
 }

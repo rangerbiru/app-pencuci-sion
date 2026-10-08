@@ -21,6 +21,7 @@ import TextField from '@/components/elements/TextField';
 import Button from '@/components/elements/Button';
 import Image from '@/components/elements/Image';
 import Icon from '@/components/elements/Icon';
+import ContactAdmin from '@/components/elements/ContactAdmin';
 import OfflineBanner from '@/components/layouts/OfflineBanner';
 import type { Dispatch } from '@/utils/store';
 
@@ -153,9 +154,12 @@ function Login() {
 
           <Button title="Masuk" onPress={onSubmit} isLoading={isSubmitting} />
 
-          <Text variant="small" color="textSecondary" align="center">
-            Lupa password? Hubungi Mandor atau Admin.
-          </Text>
+          <View style={styles.forgot}>
+            <Text variant="small" color="textSecondary" align="center">
+              Lupa password? Minta Admin mengatur ulang password Anda.
+            </Text>
+            <ContactAdmin message="Halo Admin SION, saya lupa password aplikasi SION Mobile. Nama/nomor HP saya: " />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -176,6 +180,7 @@ const styles = StyleSheet.create({
   logoPlate: { alignSelf: 'center', borderRadius: radius.card, padding: space.sm },
   logo: { width: 168, height: 181 },
   heading: { gap: space.xs, marginTop: space.sm },
+  forgot: { gap: space.sm, marginTop: space.sm },
   notice: {
     flexDirection: 'row',
     gap: space.sm,

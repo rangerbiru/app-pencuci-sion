@@ -137,6 +137,16 @@ function Batches({ back }: { back?: boolean }) {
                     ))}
                   </View>
                 ) : null}
+                {b.can_prepare && isFeatureEnabled('preparation') ? (
+                  <Button
+                    title="Penyiapan"
+                    variant="secondary"
+                    icon="layers"
+                    onPress={() =>
+                      router.push({ pathname: '/batch/siapkan/[id]', params: { id: String(b.id) } })
+                    }
+                  />
+                ) : null}
                 {canRation ? (
                   <Button
                     title="Buat penjatahan"

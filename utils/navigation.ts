@@ -48,10 +48,19 @@ export const ALL_TABS: TabName[] = [
 
 export const MAX_TABS = 5;
 
-export function tabsForRole(role: RoleCode | undefined, enabled: readonly Feature[]): TabName[] {
+/**
+ * Kepala Pencuci tanpa alur cuci (flags.kepalaWashing = false) tidak punya Riwayat kerja sendiri,
+ * jadi tab Riwayat disembunyikan.
+ */
+export function tabsForRole(
+  role: RoleCode | undefined,
+  enabled: readonly Feature[],
+  { kepalaWashing = true }: { kepalaWashing?: boolean } = {},
+): TabName[] {
   const tabs = ROLE_TABS[role ?? 'pencuci'] ?? ROLE_TABS.pencuci;
   return tabs
     .filter(t => {
+      if (t === 'riwayat' && role === 'kepala_pencuci' && !kepalaWashing) return false;
       const f = TAB_FEATURE[t];
       return !f || enabled.includes(f);
     })
