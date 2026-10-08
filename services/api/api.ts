@@ -1,14 +1,22 @@
 import { createApi, BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { ApiError } from './errors';
 import { http, HttpRequest } from './http';
+import { keyFor, needsKey, settle } from './idempotency';
 
 /**
  * baseQuery RTK Query di atas klien http(). Respons sukses dikembalikan apa adanya
  * (endpoint memilih `data` atau `{data, meta}` lewat transformResponse).
+ * POST/PUT otomatis membawa Idempotency-Key (lihat idempotency.ts).
  */
 const baseQuery: BaseQueryFn<HttpRequest | string, unknown, ApiError> = async args => {
-  const req = typeof args === 'string' ? { path: args } : args;
-  const result = await http<unknown>(req);
+  const req: HttpRequest = typeof args === 'string' ? { path: args } : args;
+  if (!needsKey(req)) {
+    const result = await http<unknown>(req);
+    return result.ok ? { data: result.data } : { error: result.error };
+  }
+  // aksi tulis: Idempotency-Key per aksi, dipakai ulang bila kiriman tidak terjawab
+  const result = await http<unknown>({ ...req, idempotencyKey: keyFor(req) });
+  settle(req, result.ok ? null : result.error);
   return result.ok ? { data: result.data } : { error: result.error };
 };
 
