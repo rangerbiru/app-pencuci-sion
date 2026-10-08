@@ -40,3 +40,7 @@ yarn-error.*
 # coverage or example directories
 coverage/
 app-example
+/.claude
+/.cursor
+/.github
+CLAUDE.md
