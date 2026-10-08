@@ -72,7 +72,9 @@ function Login() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.xxl }]}
+          keyboardShouldPersistTaps="handled">
           {/* logo raster bertulisan navy: di mode gelap diberi alas terang supaya terbaca */}
           <View style={[styles.logoPlate, isDark && { backgroundColor: lightColors.background }]}>
             <Image

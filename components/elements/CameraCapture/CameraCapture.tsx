@@ -166,10 +166,13 @@ const styles = StyleSheet.create({
   body: { flex: 1, padding: sizes.gutter, gap: space.md },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
+  // bingkai mengisi sisa tinggi (tidak memakai rasio tetap) supaya petunjuk dan info lokasi
+  // di bawahnya tidak terdorong ke balik tombol bawah di layar 360 dp
   frame: {
-    width: '100%',
-    aspectRatio: 3 / 4,
+    flex: 1,
+    minHeight: 220,
     maxHeight: 520,
+    width: '100%',
     alignSelf: 'center',
     borderRadius: radius.card,
     overflow: 'hidden',
