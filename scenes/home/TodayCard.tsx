@@ -84,7 +84,7 @@ const STATE_TEXT: Record<StepState, string> = {
  */
 function TodayCard({ model, onRefresh }: TodayCardProps) {
   const { colors } = useTheme();
-  const { steps, next, reworkOffers, canTakeMore } = model;
+  const { steps, next, reworkOffers, canTakeMore, canCheckOutEarly } = model;
 
   return (
     <Card raised style={styles.card}>
@@ -187,6 +187,15 @@ function TodayCard({ model, onRefresh }: TodayCardProps) {
           variant="ghost"
           icon="plus"
           onPress={() => router.push('/ambil-bahan')}
+        />
+      ) : null}
+
+      {canCheckOutEarly ? (
+        <Button
+          title="Absen pulang sekarang"
+          variant="ghost"
+          icon="log-out"
+          onPress={() => router.push(ROUTES.check_out)}
         />
       ) : null}
     </Card>

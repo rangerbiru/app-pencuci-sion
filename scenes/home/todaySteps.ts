@@ -44,6 +44,11 @@ export interface TodayModel {
   reworkOffers: ReworkOffer[];
   /** boleh ambil bahan lagi setelah pengambilan pertama */
   canTakeMore: boolean;
+  /**
+   * Absen pulang di luar urutan (mis. hari ini hanya kerja ulang, atau tidak ada bahan).
+   * Tampil sebagai aksi kedua bila absen pulang belum menjadi langkah utama.
+   */
+  canCheckOutEarly: boolean;
 }
 
 const has = (q: QueueItem[], kind: QueueKind) =>
@@ -189,6 +194,7 @@ export function buildToday({ attendance, work, queue, rework }: TodayInput): Tod
     next,
     reworkOffers,
     canTakeMore: inDone && !outDone && takeSubmitted,
+    canCheckOutEarly: inDone && !outDone && next.kind !== 'check_out',
   };
 }
 

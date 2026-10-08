@@ -167,4 +167,24 @@ describe('isWithinRemaining', () => {
     expect(isWithinRemaining('10000.01', '10000.00')).toBe(false);
     expect(isWithinRemaining('0.00', '10000.00')).toBe(false);
   });
+
+  it('offers early check-out after check-in, not before or after', () => {
+    const before = buildToday({ attendance: null, work: null, queue: [], rework: [] });
+    expect(before.canCheckOutEarly).toBe(false);
+    const inOnly = buildToday({
+      attendance: attendance('2026-09-24T07:58:00+07:00'),
+      work: day([]),
+      queue: [],
+      rework: [],
+    });
+    expect(inOnly.next.kind).toBe('take');
+    expect(inOnly.canCheckOutEarly).toBe(true);
+    const out = buildToday({
+      attendance: attendance('2026-09-24T07:58:00+07:00', '2026-09-24T16:00:00+07:00'),
+      work: day([]),
+      queue: [],
+      rework: [],
+    });
+    expect(out.canCheckOutEarly).toBe(false);
+  });
 });
