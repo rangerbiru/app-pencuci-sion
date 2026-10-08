@@ -164,6 +164,7 @@ function TeamWithdrawalDetail({ id, status }: { id: number; status?: string }) {
       ) : null}
 
       <ReasonDialog
+        recipient="pencuci"
         visible={rejectOpen}
         title="Tolak penarikan"
         message="Alasan dikirim ke pencuci."

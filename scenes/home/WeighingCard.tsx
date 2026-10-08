@@ -125,6 +125,7 @@ function WeighingCard({ card, onAnswered }: WeighingCardProps) {
         isLoading={submitting}
       />
       <ReasonDialog
+        recipient="Kepala Pencuci"
         visible={rejectOpen}
         title="Tidak setuju"
         message="Tulis apa yang salah. Kepala Pencuci akan menimbang ulang."

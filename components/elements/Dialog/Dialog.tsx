@@ -95,6 +95,8 @@ export interface ReasonDialogProps {
   isLoading?: boolean;
   serverError?: string;
   minLength?: number;
+  /** penerima alasan, mis. "pencuci" atau "Kepala Pencuci" */
+  recipient?: string;
 }
 
 /** Minta alasan wajib (tolak, tidak setuju). Minimal 5 huruf seperti aturan server. */
@@ -108,6 +110,7 @@ export function ReasonDialog({
   isLoading,
   serverError,
   minLength = 5,
+  recipient,
 }: ReasonDialogProps) {
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
@@ -139,7 +142,11 @@ export function ReasonDialog({
         multiline
         error={error}
         placeholder="Contoh: Gram di foto berbeda dengan isian"
-        hint={error ? undefined : `Minimal ${minLength} huruf. Dikirim ke pencuci.`}
+        hint={
+          error
+            ? undefined
+            : `Minimal ${minLength} huruf.${recipient ? ` Dikirim ke ${recipient}.` : ''}`
+        }
       />
     </Dialog>
   );

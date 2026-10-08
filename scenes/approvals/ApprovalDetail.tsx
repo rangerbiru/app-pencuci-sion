@@ -169,6 +169,7 @@ function ApprovalDetail({ id }: { id: number }) {
         </Text>
       ) : null}
       <ReasonDialog
+        recipient="pencuci"
         visible={rejectOpen}
         title="Tolak pengajuan"
         message={`Alasan dikirim ke ${s.worker.name}. Stok dan upah tidak berubah.`}

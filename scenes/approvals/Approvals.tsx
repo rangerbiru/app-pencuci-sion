@@ -292,6 +292,7 @@ function Approvals({ back }: { back?: boolean }) {
       ) : null}
 
       <ReasonDialog
+        recipient="pencuci"
         visible={rejectOpen}
         title={`Tolak ${selected.length} pengajuan`}
         message="Alasan dikirim ke pencuci. Stok dan upah tidak berubah."
