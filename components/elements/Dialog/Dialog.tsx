@@ -139,7 +139,7 @@ export function ReasonDialog({
         multiline
         error={error}
         placeholder="Contoh: Gram di foto berbeda dengan isian"
-        style={styles.reason}
+        hint={error ? undefined : `Minimal ${minLength} huruf. Dikirim ke pencuci.`}
       />
     </Dialog>
   );
@@ -157,5 +157,4 @@ const styles = StyleSheet.create({
     gap: space.md,
   },
   actions: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
-  reason: { minHeight: 88, textAlignVertical: 'top' },
 });
