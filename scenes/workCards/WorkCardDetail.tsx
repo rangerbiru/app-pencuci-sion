@@ -143,6 +143,10 @@ function WorkCardDetail({ id }: { id: number }) {
                 size="large"
                 icon="lock"
                 onPress={() => setConfirmVerify(true)}
+                disabled={weighingBlocks}
+                accessibilityHint={
+                  weighingBlocks ? 'Menunggu konfirmasi hasil timbang dari pencuci' : undefined
+                }
                 style={styles.flexHalf}
               />
             ) : null}

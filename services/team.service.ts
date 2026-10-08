@@ -1,5 +1,7 @@
 import { api, unwrapData } from './api/api';
-import { buildFormData, UploadFile } from './api/multipart';
+import { Platform } from 'react-native';
+import { buildFormData, resolveUploadFiles, UploadFile } from './api/multipart';
+import type { ApiError } from './api/errors';
 import {
   DailyProfitResponse,
   MandorFunds,
@@ -83,13 +85,18 @@ export const teamApi = api.injectEndpoints({
       Withdrawal,
       { id: number; method: 'tunai' | 'transfer'; proof?: UploadFile }
     >({
-      query: ({ id, method, proof }) => ({
-        path: `/team/withdrawals/${id}/pay`,
-        method: 'POST',
-        body: buildFormData({ method }, { proof }),
-        timeoutMs: 60000,
-      }),
-      transformResponse: unwrapData<Withdrawal>,
+      // queryFn: pratinjau web perlu mengubah foto bukti menjadi Blob dulu (async)
+      async queryFn({ id, method, proof }, _api, _extra, baseQuery) {
+        const files = await resolveUploadFiles({ proof }, Platform.OS === 'web');
+        const res = await baseQuery({
+          path: `/team/withdrawals/${id}/pay`,
+          method: 'POST',
+          body: buildFormData({ method }, files),
+          timeoutMs: 60000,
+        });
+        if (res.error) return { error: res.error as ApiError };
+        return { data: unwrapData<Withdrawal>(res.data) };
+      },
       invalidatesTags: ['TeamWithdrawals', 'MandorFunds'],
     }),
   }),
