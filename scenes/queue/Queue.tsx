@@ -56,6 +56,8 @@ function Queue() {
             icon="check-circle"
             title="Semua sudah terkirim"
             message="Tidak ada absen atau setoran yang tertunda."
+            actionLabel="Kembali ke Beranda"
+            onAction={() => router.replace('/beranda')}
           />
         </Card>
       ) : (

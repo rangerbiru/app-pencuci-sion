@@ -9,3 +9,9 @@ jest.mock('expo-crypto', () => {
   let n = 0;
   return { randomUUID: () => `uuid-${++n}` };
 });
+jest.mock(
+  'react-native-safe-area-context',
+  () => require('react-native-safe-area-context/jest/mock').default,
+);
+// ikon memuat huruf secara async; di test cukup komponen kosong
+jest.mock('@expo/vector-icons', () => ({ Feather: () => null }));
