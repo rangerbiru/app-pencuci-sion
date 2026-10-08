@@ -1,34 +1,60 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { State, Dispatch } from '@/utils/store';
-import { User } from '@/types';
+import type { State, Dispatch } from '@/utils/store';
+import { Me } from '@/types';
+
+export type AuthStatus = 'checking' | 'signedOut' | 'signedIn';
 
 export interface AppState {
-  checked: boolean;
-  loggedIn: boolean;
-  user?: User;
+  status: AuthStatus;
+  user?: Me;
+  /** true bila versi aplikasi di bawah min_app_version dari /meta */
+  updateRequired: boolean;
+  minAppVersion?: string;
+  /** selisih jam server - jam HP (ms), dari /meta */
+  serverOffsetMs: number;
+  /** pesan sekali tampil di layar masuk, mis. "Sesi Anda berakhir" */
+  loginNotice?: string;
 }
 
 const initialState: AppState = {
-  checked: false,
-  loggedIn: false,
+  status: 'checking',
   user: undefined,
+  updateRequired: false,
+  serverOffsetMs: 0,
 };
 
 const slice = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    setLoggedIn: (state: AppState, { payload }: PayloadAction<boolean>) => {
-      state.checked = true;
-      state.loggedIn = payload;
+    signedIn: (state, { payload }: PayloadAction<Me>) => {
+      state.status = 'signedIn';
+      state.user = payload;
+      state.loginNotice = undefined;
     },
-    setUser: (state: AppState, { payload }: PayloadAction<User | undefined>) => {
+    signedOut: (state, { payload }: PayloadAction<string | undefined>) => {
+      state.status = 'signedOut';
+      state.user = undefined;
+      state.loginNotice = payload;
+    },
+    setUser: (state, { payload }: PayloadAction<Me>) => {
       state.user = payload;
     },
-    reset: () => initialState,
+    setMeta: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ updateRequired: boolean; minAppVersion: string; serverOffsetMs: number }>,
+    ) => {
+      state.updateRequired = payload.updateRequired;
+      state.minAppVersion = payload.minAppVersion;
+      state.serverOffsetMs = payload.serverOffsetMs;
+    },
   },
 });
+
+export const appActions = slice.actions;
 
 export function useAppSlice() {
   const dispatch = useDispatch<Dispatch>();

@@ -43,7 +43,7 @@ function Button({
   style,
   disabled,
   isLoading,
-  loaderColor = colors.white,
+  loaderColor = colors.palette.white,
   imageStyle,
   children,
   ...others

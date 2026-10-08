@@ -52,6 +52,40 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-asset',
+      'expo-secure-store',
+      [
+        'expo-camera',
+        {
+          cameraPermission:
+            'Kamera dipakai untuk foto absen, foto timbangan, foto hasil, dan scan QR wadah.',
+          recordAudioAndroid: false,
+        },
+      ],
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission:
+            'Lokasi dipakai untuk menandai absen di lokasi kerja atau di luar lokasi.',
+        },
+      ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'Galeri dipakai untuk memilih foto bukti pembayaran.',
+          cameraPermission: 'Kamera dipakai untuk memotret bukti pembayaran.',
+        },
+      ],
+      [
+        'expo-font',
+        {
+          fonts: [
+            './node_modules/@expo-google-fonts/google-sans-flex/400Regular/GoogleSansFlex_400Regular.ttf',
+            './node_modules/@expo-google-fonts/google-sans-flex/500Medium/GoogleSansFlex_500Medium.ttf',
+            './node_modules/@expo-google-fonts/google-sans-flex/600SemiBold/GoogleSansFlex_600SemiBold.ttf',
+            './node_modules/@expo-google-fonts/google-sans-flex/700Bold/GoogleSansFlex_700Bold.ttf',
+          ],
+        },
+      ],
       [
         'expo-splash-screen',
         {

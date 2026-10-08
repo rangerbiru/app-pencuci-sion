@@ -1,23 +1,27 @@
 import { loadAsync } from 'expo-font';
+import {
+  GoogleSansFlex_400Regular,
+  GoogleSansFlex_500Medium,
+  GoogleSansFlex_600SemiBold,
+  GoogleSansFlex_700Bold,
+} from '@expo-google-fonts/google-sans-flex';
 
+/**
+ * Google Sans Flex (OFL) seperti web. Bila gagal dimuat, Text jatuh ke huruf sistem.
+ */
 export const fonts = {
-  openSan: {
-    regular: 'openSans_regular',
-    regularItalic: 'openSans_regular_italic',
-    semiBold: 'openSans_semiBold',
-    semiBoldItalic: 'openSans_semiBold_italic',
-    bold: 'openSans_bold',
-    boldItalic: 'openSans_bold_italic',
-  },
-};
+  regular: 'GoogleSansFlex_400Regular',
+  medium: 'GoogleSansFlex_500Medium',
+  semiBold: 'GoogleSansFlex_600SemiBold',
+  bold: 'GoogleSansFlex_700Bold',
+} as const;
 
-// preload fonts
+export type FontWeightName = keyof typeof fonts;
+
 export const loadFonts = () =>
   loadAsync({
-    openSans_regular: require('@/assets/fonts/OpenSans-Regular.ttf'),
-    openSans_regular_italic: require('@/assets/fonts/OpenSans-Italic.ttf'),
-    openSans_semiBold: require('@/assets/fonts/OpenSans-Semibold.ttf'),
-    openSans_semiBold_italic: require('@/assets/fonts/OpenSans-SemiboldItalic.ttf'),
-    openSans_bold: require('@/assets/fonts/OpenSans-Bold.ttf'),
-    openSans_bold_italic: require('@/assets/fonts/OpenSans-BoldItalic.ttf'),
+    [fonts.regular]: GoogleSansFlex_400Regular,
+    [fonts.medium]: GoogleSansFlex_500Medium,
+    [fonts.semiBold]: GoogleSansFlex_600SemiBold,
+    [fonts.bold]: GoogleSansFlex_700Bold,
   });
