@@ -1,15 +1,16 @@
 import { Asset } from 'expo-asset';
 
-export const images: { [key: string]: ReturnType<typeof require> } = {
-  logo: require('@/assets/images/logo.svg'),
-  logo_sm: require('@/assets/images/logo-sm.png'),
-  logo_lg: require('@/assets/images/logo-lg.png'),
-};
+/**
+ * Logo SION. Berkas masih raster beresolusi rendah; ganti berkasnya saja (nama tetap) saat
+ * file final dari klien tersedia.
+ * - emblem: ukuran kecil (header, avatar)
+ * - logoFull: hanya layar masuk / splash
+ */
+export const images = {
+  emblem: require('@/assets/images/emblem.png'),
+  wordmark: require('@/assets/images/wordmark.png'),
+  logoFull: require('@/assets/images/logo-full.png'),
+} as const;
 
-// preload images
-const preloadImages = () =>
-  Object.keys(images).map(key => {
-    return Asset.fromModule(images[key] as number).downloadAsync();
-  });
-
-export const loadImages = async () => Promise.all(preloadImages());
+export const loadImages = async () =>
+  Promise.all(Object.values(images).map(m => Asset.fromModule(m as number).downloadAsync()));

@@ -4,7 +4,7 @@
   },
   "build": {
     "base": {
-      "node": "20.9.0",
+      "node": "20.19.4",
       "ios": {
         "image": "auto",
         "resourceClass": "m-medium"
@@ -15,30 +15,46 @@
       "channel": "base"
     },
     "development": {
-      "environment": "development",
       "extends": "base",
+      "environment": "development",
       "channel": "development",
+      "developmentClient": false,
       "distribution": "internal",
+      "env": { "ENV": "development" },
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
       },
       "android": {
-        "buildType": "app-bundle",
+        "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "environment": "preview",
+      "channel": "preview",
+      "distribution": "internal",
+      "env": { "ENV": "development" },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
       }
     },
     "production": {
       "extends": "base",
-      "channel": "production",
       "environment": "production",
-      "ios": {
-        "simulator": true,
-        "buildConfiguration": "Release"
-      },
+      "channel": "production",
+      "env": { "ENV": "production" },
+      "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle",
-        "gradleCommand": ":app:bundleRelease"
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
       }
     }
   },

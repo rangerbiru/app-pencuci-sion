@@ -1,37 +1,29 @@
 {
   "expo": {
-    "name": "react-native-boilerplate",
-    "slug": "react-native-boilerplate",
-    "scheme": "react-native-boilerplate",
-    "version": "3.0.0",
-    "owner": "wataru",
+    "name": "SION",
+    "slug": "sion-mobile",
+    "scheme": "sion",
+    "version": "1.0.0",
     "newArchEnabled": true,
-    "platforms": ["ios", "android", "web"],
+    "platforms": ["android", "ios", "web"],
     "orientation": "portrait",
-    "icon": "./assets/images/logo-lg.png",
+    "icon": "./assets/images/icon-1024.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#ffffff",
-      "dark": {
-        "backgroundColor": "#101212"
-      },
-      "image": "./assets/images/logo-lg.png",
-      "resizeMode": "contain"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo-sm.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
+        "backgroundColor": "#F7F5F0"
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/images/logo-sm.png"
+      "favicon": "./assets/images/icon-1024.png"
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "appVersion"
     }
   }
 }
