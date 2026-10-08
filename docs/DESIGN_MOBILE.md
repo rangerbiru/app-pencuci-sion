@@ -1,0 +1,393 @@
+# Desain SION Mobile
+
+Rencana desain aplikasi Pencuci, Kepala Pencuci, dan Mandor (Tahap 14C). Semua nilai warna, huruf,
+radius, dan status diambil dari `docs/web-theme/tokens.json` lewat modul `theme/` (salinan
+`theme/tokens.json`, dijaga test `theme/colors.test.ts`). Layar tidak boleh menulis hex sendiri.
+
+## 1. Siapa dan di mana
+
+| Hal | Kenyataan | Akibat untuk desain |
+|---|---|---|
+| Pengguna | Pencuci sarang walet, Kepala Pencuci, Mandor; tidak terbiasa aplikasi rumit | Satu aksi utama per layar, kata kerja biasa, istilah sama dengan web (GLOSARIUM) |
+| Tangan | Sering basah | Target sentuh minimal 48 dp, tombol utama 56 dp, jarak antar tombol minimal 8 dp, tidak ada gestur geser yang wajib |
+| Cahaya | Ruang cuci terang | Kontras AA (teks utama di atas 7:1), tidak ada teks abu-abu muda untuk informasi penting |
+| HP | Android 2 s.d. 3 GB RAM, layar sekitar 6 inci (360 x 800 dp) | Tanpa animasi hiasan, tanpa blur, daftar ringan, foto dikompres 1280 px |
+| Sinyal | Naik turun | Aksi lapangan masuk antrean, tanda "Belum terkirim", banner "Tidak ada sinyal" |
+
+## 2. Token
+
+### Warna (dari tokens.json)
+
+| Peran | Terang | Gelap | Token |
+|---|---|---|---|
+| Latar layar | `#F7F5F0` krem | `#101828` | `colors.light.background` / `colors.dark.background` |
+| Permukaan kartu | `#FFFFFF` | `#171F2E` | `surface` / `surfaceSolid` |
+| Garis kartu | `#E4E7EC` | `#1D2939` | `border` |
+| Header atas | `#16293F` navy | `#101E2E` | `header` |
+| Tombol utama | latar `#C9A24B` emas, teks `#101E2E`, ditekan `#A8842F` | sama | `accent`, `onAccent`, `accentPressed` |
+| Teks utama | `#1D2939` | putih 90% | `text` |
+| Teks kedua | `#667085` (4,57:1 di krem) | `#98A2B3` | `textSecondary` |
+| Sukses | `#2E5C38` di `#CBE3CC` | `#8FC49A` | `accent-600`, `successBg` |
+| Bahaya | `#B3413A` di `#FEF2F2` | `#FFA2A2` | `danger`, `dangerBg` |
+| Info | `#16293F` di `#EEF2F7` | `#9FB6CC` | `info`, `infoBg` |
+| Peringatan | **`#4A3814`** (gold-900) di `#F2E4B8` | `#E3C87A` | lihat catatan kontras |
+
+`textMuted` (`#98A2B3`, 2,58:1 di putih) tidak dipakai untuk teks; hanya untuk garis dan ikon nonaktif.
+
+### Badge status
+
+Label ditampilkan **apa adanya dari API** (`status.label`); warna dari `tokens.status.<jenis>.<kode>.color`
+lalu `tokens.badge.colors`. Contoh: `assignment.pending_verification` "Menunggu Verifikasi" (gold),
+`weighing_confirmation.menunggu` "Menunggu" (gold), `bonus.pending` "Menunggu" (gold), `withdrawal.disetujui`
+"Disetujui" (primary). Setiap badge memakai ikon kecil di depan teks (jam untuk menunggu, centang untuk
+selesai/disetujui, silang untuk ditolak, titik untuk netral) supaya tidak bergantung pada warna.
+"Bonus Pending" tetap nama saldo; status satu bonus tetap "Menunggu".
+
+**Catatan kontras.** Teks badge gold dari web (`#A8842F` di `#F2E4B8`) hanya 2,76:1, gagal AA di bawah
+cahaya terang. Latar badge tetap `#F2E4B8`; teksnya memakai `gold-900` `#4A3814` dari palet yang sama
+(8,87:1). Badge lain sudah lolos (primary 13,1; accent 5,7; error 5,1; neutral 4,5).
+
+### Huruf
+
+Google Sans Flex (paket `@expo-google-fonts/google-sans-flex`, OFL), cadangan huruf sistem. Bobot 400,
+500, 600 (angka), 700. Semua angka gram dan rupiah memakai `fontVariant: ['tabular-nums']`.
+
+| Gaya | Ukuran / tinggi baris | Pakai untuk |
+|---|---|---|
+| `display` | 30 / 36 bold | judul layar masuk |
+| `title` | 24 / 32 bold | judul layar |
+| `heading` | 20 / 28 medium | judul bagian, nama langkah aktif |
+| `subheading` | 18 / 28 medium | judul kartu |
+| `body` | 16 / 24 | isi (web 14; dinaikkan karena dibaca sambil bekerja) |
+| `small` | 14 / 20 | keterangan, baris daftar kedua |
+| `caption` | 12 / 18 medium | badge, label tab |
+| `numberXL` | 30 / 38 semibold tabular | angka utama satu layar (total minggu, gram diambil) |
+| `numberL` | 24 / 32 semibold tabular | angka ringkasan |
+| `numberM` | 18 / 28 semibold tabular | angka di baris daftar |
+
+Satuan ("gr", "pcs", "Rp") ditulis lebih kecil dan berwarna teks kedua di samping angka besar, supaya
+angka terbaca lebih dulu tetapi satuannya tidak hilang.
+
+Huruf sistem yang diperbesar dihormati (`allowFontScaling` bawaan). Tata letak memakai `minHeight`,
+bukan tinggi tetap; baris angka dan label membungkus ke bawah bila tidak muat. Label tab dibatasi
+`maxFontSizeMultiplier` 1,3 karena lebarnya tetap.
+
+### Jarak, radius, ukuran
+
+| Token | Nilai | Asal |
+|---|---|---|
+| satuan | 4 dp | web (Tailwind) |
+| tepi layar | 16 dp | `spacing.gutterMobile` |
+| padding kartu | 16 dp (web 24 x 20) | dikecilkan untuk 360 dp |
+| jarak antar bagian | 24 dp | `spacing.sectionGap` |
+| radius kartu | 16 | `radius.card` |
+| radius tombol, isian | 8 | `radius.button` / `radius.input` |
+| radius badge, avatar | penuh | `radius.badge` |
+| tombol utama | tinggi 56 dp | brief (web 48) |
+| tombol kedua | tinggi 48 dp | web |
+| isian | tinggi 52 dp | web 44, dinaikkan untuk jari basah |
+| target sentuh | minimal 48 x 48 dp | brief |
+
+### Bayangan
+
+Kartu biasa tanpa bayangan, hanya garis 1 dp (sama dengan kartu halaman web). Bayangan `xs`
+(`0 1 2 rgba(16,24,40,0.05)`, elevation 1) hanya untuk kartu Hari ini dan bilah aksi bawah.
+
+## 3. Prinsip
+
+1. **Satu aksi utama per layar**, berupa tombol emas 56 dp di bilah bawah (zona jempol). Aksi lain
+   berupa tombol garis (outline) atau baris daftar.
+2. **Urutan nyata hari kerja** adalah tulang punggung Beranda pencuci: Absen masuk, Ambil bahan,
+   Serah hasil lembab, Absen pulang. Langkah berikutnya selalu satu tombol besar.
+3. **Angka dulu, satuan jelas.** Gram dan rupiah besar, tabular, satuan di sampingnya, nilai kosong "-".
+4. **Status selalu teks + ikon**, warna hanya penguat.
+5. **Jujur soal sinyal.** Aksi yang belum sampai ke server tampil "Belum terkirim" dengan jumlahnya di
+   header; aplikasi mengirim sendiri saat sinyal kembali. Tidak ada aksi yang hilang diam-diam.
+6. **Kata kerja jelas, istilah sama.** Tombol "Kirim setoran", toast "Setoran terkirim". Error menjelaskan
+   apa yang salah dan cara memperbaikinya, mis. "Gram melebihi sisa jatah (1.200 gr). Kurangi gramnya."
+7. **Gerak hanya untuk menjawab aksi**: toast masuk, detail terbuka. Haptic ringan saat berhasil.
+   Bila "Kurangi gerak" aktif, toast dan skeleton tampil tanpa animasi.
+8. **Tenang dan disiplin**: navy hanya di header, emas hanya untuk aksi utama dan langkah aktif,
+   selebihnya krem, putih, dan garis tipis.
+
+## 4. Komponen dasar (`components/elements`)
+
+| Komponen | Isi |
+|---|---|
+| `Text` | varian tipografi, warna dari tema, angka tabular untuk varian `number*` |
+| `Button` | `primary` (emas 56), `secondary` (outline 48), `danger` (outline merah), `ghost`; status muat; tanpa panah |
+| `Badge` | status dari API + jenis tokens -> warna; ikon di depan teks |
+| `Card` | permukaan putih, garis 1 dp, radius 16, tanpa bayangan (kecuali `raised`) |
+| `Amount` | angka besar tabular + satuan kecil (gr, pcs, Rp) |
+| `TextField` | label di atas, isian 52 dp, pesan error merah di bawah dengan ikon, keyboard angka |
+| `ListRow` | baris 56+ dp, judul, keterangan, kanan: nilai atau badge, chevron bila bisa dibuka |
+| `Skeleton` | balok abu-abu, berdenyut pelan kecuali Kurangi gerak |
+| `EmptyState` | kalimat apa yang terjadi + tombol aksi berikutnya |
+| `ErrorState` | pesan + tombol "Coba lagi" |
+| `OfflineBanner` | "Tidak ada sinyal. Data yang dikirim disimpan dulu." |
+| `PendingChip` | "Belum terkirim (n)" di header, buka daftar antrean |
+| `BottomBar` | wadah tombol utama di bawah, aman dari bilah navigasi |
+| `Toast` | konfirmasi singkat + haptic |
+| `CameraCapture` | kamera depan/belakang, bingkai panduan, ambil ulang, pratinjau |
+| `Screen` | latar krem, tarik untuk menyegarkan, banner sinyal |
+
+## 5. Wireframe (360 dp)
+
+### Masuk
+
+```
+┌──────────────────────────────┐
+│                              │
+│         [logo lengkap]       │  logo lengkap hanya di sini dan splash
+│                              │
+│  Masuk                       │  title
+│  Pakai akun Pencuci, Kepala  │
+│  Pencuci, atau Mandor.       │
+│                              │
+│  Email atau nomor HP         │
+│  [ 0812...               ]   │  52 dp
+│  Password                    │
+│  [ ••••••••          (o) ]   │  tombol mata 48 dp: Tampilkan/Sembunyikan
+│  ! Email/nomor HP atau       │  error dari API apa adanya
+│    password salah.           │
+│                              │
+│  Lupa password? Hubungi      │
+│  Mandor atau Admin.          │
+├──────────────────────────────┤
+│  [         Masuk          ]  │  emas 56 dp, bilah bawah
+└──────────────────────────────┘
+```
+
+### Beranda Pencuci
+
+```
+┌──────────────────────────────┐
+│ (emb) Selamat pagi, Siti     │  header navy, emblem dalam lingkaran krem
+│       Rabu, 7 Oktober 2026   │  [Belum terkirim 2] chip bila ada
+├──────────────────────────────┤
+│ ! Tidak ada sinyal ...       │  hanya saat offline
+│                              │
+│ ┌ Hari ini ────────────────┐ │  kartu raised, satu-satunya berbayang
+│ │ (v) Absen masuk   07:58  │ │  selesai: centang hijau + jam server
+│ │  │                       │ │
+│ │ (2) Ambil bahan          │ │  aktif: lingkaran emas, teks tebal
+│ │  │  1 menunggu disetujui │ │  ringkasan langkah
+│ │ (3) Serah hasil lembab   │ │  belum: lingkaran garis abu
+│ │  │                       │ │
+│ │ (4) Absen pulang         │ │
+│ │                          │ │
+│ │ [     Ambil bahan      ] │ │  satu tombol besar = langkah berikutnya
+│ │  Ambil kerja ulang       │ │  tombol kedua bila ada kerja ulang
+│ └──────────────────────────┘ │
+│                              │
+│ ┌ Konfirmasi hasil timbang ┐ │  hanya bila ada
+│ │ Kartu 24/09  12.156 gr   │ │
+│ │ Utuh 8.518 Kecil 900 ... │ │
+│ │ Sisa 5 jam 12 menit,     │ │
+│ │ setelah itu dianggap     │ │
+│ │ setuju.                  │ │
+│ │ [Tidak setuju] [ Setuju ]│ │
+│ └──────────────────────────┘ │
+│                              │
+│ Jatah aktif                  │  daftar, bukan kartu identik
+│ B-MOB Bulu Berat             │
+│ sisa 27.000 gr  ▓▓▓░░ 32%    │
+│                              │
+│ Saldo dapat dicairkan        │
+│ Rp 280.000          [Tarik]  │
+└──────────────────────────────┘
+│ Beranda Pendapatan Riwayat Profil │  tab
+```
+
+### Absen (kamera)
+
+```
+┌──────────────────────────────┐
+│ <  Absen masuk               │
+│ Jam server 07:58             │
+│ ┌──────────────────────────┐ │
+│ │                          │ │
+│ │      ( oval wajah )      │ │  kamera depan, bingkai oval
+│ │                          │ │
+│ └──────────────────────────┘ │
+│ Lokasi: Di lokasi kerja /    │
+│ ! Di luar lokasi (1.112 m)   │  bila server menandai luar lokasi
+├──────────────────────────────┤
+│ [         Ambil foto       ] │
+└──────────────────────────────┘
+setelah foto:  [Ambil ulang]  [   Kirim absen masuk   ]
+```
+
+### Ambil bahan (3 langkah, satu aksi per langkah)
+
+```
+1 Pilih jatah            2 Foto timbangan           3 Isi dan periksa
+┌──────────────────┐    ┌──────────────────┐      ┌──────────────────┐
+│ ( ) B-MOB        │    │ ┌──────────────┐ │      │ [foto kecil]     │
+│     Bulu Berat   │    │ │ ┌──────────┐ │ │      │ Gram             │
+│     sisa 27.000gr│    │ │ │ layar    │ │ │      │ [ 12.500    ] gr │
+│ ( ) B-XYZ ...    │    │ │ │ timbangan│ │ │      │ Sisa 27.000 gr   │
+│                  │    │ │ └──────────┘ │ │      │ Pcs (opsional)   │
+│                  │    │ └──────────────┘ │      │ [ 100       ]    │
+├──────────────────┤    ├──────────────────┤      ├──────────────────┤
+│ [   Lanjut     ] │    │ [ Ambil foto   ] │      │ [ Periksa      ] │
+└──────────────────┘    └──────────────────┘      └──────────────────┘
+Ringkasan: jatah, gram (besar), pcs, foto -> [ Kirim pengambilan ] -> toast "Pengambilan terkirim"
+```
+
+### Pendapatan
+
+```
+┌──────────────────────────────┐
+│ Pendapatan                   │
+│ [<]  Minggu 38               │  pilih minggu, 48 dp
+│      14/09/2026 s.d. 20/09   │
+│                              │
+│ Total minggu ini             │
+│ Rp 280.000                   │  numberXL
+│ Dibayar SION                 │  badge
+│                              │
+│ Rincian                      │  seperti slip gaji, baris rata kanan
+│ Upah sudah dihitung   Rp 0   │
+│ Gaji harian      Rp 180.000  │
+│ Bonus mingguan   Rp 100.000  │
+│ ──────────────────────────── │
+│ Per hari                     │
+│ Sen, 14 Sep  Hadir    250 gr │  baris bisa dibuka: kartu + status upah
+│ ...                          │
+│                              │
+│ Bonus berjalan               │
+│ Bonus mingguan  [Menunggu]   │
+│ 120 / 240 gr ▓▓▓▓░░░░        │
+│ THR (bertambah per hari) ... │
+│                              │
+│ Profit harian (bila diizinkan│
+│                              │
+│ Saldo                        │
+│ Dapat dicairkan Rp 280.000   │
+│ Bonus Pending   Rp 100.000   │
+│ THR Ditahan      Rp 22.400   │
+│ Sumber dana: SION / Mandor X │
+├──────────────────────────────┤
+│ [        Tarik dana       ]  │
+└──────────────────────────────┘
+```
+
+### Tarik dana
+
+```
+Saldo dapat dicairkan Rp 280.000 (Mandor Pak Budi bila Borongan)
+Nominal [ Rp 100.000 ]   minimal Rp 50.000, maksimal saldo
+Catatan (opsional)
+[ Ajukan penarikan ] -> konfirmasi "Ajukan Rp 100.000?" -> toast "Penarikan diajukan"
+Riwayat: baris per pengajuan + badge + diproses oleh; tombol "Batalkan" selama Diajukan
+```
+
+### Riwayat
+
+```
+Daftar hari: Rab, 24 Sep   bahan 12.500 gr  lembab 240 pcs  hasil 12.156 gr
+             [Lolos QC] [Standard] [Menunggu] [Tertahan]
+Detail hari: kartu (bahan, hasil per grup, QC, konfirmasi, upah) + pengajuan dengan foto
+```
+
+### Tim (Kepala Pencuci)
+
+```
+Ringkasan: Hadir 5/7  Menunggu verifikasi 3   [Verifikasi]
+Anggota (baris): nama, badge absen, jatah sisa, setoran hari ini, pengajuan menunggu
+Profit harian tim (7 hari)
+Bonus tim: 4/6 anggota capai (data per anggota belum ada di API)
+Lainnya: Kartu Kerja, Penjatahan, Batch masuk (bila API mengizinkan)
+```
+
+### Verifikasi
+
+```
+[Semua] [Ambil bahan] [Serah hasil] [Kerja ulang]   filter
+[ ] Siti   Ambil Bahan   12.500 gr  08:00  [foto]
+[ ] Ani    Serah Lembab     240 pcs ...
+bilah bawah saat ada pilihan: [Tolak] [ Setujui 3 ]
+detail: foto besar (ketuk = layar penuh), data, Setujui / Tolak (alasan wajib min 5 huruf)
+```
+
+### Beranda Mandor
+
+```
+Hari ini
+Hadir 12 / 15        Menunggu verifikasi 4
+Kartu belum QC 3     Batch belum diterima 1
+Penarikan Borongan menunggu 2
+(setiap angka = baris yang membuka layarnya)
+Absen saya: kartu absen kecil
+```
+
+### Batch
+
+```
+Batch masuk: B-MB Mangkok, dikirim 6.000 gr [Diserahkan] -> Terima batch
+Terima batch: [Scan QR wadah] bruto - tara = gram diterima (tidak boleh > 6.000 gr)
+              pcs, foto, catatan selisih (wajib bila ada selisih) -> [ Terima batch ]
+Penjatahan: batch Diterima/Berjalan, sisa gram; tambah baris pencuci + target gram -> [ Simpan penjatahan ]
+```
+
+### Kartu Kerja (Mandor)
+
+```
+Tanggal [<] 24/09/2026 [>]   daftar per pekerja + badge status/QC
+Detail: bahan, hasil per baris (gram bersih, pcs) -> QC [Standard] [Belum Standard]
+Belum Standard: tanggal kerja ulang wajib -> [ Simpan QC ]; kartu lolos QC: [ Verifikasi ]
+```
+
+### Profil
+
+```
+(emblem) Siti  [Pencuci]
+Email, HP, lokasi, Kepala Pencuci, Mandor
+Kontrak berlaku: sejak 01/01/2026, komponen upah
+Ganti password  >
+Belum terkirim (2) >
+[ Keluar ]  (peringatan bila masih ada yang belum terkirim)
+Versi 1.0.0
+```
+
+### Perbarui aplikasi
+
+```
+(emblem)  Perbarui aplikasi
+Versi Anda 1.0.0. Versi minimal 1.2.0. Minta file APK terbaru ke Mandor atau Admin.
+[ Periksa lagi ]
+```
+
+## 6. Tinjauan terhadap brief: yang diganti dan alasannya
+
+Draf pertama rencana ini masih membawa pola template. Bagian berikut diganti setelah ditinjau terhadap
+brief:
+
+| Draf awal (generik) | Diganti dengan | Alasan |
+|---|---|---|
+| Beranda berisi kisi 4 kartu statistik sama besar (hadir, gram, upah, saldo) dengan ikon di pojok | Kartu "Hari ini" berupa rel langkah vertikal; angka lain jadi daftar biasa | Brief: elemen khas adalah urutan hari kerja. Kisi kartu identik adalah ciri tampilan AI dan memaksa pencuci memilih sendiri apa yang harus dilakukan |
+| Label kecil huruf kapital berjarak ("RINGKASAN", "SALDO") di atas tiap judul | Judul kalimat biasa 18 dp medium | Dilarang brief; juga lebih sulit dibaca pengguna yang jarang membaca |
+| Tombol utama navy dengan teks "Lanjut →" | Tombol emas `#C9A24B`, teks navy, tanpa panah | Sama dengan web; brief melarang panah di teks tombol |
+| Semua kartu berbayang abu-abu seragam | Garis 1 dp tanpa bayangan; hanya Hari ini dan bilah bawah berbayang `xs` | Web memakai kartu tanpa bayangan; satu bayangan menandai yang terpenting |
+| Header bergradien navy ke biru | Header navy polos `#16293F` dengan emblem dalam lingkaran krem bergaris emas | Brief melarang gradient hiasan; emblem navy tenggelam di navy tanpa lingkaran (README logo) |
+| Meta baris "Siti · 08:00 · 12.500 gr" | Nilai di baris sendiri atau pasangan label: nilai | Brief melarang pemisah titik tengah |
+| Tombol aksi melayang (FAB) di kanan bawah | Bilah bawah selebar layar 56 dp | Zona jempol untuk dua tangan dan jari basah; FAB mudah tertutup dan ambigu |
+| Modal sukses dengan animasi centang besar | Toast singkat + haptic ringan, lalu kembali ke Beranda | Gerak hanya menjawab aksi; HP kelas bawah |
+| Status upah hanya titik warna | Badge teks + ikon dari tokens | Brief: bukan warna saja; buta warna dan cahaya terang |
+| Pendapatan berupa grafik batang mingguan | Slip gaji: total besar, lalu baris rincian rata kanan | Pekerja terbiasa slip; grafik tidak menjawab "berapa yang saya terima" |
+| Form ambil bahan satu halaman panjang (jatah, foto, gram, pcs) | Tiga langkah, masing-masing satu aksi, lalu ringkasan | Satu aksi per layar; foto timbangan butuh layar penuh |
+| Teks badge gold persis web | Teks gold-900 di latar gold-100 yang sama | Gagal AA (2,76:1) di cahaya terang |
+| Skeleton berkilau (shimmer) | Balok berdenyut pelan, diam bila Kurangi gerak | Hemat GPU, hormati aksesibilitas |
+| Tab bar dengan ikon saja | Ikon + label | Pengguna tidak terbiasa ikon abstrak |
+
+## 7. Bahasa
+
+- Tombol = kata kerja + benda: "Absen masuk", "Kirim pengambilan", "Kirim setoran", "Terima batch",
+  "Ajukan penarikan", "Setujui", "Tolak".
+- Toast = benda + hasil: "Absen masuk tercatat", "Pengambilan terkirim", "Setoran terkirim",
+  "Disimpan. Dikirim otomatis saat ada sinyal."
+- Layar kosong memberi aksi: "Belum ada jatah aktif. Minta Mandor membuat penjatahan." (tombol Muat ulang),
+  "Belum ada pengajuan untuk diverifikasi." (tombol Muat ulang).
+- Error: dari API apa adanya bila ada (`message`/`errors`), selain itu pesan per kode di
+  `services/api/errors.ts`.
