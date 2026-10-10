@@ -60,7 +60,7 @@ function WorkCardSummary({ card, showWorker }: { card: WorkCard; showWorker?: bo
           />
         ) : null}
         {card.wage ? (
-          <Badge status={card.wage.status} kind="card_wage" icon="dollar-sign" prefix="Upah" />
+          <Badge status={card.wage.status} kind="card_wage" icon="credit-card" prefix="Upah" />
         ) : null}
       </View>
 

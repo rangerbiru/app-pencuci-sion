@@ -50,7 +50,7 @@ function TeamWithdrawalDetail({ id, status }: { id: number; status?: string }) {
           <SkeletonList rows={3} />
         ) : (
           <EmptyState
-            icon="dollar-sign"
+            icon="credit-card"
             title="Penarikan tidak ditemukan"
             actionLabel="Kembali"
             onAction={() => router.back()}

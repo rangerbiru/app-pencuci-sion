@@ -201,7 +201,7 @@ function WorkerHome() {
               <Button
                 title="Tarik dana"
                 variant="secondary"
-                icon="dollar-sign"
+                icon="arrow-down-circle"
                 onPress={() => router.push('/tarik-dana')}
               />
             ) : null}

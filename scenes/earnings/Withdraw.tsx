@@ -221,7 +221,7 @@ function Withdraw() {
               {wholeAvailable && wholeAvailable !== '0' ? (
                 <Chip
                   label="Tarik semua"
-                  icon="maximize-2"
+                  icon="arrow-down-circle"
                   selected={amountText === wholeAvailable}
                   accessibilityLabel={`Tarik semua, ${formatRupiah(wholeAvailable, { style: 'whole' })}`}
                   onPress={() => {
@@ -260,7 +260,7 @@ function Withdraw() {
         ) : (
           <Card>
             <EmptyState
-              icon="dollar-sign"
+              icon="credit-card"
               title="Belum ada penarikan"
               message="Pengajuan Anda akan muncul di sini beserta statusnya."
             />

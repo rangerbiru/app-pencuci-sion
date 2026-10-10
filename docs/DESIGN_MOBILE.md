@@ -517,3 +517,40 @@ Tangkapan dan rekaman layar contoh v2 ada di `docs/screenshots/v2/`: `360-{light
 `360-{light,dark}-pendapatan.png`, `360-{light,dark}-mandor-beranda.png`, dan `animasi-v2.webm`
 (pratinjau web, data demo: muncul bertahap, cincin/bilah/donat terisi, saldo menghitung naik, denyut
 tombol absen, pil tab bergeser). Haptic dan worklet hitung naik hanya terasa di HP.
+
+## Bagian 1 (14C-R2): huruf, skala, ikon
+
+### Perbandingan huruf
+
+Tangkapan 360 dp mode terang, data demo yang sama, di `docs/screenshots/v2/huruf/`
+(`360-{jakarta,inter,googleSans}-{masuk,beranda,pendapatan}.png`). Angka tabular diukur di browser
+(lebar "1111" = "0000" dengan `tabular-nums`, 40 px):
+
+| Huruf | Angka tabular | Lebar 4 angka | Catatan di layar |
+|---|---|---|---|
+| **Plus Jakarta Sans** (dipilih) | ada | 96 px | angka paling ramping, bentuk 1/7/4 jelas; huruf sedikit lebih lebar, "Ambil bahan" turun 2 baris di ubin |
+| Inter | ada | 104 px | paling lebar: "Durasi kerja ..." dan "Bonus menunggu" terpotong; dihindari sebagai bawaan (design-taste) |
+| Google Sans Flex (lama) | ada | 103 px | paling ringkas tetapi generik; angka lebih lebar dari Jakarta |
+
+Pilihan: **Plus Jakarta Sans**. Dibuat Tokotype (Jakarta) untuk identitas Jakarta, terasa hangat dan
+lokal untuk tim pencucian; angka tabularnya paling ramping sehingga rupiah dan gram panjang muat di
+360 dp, dan bentuk angkanya jelas di bawah cahaya terang. Kelebihan lebar hurufnya ditangani di tata
+letak (label boleh dua baris, tidak dipotong). Hanya satu keluarga dimuat (4 ketebalan) lewat
+`@expo-google-fonts/plus-jakarta-sans` dan plugin `expo-font`; Inter dan Google Sans Flex dihapus.
+
+### Skala
+
+Isi 15, kecil/meta/label 13, keterangan 12, judul layar 18, nama di header 17, judul kartu 16, angka
+17 (baris), 24 (ubin), 28 (saldo/total), jam absen 34; tinggi baris sekitar 1,4x. Semua `Text` memakai
+`maxFontSizeMultiplier` 1,3 (jam absen 1,1) supaya pembesaran huruf sistem tidak merusak tata letak.
+
+### Ikon
+
+Satu set: Feather (`@expo/vector-icons`). Arti tetap per perintah ada di `theme/icons.ts`:
+absen masuk `log-in`, absen pulang `log-out`, ambil bahan `download`, serah hasil `upload`, kerja
+ulang `repeat`, terima batch `inbox`, penjatahan `users`, penyiapan `layers`, verifikasi `shield`,
+setujui `check`, tolak `x`, foto `camera`, galeri `image`, scan wadah `maximize`, tambah `plus`, hapus
+`trash-2`, muat ulang `refresh-cw`, uang/saldo `credit-card`, tarik dana `arrow-down-circle`,
+notifikasi `bell`, hubungi Admin `message-circle`. Diperbaiki: tombol absen tidak lagi memakai
+`camera`, uang tidak lagi `dollar-sign`, terima batch dibedakan dari ambil bahan, verifikasi kartu
+`shield` (bukan gembok).

@@ -164,7 +164,7 @@ function MandorHome() {
         firstIncoming ? (
           <Fab
             label="Terima batch"
-            icon="download"
+            icon="inbox"
             onPress={() =>
               router.push({
                 pathname: '/batch/terima/[id]',
@@ -223,7 +223,7 @@ function MandorHome() {
                       }
                       accessibilityLabel={`Terima batch ${firstIncoming.batch_code}`}
                       style={[styles.heroButton, { backgroundColor: colors.accent }]}>
-                      <Icon name="download" size={18} color={colors.onAccent} />
+                      <Icon name="inbox" size={18} color={colors.onAccent} />
                       <Text type="bodyStrong" style={{ color: colors.onAccent }}>
                         Terima
                       </Text>
@@ -270,7 +270,7 @@ function MandorHome() {
             />
             <StatTile
               index={4}
-              icon="dollar-sign"
+              icon="credit-card"
               label="Penarikan Borongan"
               value={withdrawals.data ? String(wd) : '-'}
               attention={wd > 0}

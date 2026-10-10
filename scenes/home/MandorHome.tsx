@@ -145,7 +145,7 @@ function MandorHome() {
             ) : null}
             {isFeatureEnabled('teamWithdrawals') ? (
               <FigureRow
-                icon="dollar-sign"
+                icon="credit-card"
                 label="Penarikan Borongan menunggu"
                 value={withdrawals.data ? String(withdrawals.data.meta.total) : '-'}
                 attention={(withdrawals.data?.meta.total ?? 0) > 0}

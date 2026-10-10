@@ -73,7 +73,7 @@ function Batches({ back }: { back?: boolean }) {
                 <Button
                   title="Terima batch"
                   variant="secondary"
-                  icon="download"
+                  icon="inbox"
                   onPress={() =>
                     router.push({ pathname: '/batch/terima/[id]', params: { id: String(b.id) } })
                   }

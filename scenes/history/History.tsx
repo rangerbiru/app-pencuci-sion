@@ -135,7 +135,7 @@ function History() {
                         <Badge
                           status={d.card.wage.status}
                           kind="card_wage"
-                          icon="dollar-sign"
+                          icon="credit-card"
                           prefix="Upah"
                         />
                       ) : null}

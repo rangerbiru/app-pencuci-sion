@@ -43,7 +43,7 @@ function TeamWithdrawals() {
       ) : items.length === 0 ? (
         <Card>
           <EmptyState
-            icon="dollar-sign"
+            icon="credit-card"
             title={filter === 'semua' ? 'Belum ada penarikan' : `Tidak ada penarikan ${filter}`}
             actionLabel={filter === 'semua' ? 'Muat ulang' : 'Lihat semua'}
             onAction={() => (filter === 'semua' ? q.refetch() : setFilter('semua'))}

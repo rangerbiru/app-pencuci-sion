@@ -12,7 +12,7 @@ import { CountUp, HeroSurface, onHero, PressableScale } from '@/components/eleme
 function GlassTile({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.tile}>
-      <Text type="small" style={{ color: onHero.muted }} numberOfLines={1}>
+      <Text type="small" style={{ color: onHero.muted }}>
         {label}
       </Text>
       <Text type="bodyStrong" style={{ color: onHero.text }} numberOfLines={1}>

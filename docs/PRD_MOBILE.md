@@ -144,6 +144,7 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 | Waktu | Asia/Jakarta untuk semua tanggal; jam absen = jam server |
 | Tampilan | Terang (bawaan, ruang cuci terang), Gelap, Ikuti sistem; disimpan di AsyncStorage, berlaku tanpa restart. Semua warna dari `theme/tokens.json`; header navy di kedua mode, bilah status terang. |
 | Aksesibilitas | Kontras AA kedua mode diuji (`theme/contrast.test.ts`): teks 4,5:1, garis isian dan fokus 3:1. Target sentuh >= 48 dp, tombol utama 56 dp di zona jempol. Label dan peran pembaca layar di semua tombol, isian, tab. Huruf ikut pengaturan HP. Animasi singkat dan mengikuti "kurangi gerak". |
+| Huruf | Plus Jakarta Sans (4 ketebalan), angka tabular untuk rupiah dan gram; skala v2 (isi 15, kecil 13, judul 18/16, angka 24 s.d. 28); `maxFontSizeMultiplier` 1,3 |
 | Isian | Satu komponen: garis 1 px, fokus emas 2 px, error merah + pesan di bawah, tinggi 52 dp, label di atas, bantuan di bawah, satuan di dalam isian, tanpa outline kedua (web/Android) |
 | Format angka | Rupiah `Rp 30.000`, desimal hanya bila ada sen. Gram `1.250,5 gr`, desimal hanya bila tidak bulat. MoneyInput/GramInput: titik ribuan saat mengetik, koma desimal, tempelan berformat dibaca benar, nilai terkirim angka polos. "Rp" dan "gr" tidak pernah terpisah dari angka (spasi tak terputus). |
 | Tata letak | Tombol yang menempel di bawah diukur, isi diberi ruang bawah setinggi tombol + safe area |

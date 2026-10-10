@@ -141,7 +141,7 @@ function WorkCardDetail({ id }: { id: number }) {
                 title="Verifikasi"
                 variant="secondary"
                 size="large"
-                icon="lock"
+                icon="shield"
                 onPress={() => setConfirmVerify(true)}
                 disabled={weighingBlocks}
                 accessibilityHint={

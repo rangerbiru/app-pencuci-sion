@@ -37,7 +37,7 @@ function AttendanceCard() {
           <Button
             title={checkedIn ? 'Absen pulang' : 'Absen masuk'}
             variant={checkedIn ? 'secondary' : 'primary'}
-            icon="camera"
+            icon={checkedIn ? 'log-out' : 'log-in'}
             onPress={() => router.push(checkedIn ? '/absen?mode=pulang' : '/absen?mode=masuk')}
           />
         ) : null}
