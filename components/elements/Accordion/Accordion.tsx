@@ -1,8 +1,14 @@
-import { ReactNode, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import useTheme from '@/hooks/useTheme';
-import { sizes, space } from '@/theme';
+import { duration, easing, sizes, space } from '@/theme';
 import Icon from '../Icon';
 
 /**
@@ -15,11 +21,6 @@ export function useSingleOpen(initial: string | null = null) {
   return { openKey, setOpenKey, toggle };
 }
 
-// singkat dan mengikuti pengaturan "kurangi gerak" di HP (ReduceMotion.System)
-const layout = LinearTransition.duration(180).reduceMotion(ReduceMotion.System);
-const enter = FadeIn.duration(160).reduceMotion(ReduceMotion.System);
-const exit = FadeOut.duration(100).reduceMotion(ReduceMotion.System);
-
 export interface AccordionItemProps {
   open: boolean;
   onToggle: () => void;
@@ -28,11 +29,15 @@ export interface AccordionItemProps {
   accessibilityLabel: string;
   children: ReactNode;
   divider?: boolean;
+  /** padding tepi isi; false untuk isi yang mengatur jaraknya sendiri */
+  padded?: boolean;
 }
 
 /**
- * Satu baris accordion di dalam kartu tanpa padding (Card padded={false}).
- * Efek tekan menutup seluruh lebar baris dan terpotong sudut kartu.
+ * Satu-satunya accordion di aplikasi (v2, Reanimated): tinggi isi diukur lalu dianimasikan
+ * 220 ms ease-out, isi memudar masuk, chevron berputar. Isi baru dipasang saat pertama dibuka
+ * lalu tetap terpasang (buka ulang tidak mengukur dari nol). "Kurangi gerak": langsung buka/tutup.
+ * Dipakai di dalam kartu tanpa padding; efek tekan menutup seluruh lebar baris.
  */
 export function AccordionItem({
   open,
@@ -41,10 +46,37 @@ export function AccordionItem({
   accessibilityLabel,
   children,
   divider = true,
+  padded = true,
 }: AccordionItemProps) {
   const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(open);
+  const contentHeight = useSharedValue(0);
+  const progress = useSharedValue(open ? 1 : 0);
+
+  useEffect(() => {
+    if (open) setMounted(true);
+    const to = open ? 1 : 0;
+    progress.set(
+      reduce ? to : withTiming(to, { duration: duration.accordion, easing: easing.out }),
+    );
+  }, [open, reduce, progress]);
+
+  // isi bisa berubah tinggi saat terbuka (mis. kartu konfirmasi timbang): ikut diperbarui
+  const onContentLayout = (e: LayoutChangeEvent) => {
+    contentHeight.set(Math.ceil(e.nativeEvent.layout.height));
+  };
+
+  const bodyStyle = useAnimatedStyle(() => ({
+    height: contentHeight.get() * progress.get(),
+    opacity: interpolate(progress.get(), [0, 0.4, 1], [0, 0.2, 1]),
+  }));
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${180 * progress.get()}deg` }],
+  }));
+
   return (
-    <Animated.View layout={layout}>
+    <View>
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
@@ -53,15 +85,24 @@ export function AccordionItem({
         accessibilityHint={open ? 'Ketuk untuk menutup' : 'Ketuk untuk membuka rincian'}
         style={({ pressed }) => [styles.head, pressed && { backgroundColor: colors.pressed }]}>
         <View style={styles.headContent}>{header}</View>
-        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+        <Animated.View style={chevronStyle}>
+          <Icon name="chevron-down" size={20} color={colors.textSecondary} />
+        </Animated.View>
       </Pressable>
-      {open ? (
-        <Animated.View entering={enter} exiting={exit} style={styles.body}>
-          {children}
+      {mounted ? (
+        <Animated.View
+          style={[styles.clip, bodyStyle]}
+          accessibilityElementsHidden={!open}
+          importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
+          pointerEvents={open ? 'auto' : 'none'}>
+          {/* diukur di posisi absolut supaya tingginya tidak ikut terpotong animasi */}
+          <View style={styles.measure} onLayout={onContentLayout}>
+            <View style={padded ? styles.body : undefined}>{children}</View>
+          </View>
         </Animated.View>
       ) : null}
       {divider ? <View style={[styles.divider, { backgroundColor: colors.border }]} /> : null}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -75,6 +116,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: sizes.gutter,
   },
   headContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  clip: { overflow: 'hidden' },
+  measure: { position: 'absolute', top: 0, left: 0, right: 0 },
   body: { paddingHorizontal: sizes.gutter, paddingBottom: space.md },
   divider: { height: 1, marginHorizontal: sizes.gutter },
 });

@@ -581,3 +581,14 @@ Tanggal pindah dari kartu absen ke header (kartu absen menulis "Jam server").
 Layar Notifikasi: kelompok per hari, baris = ikon jenis dalam lingkaran berwarna badge, judul (tebal
 bila belum dibaca), jam, isi satu kalimat, titik emas belum dibaca; latar biru muda (`infoBg`) untuk
 yang belum dibaca. Ikon per jenis ada di `scenes/notifications/notificationView.ts`.
+
+## Bagian 4 (14C-R2): accordion
+
+Satu komponen `components/elements/Accordion` (Reanimated, tanpa LayoutAnimation dan tanpa layout
+animation Reanimated): isi diukur di posisi absolut, tinggi dianimasikan 220 ms ease-out dari 0 ke
+tinggi terukur (shared value, ikut berubah bila isi bertambah tinggi saat terbuka), isi memudar masuk
+(opasitas 0 ke 1, tertinggal sedikit dari tinggi), chevron berputar 180 derajat. Isi dipasang saat
+pertama dibuka lalu tetap terpasang. Hanya satu terbuka (`useSingleOpen`). "Kurangi gerak": langsung
+buka/tutup. Isi yang tertutup disembunyikan dari pembaca layar dan tidak bisa disentuh. Diuji di web:
+tinggi sampel tiap 40 ms 284 > 129 > 61 > 22 > 0 (tutup) bersamaan 0 > 47 > 67 > 79 > 86 (buka).
+Dipakai di Pendapatan per hari, Riwayat, konfirmasi timbang di Beranda, dan kartu pengajuan.
