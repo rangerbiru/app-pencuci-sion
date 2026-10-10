@@ -24,7 +24,7 @@ import { toCents } from '@/utils/decimal';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Badge from '@/components/elements/Badge';
-import Amount from '@/components/elements/Amount';
+import { CountUp, HeroSurface, onHero } from '@/components/elements/Motion';
 import Icon from '@/components/elements/Icon';
 import { Dialog } from '@/components/elements/Dialog';
 import { SkeletonList } from '@/components/elements/Skeleton';
@@ -170,16 +170,21 @@ function Withdraw() {
         <ErrorState error={toApiError(balance.error)} onRetry={balance.refetch} />
       ) : b ? (
         <>
-          <Card style={styles.gap}>
-            <Text variant="small" color="textSecondary">
+          <HeroSurface>
+            <Text type="small" style={{ color: onHero.muted }}>
               Saldo dapat dicairkan
             </Text>
-            <Amount value={available} unit="rupiah" whole size="xl" />
-            <Text variant="small" color="textSecondary">
+            <CountUp
+              value={available}
+              formatted={formatRupiah(available, { style: 'whole' })}
+              prefix="Rp "
+              style={{ color: onHero.text }}
+            />
+            <Text type="small" style={{ color: onHero.muted }}>
               Sumber dana: {sourceLabel}. Minimal penarikan{' '}
               {formatRupiah(b.withdrawal.min_amount, { style: 'whole' })}.
             </Text>
-          </Card>
+          </HeroSurface>
 
           {active ? (
             <View style={[styles.note, { backgroundColor: colors.infoBg }]}>

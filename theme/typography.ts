@@ -1,44 +1,39 @@
 import { TextStyle } from 'react-native';
-import tokens from './tokens.json';
 import { fonts } from './fonts';
 
-const fs = tokens.fontSize;
-
 /**
- * Skala huruf mobile. Dasar dari tokens.json; isi 16 (web 14) karena dibaca sambil bekerja.
+ * Skala huruf mobile v2: isi 15, kecil 13, judul layar 18, judul kartu 16, angka besar 24 s.d. 28.
  * Angka memakai tabular-nums supaya kolom gram dan rupiah rata.
  */
 export const typography = {
-  display: { fontFamily: fonts.bold, fontSize: fs['3xl'].size, lineHeight: fs['3xl'].lineHeight },
-  title: { fontFamily: fonts.bold, fontSize: fs['2xl'].size, lineHeight: fs['2xl'].lineHeight },
-  heading: { fontFamily: fonts.medium, fontSize: fs.xl.size, lineHeight: fs.xl.lineHeight },
-  subheading: { fontFamily: fonts.medium, fontSize: fs.lg.size, lineHeight: fs.lg.lineHeight },
-  body: { fontFamily: fonts.regular, fontSize: fs.base.size, lineHeight: fs.base.lineHeight },
-  bodyStrong: { fontFamily: fonts.medium, fontSize: fs.base.size, lineHeight: fs.base.lineHeight },
-  small: { fontFamily: fonts.regular, fontSize: fs.sm.size, lineHeight: fs.sm.lineHeight },
-  smallStrong: { fontFamily: fonts.medium, fontSize: fs.sm.size, lineHeight: fs.sm.lineHeight },
-  caption: {
-    fontFamily: fonts.medium,
-    fontSize: fs.xs.size,
-    lineHeight: fs['theme-xs'].lineHeight,
-  },
-  button: { fontFamily: fonts.medium, fontSize: fs.base.size, lineHeight: fs.base.lineHeight },
+  // skala v2 (Tahap 14C-R2): isi 15, kecil 13, judul layar 18, judul kartu 16, angka 24 s.d. 28,
+  // tinggi baris sekitar 1,4x. Nama varian lama dipertahankan supaya semua layar ikut berubah.
+  display: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 34 },
+  title: { fontFamily: fonts.semiBold, fontSize: 18, lineHeight: 25 },
+  heading: { fontFamily: fonts.semiBold, fontSize: 17, lineHeight: 23 },
+  subheading: { fontFamily: fonts.semiBold, fontSize: 16, lineHeight: 22 },
+  body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 21 },
+  bodyStrong: { fontFamily: fonts.semiBold, fontSize: 15, lineHeight: 21 },
+  small: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  smallStrong: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
+  button: { fontFamily: fonts.semiBold, fontSize: 15, lineHeight: 21 },
   numberXL: {
-    fontFamily: fonts.semiBold,
-    fontSize: fs['title-sm'].size,
-    lineHeight: fs['title-sm'].lineHeight,
+    fontFamily: fonts.bold,
+    fontSize: 28,
+    lineHeight: 34,
     fontVariant: ['tabular-nums'],
   },
   numberL: {
     fontFamily: fonts.semiBold,
-    fontSize: fs['2xl'].size,
-    lineHeight: fs['2xl'].lineHeight,
+    fontSize: 24,
+    lineHeight: 30,
     fontVariant: ['tabular-nums'],
   },
   numberM: {
     fontFamily: fonts.semiBold,
-    fontSize: fs.lg.size,
-    lineHeight: fs.lg.lineHeight,
+    fontSize: 17,
+    lineHeight: 22,
     fontVariant: ['tabular-nums'],
   },
 } satisfies Record<string, TextStyle>;
@@ -78,8 +73,8 @@ export const type2 = {
   },
   clock: {
     fontFamily: fonts.semiBold,
-    fontSize: 40,
-    lineHeight: 46,
+    fontSize: 34,
+    lineHeight: 40,
     fontVariant: ['tabular-nums'],
   },
 } satisfies Record<string, TextStyle>;

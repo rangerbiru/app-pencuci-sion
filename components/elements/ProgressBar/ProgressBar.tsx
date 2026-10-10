@@ -1,6 +1,5 @@
-import { StyleSheet, View } from 'react-native';
 import useTheme from '@/hooks/useTheme';
-import { radius } from '@/theme';
+import { ProgressBarV2 } from '../Motion/Progress';
 
 export interface ProgressBarProps {
   /** 0..1 */
@@ -9,32 +8,16 @@ export interface ProgressBarProps {
   label: string;
 }
 
+/** Bilah progres v2: terisi dari 0 saat tampil (lihat Motion/Progress). API lama dipertahankan. */
 function ProgressBar({ value, tone = 'accent', label }: ProgressBarProps) {
   const { colors } = useTheme();
-  const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
-    <View
-      accessible
-      accessibilityRole="progressbar"
+    <ProgressBarV2
+      value={value}
+      color={tone === 'success' ? colors.success : colors.accent}
       accessibilityLabel={label}
-      accessibilityValue={{ min: 0, max: 100, now: pct }}
-      style={[styles.track, { backgroundColor: colors.border }]}>
-      <View
-        style={[
-          styles.fill,
-          {
-            width: `${pct}%`,
-            backgroundColor: tone === 'success' ? colors.success : colors.accent,
-          },
-        ]}
-      />
-    </View>
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  track: { height: 8, borderRadius: radius.badge, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: radius.badge },
-});
 
 export default ProgressBar;

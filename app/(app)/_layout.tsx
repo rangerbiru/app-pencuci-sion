@@ -7,5 +7,10 @@ export default function SignedInLayout() {
   if (updateRequired) return <Redirect href="/perbarui" />;
   if (status === 'checking') return null;
   if (status === 'signedOut') return <Redirect href="/masuk" />;
-  return <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />;
+  // native stack: transisi geser bawaan platform; layar di bawah tumpukan dibekukan
+  return (
+    <Stack
+      screenOptions={{ headerShown: false, animation: 'slide_from_right', freezeOnBlur: true }}
+    />
+  );
 }

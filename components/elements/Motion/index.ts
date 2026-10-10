@@ -6,3 +6,4 @@ export type { DonutSlice } from './Progress';
 export { default as HeroSurface, onHero } from './HeroSurface';
 export { default as FadeInItem } from './FadeInItem';
 export { default as Fab } from './Fab';
+export { FabCollapseContext, useFabCollapse } from './fabCollapse';

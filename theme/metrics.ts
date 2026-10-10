@@ -15,7 +15,8 @@ export const space = {
 export const radius = {
   badge: tokens.radius.badge,
   button: tokens.radius.button,
-  input: tokens.radius.input,
+  /** v2: isian 12 (web 8) */
+  input: 12,
   table: tokens.radius.table,
   card: tokens.radius.card,
   // kartu Hari ini dan lembar bawah memakai radius kartu web

@@ -1,9 +1,15 @@
 import { ReactNode, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { FabCollapseContext } from '@/components/elements/Motion/fabCollapse';
 import useTheme from '@/hooks/useTheme';
-import { sizes, space } from '@/theme';
-import AppHeader, { AppHeaderProps } from '../AppHeader';
-import OfflineBanner from '../OfflineBanner';
+import { duration, sizes, space } from '@/theme';
+import { AppHeaderProps } from '../AppHeader';
+import { PageHeader } from '../HomeHeader';
 
 export interface ScreenProps extends Omit<AppHeaderProps, 'title'> {
   title?: string;
@@ -44,6 +50,21 @@ function Screen({
   const { colors } = useTheme();
   const [footerHeight, setFooterHeight] = useState(0);
   const [fabHeight, setFabHeight] = useState(0);
+  // tombol melayang mengecil saat menggulir ke bawah, kembali saat ke atas atau dekat puncak
+  const fabCollapsed = useSharedValue(0);
+  const lastY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler(e => {
+    const y = e.contentOffset.y;
+    const dy = y - lastY.get();
+    lastY.set(y);
+    if (y < 24) {
+      if (fabCollapsed.get() !== 0) fabCollapsed.set(withTiming(0, { duration: duration.enter }));
+    } else if (dy > 4 && fabCollapsed.get() === 0) {
+      fabCollapsed.set(withTiming(1, { duration: duration.enter }));
+    } else if (dy < -4 && fabCollapsed.get() === 1) {
+      fabCollapsed.set(withTiming(0, { duration: duration.enter }));
+    }
+  });
   const bottomSpace = footer
     ? footerHeight + space.xxl
     : fab
@@ -51,14 +72,18 @@ function Screen({
       : space.xxxl;
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* v2: header terang dengan judul 18; lonceng di layar utama (tab), kembali di layar tumpuk */}
       {header ?? (
-        <>
-          <AppHeader title={title} {...headerProps} />
-          <OfflineBanner />
-        </>
+        <PageHeader
+          title={title}
+          subtitle={headerProps.subtitle}
+          back={headerProps.back}
+          bell={!headerProps.back}
+          right={headerProps.right}
+        />
       )}
       {scroll ? (
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={[
             styles.content,
             { paddingBottom: bottomSpace },
@@ -66,6 +91,8 @@ function Screen({
           ]}
           scrollIndicatorInsets={footer ? { bottom: footerHeight } : undefined}
           keyboardShouldPersistTaps="handled"
+          onScroll={fab ? onScroll : undefined}
+          scrollEventThrottle={16}
           refreshControl={
             onRefresh ? (
               <RefreshControl
@@ -78,7 +105,7 @@ function Screen({
             ) : undefined
           }>
           {children}
-        </ScrollView>
+        </Animated.ScrollView>
       ) : (
         <View
           style={[
@@ -94,7 +121,7 @@ function Screen({
           style={styles.fab}
           pointerEvents="box-none"
           onLayout={e => setFabHeight(Math.ceil(e.nativeEvent.layout.height))}>
-          {fab}
+          <FabCollapseContext.Provider value={fabCollapsed}>{fab}</FabCollapseContext.Provider>
         </View>
       ) : null}
       {footer ? (

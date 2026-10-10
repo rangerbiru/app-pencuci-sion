@@ -18,11 +18,13 @@ function PageHeader({
   subtitle,
   back,
   bell = true,
+  right,
 }: {
   title: string;
   subtitle?: string;
   back?: boolean;
   bell?: boolean;
+  right?: React.ReactNode;
 }) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -52,6 +54,7 @@ function PageHeader({
             </Text>
           ) : null}
         </View>
+        {right}
         <PendingChip />
         {bell ? <Bell /> : null}
       </View>

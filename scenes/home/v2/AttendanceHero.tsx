@@ -27,6 +27,8 @@ const LiveClock = memo(function LiveClock() {
   return (
     <Text
       type="clock"
+      numberOfLines={1}
+      maxFontSizeMultiplier={1.1}
       style={{ color: onHero.text }}
       accessibilityLabel={`Jam server ${now.format('HH:mm')}`}>
       {now.format('HH:mm:ss')}

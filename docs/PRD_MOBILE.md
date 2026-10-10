@@ -42,7 +42,16 @@ Bottom tab, **maksimal 5**, tanpa drawer. Tab ditentukan dari `GET /me` `role.co
   Borongan, lalu isi Profil.
 - Label tab tidak pernah terpotong: ukuran huruf mengikuti besar huruf HP, label dua kata turun ke
   baris kedua, kalau tetap tidak muat ukurannya dikecilkan (diuji 360 dan 412 dp, 130%).
-- Tab aktif ditandai pil emas di belakang ikon; efek tekan terbatas di dalam pil.
+- Tab aktif ditandai pil emas di belakang ikon yang bergeser halus antar tab; efek tekan terbatas
+  di dalam pil. Tab dipasang saat pertama dibuka dan tab tidak aktif dibekukan (`lazy`,
+  `freezeOnBlur`), begitu pula layar di bawah tumpukan.
+- Header v2 terang: Beranda = avatar, "Hai, nama", peran/tim; layar lain = judul 18. Lonceng di
+  kanan semua layar utama dengan badge belum dibaca (`GET /me/notifications/unread-count` tiap 60
+  detik saat terbuka, saat layar fokus, saat aplikasi aktif). Ketuk = layar Notifikasi (terbaru di
+  atas, ketuk = tandai dibaca lalu buka `target.screen`/`target.id`, Tandai semua dibaca).
+- Aksi utama melayang di kanan bawah, hanya di Beranda: Pencuci = langkah berikutnya (Ambil bahan /
+  Serah hasil), Mandor = Terima batch bila ada batch masuk. Mengecil menjadi ikon saat isi digulir
+  ke bawah; isi diberi ruang bawah setinggi tombol.
 
 ### Modul dan feature flag (`utils/config.ts`)
 

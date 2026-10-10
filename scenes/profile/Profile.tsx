@@ -18,7 +18,7 @@ import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
 import ListRow from '@/components/elements/ListRow';
-import Emblem from '@/components/elements/Emblem';
+import { HeroSurface, onHero } from '@/components/elements/Motion';
 import Amount from '@/components/elements/Amount';
 import Segmented from '@/components/elements/Segmented';
 import ContactAdmin from '@/components/elements/ContactAdmin';
@@ -112,13 +112,28 @@ function Profile({ account = false }: { account?: boolean }) {
       title={account ? 'Akun' : 'Profil'}
       refreshing={me.isFetching && !me.isLoading}
       onRefresh={me.refetch}>
-      <Card style={styles.head}>
-        <Emblem size={56} />
-        <View style={styles.flex}>
-          <Text variant="heading">{user?.name}</Text>
-          {user ? <Badge status={user.role} kind="role" icon="user" /> : null}
+      <HeroSurface style={styles.head}>
+        <View
+          style={[
+            styles.avatar,
+            { backgroundColor: onHero.glass, borderColor: onHero.glassBorder },
+          ]}>
+          <Text type="screenTitle" style={{ color: colors.accent }}>
+            {(user?.name ?? '?')
+              .replace(/^(Bu|Pak)\s+/i, '')
+              .slice(0, 1)
+              .toUpperCase()}
+          </Text>
         </View>
-      </Card>
+        <View style={styles.flex}>
+          <Text type="screenTitle" style={{ color: onHero.text }}>
+            {user?.name}
+          </Text>
+          <Text type="small" style={{ color: onHero.muted }}>
+            {[user?.role.label, user?.location?.name].filter(Boolean).join(', ')}
+          </Text>
+        </View>
+      </HeroSurface>
 
       {account && isFeatureEnabled('earnings') ? <EarningsSummary /> : null}
 
@@ -232,6 +247,14 @@ function Profile({ account = false }: { account?: boolean }) {
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   flex: { flex: 1, gap: space.xs },
   fields: { gap: space.md },
   field: { gap: 2 },

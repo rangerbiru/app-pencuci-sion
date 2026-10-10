@@ -25,7 +25,9 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{ headerShown: false }}
+      // HP murah: tab dipasang saat pertama dibuka, dan tab yang tidak aktif dibekukan
+      // (react-native-screens freeze) sehingga tidak dirender ulang di belakang
+      screenOptions={{ headerShown: false, lazy: true, freezeOnBlur: true }}
       tabBar={props => <TabBar {...props} items={items} />}>
       {ALL_TABS.map(name => (
         <Tabs.Screen
