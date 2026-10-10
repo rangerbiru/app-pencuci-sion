@@ -14,7 +14,7 @@ import useNow from '@/hooks/useNow';
 import useTheme from '@/hooks/useTheme';
 import { duration, easing, space } from '@/theme';
 import { Attendance } from '@/types';
-import { formatDayLong, formatTime, jakarta } from '@/utils/date';
+import { formatTime, jakarta } from '@/utils/date';
 import Text from '@/components/elements/Text';
 import Icon from '@/components/elements/Icon';
 import { HeroSurface, onHero, PressableScale, ProgressBarV2 } from '@/components/elements/Motion';
@@ -110,7 +110,7 @@ function AttendanceHero({
       <View style={styles.top}>
         <View style={styles.flex}>
           <Text type="small" style={{ color: onHero.muted }}>
-            {formatDayLong(now.format('YYYY-MM-DD'))}
+            Jam server
           </Text>
           <LiveClock />
           <Text type="small" style={{ color: onHero.muted }}>

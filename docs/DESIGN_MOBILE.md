@@ -571,3 +571,13 @@ Satu komponen `components/elements/Button` untuk semua tombol berteks:
 Pressable + shared value, bukan Gesture.Tap: tombol juga dipakai di dalam `Modal` (lembar konfirmasi),
 tempat gesture handler tidak berjalan di Android tanpa root tambahan. Tombol hero (Tarik dana, Terima
 batch) kini memakai komponen yang sama.
+
+## Bagian 3 (14C-R2): header dan notifikasi
+
+Header Beranda: avatar inisial 40 dp, sapaan 13 redup, nama 17 semibold, tanggal + peran/tim 13;
+lonceng 44 dp di kanan semua layar utama (badge merah angka, pop + goyang sekali saat bertambah).
+Tanggal pindah dari kartu absen ke header (kartu absen menulis "Jam server").
+
+Layar Notifikasi: kelompok per hari, baris = ikon jenis dalam lingkaran berwarna badge, judul (tebal
+bila belum dibaca), jam, isi satu kalimat, titik emas belum dibaca; latar biru muda (`infoBg`) untuk
+yang belum dibaca. Ikon per jenis ada di `scenes/notifications/notificationView.ts`.

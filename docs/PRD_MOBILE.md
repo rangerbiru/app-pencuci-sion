@@ -45,10 +45,15 @@ Bottom tab, **maksimal 5**, tanpa drawer. Tab ditentukan dari `GET /me` `role.co
 - Tab aktif ditandai pil emas di belakang ikon yang bergeser halus antar tab; efek tekan terbatas
   di dalam pil. Tab dipasang saat pertama dibuka dan tab tidak aktif dibekukan (`lazy`,
   `freezeOnBlur`), begitu pula layar di bawah tumpukan.
-- Header v2 terang: Beranda = avatar, "Hai, nama", peran/tim; layar lain = judul 18. Lonceng di
+- Header v2 terang: Beranda = avatar kecil, sapaan (13, redup), nama (17 semibold), tanggal dan
+  peran/tim (13); layar lain = judul 18. Lonceng di
   kanan semua layar utama dengan badge belum dibaca (`GET /me/notifications/unread-count` tiap 60
-  detik saat terbuka, saat layar fokus, saat aplikasi aktif). Ketuk = layar Notifikasi (terbaru di
-  atas, ketuk = tandai dibaca lalu buka `target.screen`/`target.id`, Tandai semua dibaca).
+  detik saat terbuka, saat layar fokus, saat aplikasi aktif). Ketuk = layar Notifikasi: terbaru di
+  atas dikelompokkan per hari (Hari ini, Kemarin, tanggal), ikon per jenis, belum dibaca ditandai
+  (latar, huruf tebal, titik emas), 20 per halaman dengan Muat lebih banyak, tarik untuk menyegarkan,
+  diambil ulang setiap dibuka. Ketuk = tandai dibaca seketika (badge ikut berkurang) lalu buka
+  `target.screen`/`target.id`; `target` kosong (notifikasi lama dari web) = hanya ditandai dibaca.
+  Tandai semua dibaca. Push notification belum (fase berikutnya).
 - Aksi utama melayang di kanan bawah, hanya di Beranda: Pencuci = langkah berikutnya (Ambil bahan /
   Serah hasil), Mandor = Terima batch bila ada batch masuk. Mengecil menjadi ikon saat isi digulir
   ke bawah; isi diberi ruang bawah setinggi tombol.

@@ -3,6 +3,8 @@ import useOnFocus from '@/hooks/useOnFocus';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useTheme from '@/hooks/useTheme';
+import useNow from '@/hooks/useNow';
+import { formatDayLong, greeting } from '@/utils/date';
 import { sizes, space } from '@/theme';
 import Text from '@/components/elements/Text';
 import OfflineBanner from '../OfflineBanner';
@@ -11,7 +13,7 @@ import Bell from './Bell';
 
 export interface HomeHeaderProps {
   name: string;
-  /** baris kecil: peran dan tim, mis. "Pencuci, tim Bu Sari" */
+  /** peran dan tim, mis. "Pencuci, tim Bu Sari"; tampil bersama tanggal di baris bawah */
   subtitle?: string;
 }
 
@@ -24,11 +26,13 @@ function initials(name: string) {
 }
 
 /**
- * Header v2 untuk Beranda: di atas latar layar (bukan bilah navy), avatar inisial, "Hai, nama",
- * peran/tim kecil, lonceng. Bilah status gelap di mode terang selama layar ini fokus.
+ * Header v2 untuk Beranda: di atas latar layar (bukan bilah navy), avatar inisial kecil, sapaan
+ * kecil redup (13), nama 17 semibold, lalu tanggal dan peran/tim (13), lonceng di kanan.
+ * Bilah status gelap di mode terang selama layar ini fokus.
  */
 function HomeHeader({ name, subtitle }: HomeHeaderProps) {
   const { colors, isDark } = useTheme();
+  const now = useNow(60000);
   const insets = useSafeAreaInsets();
 
   useOnFocus(
@@ -48,14 +52,16 @@ function HomeHeader({ name, subtitle }: HomeHeaderProps) {
           </Text>
         </View>
         <View style={styles.titles}>
-          <Text type="name" numberOfLines={1} accessibilityRole="header">
-            Hai, {name}
+          <Text type="small" color="textSecondary" numberOfLines={1}>
+            {greeting(now)},
           </Text>
-          {subtitle ? (
-            <Text type="small" color="textSecondary" numberOfLines={1}>
-              {subtitle}
-            </Text>
-          ) : null}
+          <Text type="name" numberOfLines={1} accessibilityRole="header">
+            {name}
+          </Text>
+          <Text type="small" color="textSecondary" numberOfLines={2}>
+            {formatDayLong(now.format('YYYY-MM-DD'))}
+            {subtitle ? `. ${subtitle}` : ''}
+          </Text>
         </View>
         <PendingChip />
         <Bell />
@@ -74,9 +80,9 @@ const styles = StyleSheet.create({
     paddingBottom: space.sm,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
