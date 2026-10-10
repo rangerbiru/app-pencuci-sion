@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -6,6 +6,8 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withTiming,
+  cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
 import useTheme from '@/hooks/useTheme';
 import { radius, space } from '@/theme';
@@ -16,19 +18,41 @@ export interface SkeletonProps {
   rounded?: number;
 }
 
-/** Balok muat. Berdenyut pelan; diam bila "Kurangi gerak" aktif. */
+/** Balok muat dengan kilau halus yang bergeser; diam bila "Kurangi gerak" aktif. */
 export function Skeleton({ width = '100%', height = 16, rounded = radius.button }: SkeletonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const reduce = useReducedMotion();
-  const opacity = useSharedValue(1);
+  const [w, setW] = useState(0);
+  const x = useSharedValue(0);
   useEffect(() => {
-    if (!reduce) opacity.value = withRepeat(withTiming(0.5, { duration: 800 }), -1, true);
-  }, [reduce, opacity]);
-  const anim = useAnimatedStyle(() => ({ opacity: opacity.value }));
+    if (reduce || w === 0) return;
+    x.set(0);
+    x.set(withRepeat(withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.quad) }), -1));
+    return () => cancelAnimation(x);
+  }, [reduce, w, x]);
+  const band = useAnimatedStyle(() => ({
+    transform: [{ translateX: -w * 0.6 + x.get() * w * 1.6 }],
+  }));
   return (
-    <Animated.View
-      style={[{ width, height, borderRadius: rounded, backgroundColor: colors.skeleton }, anim]}
-    />
+    <View
+      onLayout={e => setW(e.nativeEvent.layout.width)}
+      style={[
+        styles.block,
+        { width, height, borderRadius: rounded, backgroundColor: colors.skeleton },
+      ]}>
+      {!reduce && w > 0 ? (
+        <Animated.View
+          style={[
+            styles.band,
+            {
+              width: w * 0.6,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.55)',
+            },
+            band,
+          ]}
+        />
+      ) : null}
+    </View>
   );
 }
 
@@ -48,6 +72,8 @@ export function SkeletonList({ rows = 4 }: { rows?: number }) {
 }
 
 const styles = StyleSheet.create({
+  block: { overflow: 'hidden' },
+  band: { position: 'absolute', top: 0, bottom: 0, left: 0 },
   list: { gap: space.lg },
   row: { gap: space.sm },
 });

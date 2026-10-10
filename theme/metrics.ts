@@ -20,6 +20,10 @@ export const radius = {
   card: tokens.radius.card,
   // kartu Hari ini dan lembar bawah memakai radius kartu web
   sheet: tokens.radius.card,
+  /** v2: kartu hero 24, ubin dan isian 12 */
+  hero: 24,
+  tile: 12,
+  pill: 9999,
 } as const;
 
 export const sizes = {
@@ -39,4 +43,12 @@ export const sizes = {
 export const shadow = {
   // hanya dipakai di kartu Hari ini dan bilah aksi bawah; kartu lain cukup garis 1 dp
   xs: tokens.shadow.reactNative.xs,
+  /** v2: hanya kartu hero dan tombol melayang; warna bayangan navy, bukan hitam */
+  hero: {
+    shadowColor: tokens.palette.primary['600'],
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    elevation: 4,
+  },
 } as const;

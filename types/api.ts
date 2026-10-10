@@ -549,3 +549,35 @@ export interface PreparationResult {
   susut_gram: Decimal;
   batches: Batch[];
 }
+
+// ---------- Tahap 15D: notifikasi ----------
+
+export interface AppNotification {
+  id: number;
+  type: Status;
+  title: string;
+  body: string;
+  created_at: IsoDateTime;
+  is_read: boolean;
+  read_at: IsoDateTime | null;
+  /** layar tujuan; null = notifikasi lama dari web tanpa tujuan */
+  target: { screen: string; id: number | null } | null;
+  data: Record<string, unknown>;
+}
+
+/** GET /me/kpi?month=YYYY-MM (ringkasan bulan) */
+export interface Kpi {
+  month: string;
+  work_days: number;
+  present_days: number;
+  material_gram: Decimal;
+  gram_per_day: Decimal;
+  target_gram_per_day: Decimal | null;
+  yield: {
+    group: string;
+    gram: Decimal;
+    percent: Decimal | null;
+    target_percent: Decimal | null;
+  }[];
+  monthly_bonus: { status: Status; amount: Decimal | null } | null;
+}

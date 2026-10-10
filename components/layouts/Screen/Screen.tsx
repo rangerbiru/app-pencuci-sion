@@ -5,8 +5,15 @@ import { sizes, space } from '@/theme';
 import AppHeader, { AppHeaderProps } from '../AppHeader';
 import OfflineBanner from '../OfflineBanner';
 
-export interface ScreenProps extends AppHeaderProps {
+export interface ScreenProps extends Omit<AppHeaderProps, 'title'> {
+  title?: string;
   children: ReactNode;
+  /** v2: header pengganti (mis. HomeHeader); banner sinyal diurus header itu */
+  header?: ReactNode;
+  /** v2: tombol melayang kanan bawah (aksi utama); isi diberi ruang bawah setinggi tombol */
+  fab?: ReactNode;
+  /** jarak antar bagian isi; bawaan 24 */
+  gap?: number;
   /** bilah aksi bawah (BottomBar) */
   footer?: ReactNode;
   refreshing?: boolean;
@@ -28,18 +35,35 @@ function Screen({
   onRefresh,
   scroll = true,
   padded = true,
-  ...header
+  header,
+  fab,
+  gap,
+  title = '',
+  ...headerProps
 }: ScreenProps) {
   const { colors } = useTheme();
   const [footerHeight, setFooterHeight] = useState(0);
-  const bottomSpace = footer ? footerHeight + space.xxl : space.xxxl;
+  const [fabHeight, setFabHeight] = useState(0);
+  const bottomSpace = footer
+    ? footerHeight + space.xxl
+    : fab
+      ? fabHeight + space.lg * 2
+      : space.xxxl;
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <AppHeader {...header} />
-      <OfflineBanner />
+      {header ?? (
+        <>
+          <AppHeader title={title} {...headerProps} />
+          <OfflineBanner />
+        </>
+      )}
       {scroll ? (
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: bottomSpace }]}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: bottomSpace },
+            gap !== undefined && { gap },
+          ]}
           scrollIndicatorInsets={footer ? { bottom: footerHeight } : undefined}
           keyboardShouldPersistTaps="handled"
           refreshControl={
@@ -65,6 +89,14 @@ function Screen({
           {children}
         </View>
       )}
+      {fab ? (
+        <View
+          style={styles.fab}
+          pointerEvents="box-none"
+          onLayout={e => setFabHeight(Math.ceil(e.nativeEvent.layout.height))}>
+          {fab}
+        </View>
+      ) : null}
       {footer ? (
         <View
           style={styles.footer}
@@ -81,6 +113,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: sizes.gutter, gap: space.xxl },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  fab: { position: 'absolute', right: sizes.gutter, bottom: space.lg },
   contentStatic: { padding: sizes.gutter },
 });
 

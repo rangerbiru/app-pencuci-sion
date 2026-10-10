@@ -7,3 +7,4 @@ export * from './earnings.service';
 export * from './team.service';
 export * from './workCards.service';
 export * from './batches.service';
+export * from './notifications.service';

@@ -4,6 +4,7 @@ import {
   BonusesSummary,
   DailyProfitResponse,
   Earnings,
+  Kpi,
   Paginated,
   Withdrawal,
 } from '@/types';
@@ -29,6 +30,11 @@ export const earningsApi = api.injectEndpoints({
       query: args => ({ path: '/me/daily-profit', params: args ?? undefined }),
       providesTags: ['DailyProfit'],
     }),
+    getMyKpi: build.query<Kpi, string | void>({
+      query: month => ({ path: '/me/kpi', params: month ? { month } : undefined }),
+      transformResponse: unwrapData<Kpi>,
+      providesTags: ['Kpi'],
+    }),
     getWithdrawals: build.query<Paginated<Withdrawal>, number | void>({
       query: page => ({ path: '/me/withdrawals', params: { page: page ?? 1, per_page: 20 } }),
       providesTags: ['Withdrawals'],
@@ -51,6 +57,7 @@ export const {
   useGetBalanceQuery,
   useGetBonusesQuery,
   useGetMyDailyProfitQuery,
+  useGetMyKpiQuery,
   useGetWithdrawalsQuery,
   useCreateWithdrawalMutation,
   useCancelWithdrawalMutation,

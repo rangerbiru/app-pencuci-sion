@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
-import { sizes, space } from '@/theme';
+import { radius, sizes, space } from '@/theme';
 import { isFeatureEnabled } from '@/utils/config';
 import {
   formatDate,
@@ -26,11 +25,13 @@ import Section from '@/components/elements/Section';
 import Text from '@/components/elements/Text';
 import Amount from '@/components/elements/Amount';
 import Badge from '@/components/elements/Badge';
-import Button, { IconButton } from '@/components/elements/Button';
-import BottomBar from '@/components/elements/BottomBar';
+import { IconButton } from '@/components/elements/Button';
+import { PageHeader } from '@/components/layouts/HomeHeader';
+import { Skeleton, SkeletonList } from '@/components/elements/Skeleton';
+import { FadeInItem, ProgressBarV2 } from '@/components/elements/Motion';
+import BalanceHero from './BalanceHero';
 import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
 import ProgressBar from '@/components/elements/ProgressBar';
-import { SkeletonList } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import MoneyRow from './MoneyRow';
 
@@ -182,18 +183,14 @@ function Earnings({ back = false }: { back?: boolean }) {
       back={back}
       refreshing={(earnings.isFetching || balance.isFetching) && !earnings.isLoading}
       onRefresh={refresh}
-      footer={
-        isFeatureEnabled('withdrawals') ? (
-          <BottomBar inTabs={!back}>
-            <Button
-              title="Tarik dana"
-              icon="dollar-sign"
-              onPress={() => router.push('/tarik-dana')}
-              style={styles.flex}
-            />
-          </BottomBar>
-        ) : undefined
-      }>
+      header={<PageHeader title="Pendapatan" back={back} />}>
+      {b ? (
+        <FadeInItem index={0}>
+          <BalanceHero balance={b} />
+        </FadeInItem>
+      ) : balance.isLoading ? (
+        <Skeleton height={196} rounded={radius.hero} />
+      ) : null}
       <View style={styles.weekPicker}>
         <IconButton
           icon="chevron-left"
@@ -241,6 +238,28 @@ function Earnings({ back = false }: { back?: boolean }) {
             <Text variant="small" color="textSecondary">
               Hadir {e.present_days} hari, bahan {formatGram(e.material_gram)}
             </Text>
+            {e.bonus_mingguan.target_gram ? (
+              <View style={styles.bonus}>
+                <View style={styles.noteRow}>
+                  <Text type="label" style={styles.flex}>
+                    Bonus mingguan
+                  </Text>
+                  <Badge status={e.bonus_mingguan.status} kind="bonus" />
+                </View>
+                <ProgressBarV2
+                  value={progressRatio(
+                    e.bonus_mingguan.achieved_gram,
+                    e.bonus_mingguan.target_gram,
+                  )}
+                  accessibilityLabel={`Bonus mingguan ${formatGram(e.bonus_mingguan.achieved_gram)} dari ${formatGram(e.bonus_mingguan.target_gram)}`}
+                />
+                <Text type="small" color="textSecondary">
+                  {formatGram(e.bonus_mingguan.achieved_gram)} dari{' '}
+                  {formatGram(e.bonus_mingguan.target_gram)},{' '}
+                  {formatRupiah(e.bonus_mingguan.amount, { style: 'whole' })}
+                </Text>
+              </View>
+            ) : null}
           </Card>
 
           <Section title="Rincian">
@@ -404,6 +423,7 @@ const styles = StyleSheet.create({
   weekPicker: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   weekLabel: { flex: 1 },
   total: { gap: space.sm },
+  bonus: { gap: space.sm, marginTop: space.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   noteRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, alignItems: 'center' },
   tight: { paddingVertical: space.xs },

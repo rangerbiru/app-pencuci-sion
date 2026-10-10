@@ -432,3 +432,83 @@ Tinjauan (frontend-design, design-taste-frontend, ui-ux-pro-max), putaran 1 lalu
 | Dana Mandor: "Pengajuan aktif Rp 0" di setiap pencuci | Baris hanya tampil bila ada nominal |
 | Badge "Menunggu" di Riwayat tanpa konteks | Awalan "Timbang: Menunggu" |
 | Logo bertulisan navy tidak terbaca di mode gelap | Alas terang di belakang logo layar masuk |
+
+## Arah visual v2 (Tahap 14C-R2, menunggu persetujuan)
+
+Skill yang dipakai: vercel-react-native-skills, ui-ux-pro-max, design-taste-frontend, frontend-design.
+
+Design read: aplikasi kerja lapangan Android (HP kelas bawah, tangan basah, ruang cuci terang) untuk
+tim pencucian sarang walet; bahasa visual "utilitas hangat yang tepercaya"; memakai token SION
+(navy, emas, krem) dengan kartu bertingkat, grafik SVG ringan, dan gerak yang menjawab sentuhan.
+Dial: variasi 4, gerak 5, kepadatan 5 (layar kerja harian, bukan halaman pemasaran).
+
+### Referensi (`docs/referensi-desain/`) dan pola yang diambil
+
+| Gambar | Pola yang diambil | Yang sengaja tidak diambil |
+|---|---|---|
+| design2 (HR absensi, tiga layar) | Header kartu: avatar, "Hai, nama", baris kecil di bawahnya, lonceng dengan badge angka. Kartu absen sebagai pusat Beranda: jam berjalan besar, tanggal, tombol bulat besar, kotak Masuk/Pulang berisi jam, bilah durasi. Kartu "Ringkasan bulanan" berisi ubin ikon + label + angka. Cincin progres dengan angka di tengah dan keterangan "3 / 5 selesai". Kartu horizontal dengan bilah progres. Tombol aksi melayang (extended FAB) di kanan bawah. | Warna toska dan gradasi kaca bertumpuk; blur sungguhan; segmented "Personal/Group" yang berpendar; daftar chat. |
+| design3 (aplikasi jasa servis) | Header ringan di latar layar (bukan bilah berwarna) dengan lonceng berbulatan; satu kartu "hero" berwarna merek dengan dua tombol; kisi aksi cepat ikon + label; bilah tab dengan pil di tab aktif dan label. | Foto orang di hero, karusel bertitik, kolom cari, strip "terverifikasi/garansi", harga coret. Tidak relevan untuk alat kerja. |
+| design4 (fintech) | Sapaan kecil redup di atas nama tebal; kartu saldo berwarna merek dengan tombol pil di dalamnya; baris aksi cepat bulat; daftar transaksi: ikon bulat kiri, judul + keterangan, nominal + waktu kanan; chip filter; isian nominal dengan chip nominal cepat; layar berhasil: centang besar, nominal, rincian, tombol Selesai; menu profil berbaris dengan chevron. | Hijau merek PayNest, logo bank, ilustrasi 3D, header profil berwarna penuh. |
+
+Ringkasnya: **kartu hero berwarna navy satu per layar**, ubin ringkasan bersudut lembut, cincin dan
+bilah progres SVG, sapaan + lonceng di header terang, pil tab, dan aksi utama melayang di zona jempol.
+
+### Tinjauan rencana terhadap brief (sebelum kode)
+
+- Hampir terjebak pola umum "kartu gradasi + angka besar + statistik" di setiap layar. Diputuskan:
+  hanya **satu** kartu navy per layar (Beranda Pencuci: absen; Pendapatan: saldo; Beranda Mandor:
+  batch masuk). Kartu lain putih/krem bergaris 1 px, supaya kartu utama benar-benar menonjol.
+- Krem + navy + emas adalah identitas SION dari web (tokens.json), bukan pilihan bawaan; tetap.
+- Efek kaca = permukaan putih semi transparan di atas kartu navy (`rgba(255,255,255,0.08)`), tanpa
+  `backdrop-filter`/expo-blur (berat di HP murah).
+- Tidak ada label kapital berjarak, tidak ada titik dekoratif; badge hanya untuk status nyata.
+- Penyimpangan dari vercel-react-native-skills: bilah tab tetap JS (expo-router Tabs) karena tab
+  native tidak bisa menggambar indikator pil yang bergeser; tumpukan layar tetap native stack.
+
+### Token tambahan v2 (`theme/motion.ts`, `theme/metrics.ts`)
+
+| Token | Nilai | Pakai |
+|---|---|---|
+| Gradasi merek terang | navy `primary-600 #16293F` ke `primary-500 #1E3A5F`, diagonal | kartu hero (SVG LinearGradient) |
+| Gradasi merek gelap | `primary-700 #101E2E` ke `primary-500`, garis 1 px `rgba(255,255,255,0.08)` | kartu hero mode gelap |
+| Permukaan kaca | `rgba(255,255,255,0.08)` (teks putih), garis `rgba(255,255,255,0.12)` | ubin di dalam kartu hero |
+| Radius | hero 24, kartu 16, ubin dan isian 12, tombol 12, pil/badge 999 | satu skala untuk semua layar |
+| Bayangan | hero: `#16293F` opasitas 0,16, radius 16, elevasi 4; kartu biasa tanpa bayangan (garis 1 px) | hanya kartu hero dan tombol melayang |
+| Durasi | tekan 120, keluar 150, masuk 220, accordion 220, toast 240, lembar bawah 280, isi progres 700, hitung naik 600 (ms) | 150 s.d. 300 ms untuk perubahan UI; isi progres dan hitung naik sekali saat tampil |
+| Kurva | `Easing.out(Easing.cubic)` untuk masuk dan isi; spring tekan `{damping 18, stiffness 320, mass 0.6}`; spring lembar `{damping 22, stiffness 220}` | |
+| Bertahap | 35 ms per item, maksimal 8 item pertama, fade + geser naik 8 dp, hanya saat layar pertama dibuka | daftar dan ubin Beranda |
+| Tekan | skala 0,97 + haptic ringan (expo-haptics `ImpactFeedbackStyle.Light`) | kartu dan tombol yang bisa ditekan |
+| Denyut | skala 1 ke 1,04, 1.200 ms bolak-balik, hanya tombol Absen saat belum absen | satu-satunya animasi berulang |
+| Kurangi gerak | `useReducedMotion()`: tanpa bertahap, hitung naik, denyut, goyang lonceng; isi progres langsung | perubahan status tetap terlihat |
+
+Huruf untuk layar contoh memakai skala baru dari bagian 1 brief (isi 15, kecil 13, judul layar 18,
+judul kartu 16, angka besar 24 s.d. 28, tinggi baris 1,4x); pilihan keluarga huruf menunggu
+perbandingan di bagian 1.
+
+### Layar contoh v2 (tiga layar)
+
+```
+Beranda Pencuci                 Pendapatan                      Beranda Mandor
++---------------------------+   +---------------------------+   +---------------------------+
+| (S) Hai, Siti         (3)🔔|   | Pendapatan            🔔  |   | (J) Hai, Pak Joko     (5)🔔|
+|     Pencuci, tim Bu Sari  |   |                           |   |     Mandor                |
+| +=======================+ |   | +=======================+ |   | +=======================+ |
+| | Jumat, 10 Okt          | |   | | Saldo dapat dicairkan | |   | | Batch masuk           | |
+| | 13:42:08      ( O )    | |   | | Rp 3.747.500          | |   | | B-MOB-IN, Sudut Putih | |
+| | [Masuk 07:50][Pulang -]| |   | | Dana Mandor Pak Joko  | |   | | 3.000 gr dikirim      | |
+| | ▓▓▓▓░░ 5 j 52 m kerja  | |   | | [pending][THR]  (Tarik)| |   | |          (Terima)     | |
+| +=======================+ |   | +=======================+ |   | +=======================+ |
+| Hari ini                  |   | < Minggu 41 >             |   | [Hadir 2/3][Verif 2]     |
+| [Ambil] [Serah] [Ulang]   |   | Rincian (baris uang)      |   | [Belum QC 1][Tarik 0]    |
+| ! Konfirmasi timbang      |   | Bonus mingguan ▓▓▓░ 63%   |   | Batch & penjatahan        |
+| Target minggu ini (◔ 63%) |   | Per hari (accordion)      |   | B-MOB-IN ▓▓▓▓░ 75% dijatah|
+| Ringkasan bulan ini 2x2   |   | THR dan bonus             |   | Hasil 7 hari (donat)      |
+|               (Ambil bahan>)|  |                           |   |            (Terima batch>)|
+| [Beranda][Pendapatan]...  |   | [tab]                     |   | [tab]                     |
++---------------------------+   +---------------------------+   +---------------------------+
+```
+
+Aksi utama per peran: tombol melayang (extended FAB) di kanan bawah, tepat di atas bilah tab, hanya
+di Beranda (Pencuci: langkah berikutnya hari ini; Mandor: Terima batch bila ada batch masuk).
+Dipilih daripada tombol tengah di bilah tab karena Mandor sudah punya 5 tab: tombol keenam membuat
+label tab mengecil di 360 dp.

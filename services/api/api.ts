@@ -42,6 +42,8 @@ export const tagTypes = [
   'Items',
   'BonusProgress',
   'MandorFunds',
+  'Notifications',
+  'Kpi',
 ] as const;
 
 export const api = createApi({

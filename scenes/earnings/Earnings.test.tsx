@@ -57,6 +57,7 @@ jest.mock('@/services', () => ({
   useGetEarningsQuery: () => q(earnings),
   useGetBalanceQuery: () => q(balance),
   useGetMyDailyProfitQuery: () => q({ data: [], meta: { from: '', to: '' } }),
+  useGetUnreadCountQuery: () => q(0),
 }));
 
 describe('<Earnings /> Pendapatan', () => {
@@ -74,6 +75,13 @@ describe('<Earnings /> Pendapatan', () => {
     expect(screen.getByTestId('money-Saldo Dapat Dicairkan')).toHaveTextContent('Rp\u00a0280.000');
     expect(screen.getByTestId('money-Bonus Pending')).toHaveTextContent('Rp\u00a0100.000');
     expect(screen.getByTestId('money-THR Ditahan')).toHaveTextContent('Rp\u00a022.400');
-    expect(screen.getByText('Capai')).toBeTruthy();
+    expect(screen.getAllByText('Capai').length).toBeGreaterThan(0);
+  });
+
+  it('shows the withdrawable balance in the hero card with a Tarik dana action', () => {
+    renderWithProviders(<Earnings />);
+    expect(screen.getByText('Saldo dapat dicairkan')).toBeTruthy();
+    expect(screen.getByLabelText('Rp\u00a0280.000')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Tarik dana' })).toBeTruthy();
   });
 });
