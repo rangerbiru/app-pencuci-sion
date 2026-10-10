@@ -45,7 +45,7 @@ Error:
 | 403 | Tidak punya akses (peran salah, data orang di luar tim). |
 | 404 | Data tidak ditemukan. |
 | 409 | Bentrok dengan keadaan data (mis. sudah absen masuk, sudah ada pengajuan penarikan aktif, pengajuan sudah diproses), atau `Idempotency-Key` dipakai untuk isian lain / masih diproses. |
-| 422 | Isian tidak valid. `errors` berisi pesan per kolom; `message` = pesan pertama. |
+| 422 | Isian tidak valid. `errors` berisi pesan per kolom; `message` = pesan pertama. Pesan selalu berbahasa Indonesia dan siap ditampilkan apa adanya: nama kolom diterjemahkan (`prepared_at` = "Tanggal penyiapan", `received_qty` = "Gram diterima", `outputs.*.weight` = "Gram hasil"), begitu juga kata tanggal relatif dan format (mis. `Tanggal penyiapan tidak boleh melebihi hari ini.`, `Format tanggal awal harus tahun-bulan-tanggal (mis. 2026-10-10).`). |
 | 429 | Terlalu banyak percobaan. Header `Retry-After` berisi detik tunggu. |
 
 ### Cakupan data per peran
@@ -524,7 +524,7 @@ QC `belum_standard` (POST /work-cards/{id}/qc atau simpan kartu) membuat catatan
 
 | Endpoint | Isi |
 |---|---|
-| GET /me/rework | Pencuci: kerja ulang yang masih berjalan: `id`, `daily_work_card_id`, `card_date`, `rework_date`, `pcs`, `gram`, `status`, `taken_pcs`, `taken_at`, `returned_pcs`, `returned_at`. |
+| GET /me/rework | Pencuci: kerja ulang yang masih berjalan: `id`, `daily_work_card_id`, `card_date`, `rework_date`, `pcs`, `gram`, `status`, `taken_pcs`, `taken_at`, `returned_pcs`, `returned_at`, `pending_submission` (boolean: masih ada pengajuan ambil/serah kerja ulang ini yang menunggu verifikasi; sembunyikan tombol Ambil/Serah selama `true`, pengajuan kedua ditolak 422). Objek yang sama dipakai `rework` di GET /approvals/{id}. |
 | POST /work/take-rework | Saat absen masuk: `rework_item_id`, `pcs`, `photo` opsional. Membuat pengajuan `ambil_kerja_ulang`. |
 | POST /work/hand-over-rework (multipart) | Saat pulang: `rework_item_id`, `pcs`, `photo` wajib. Membuat pengajuan `serah_kerja_ulang`; hanya setelah kerja ulang diambil. |
 
@@ -630,6 +630,70 @@ Saldo dana Mandor ini per pencuci Borongan (sesudah sinkron saldo, sama dengan `
 POST /work/take-material dan /work/hand-over-damp boleh untuk Kepala Pencuci yang **punya kontrak kerja aktif** (dianggap ikut mencuci). Tanpa kontrak, atau kontraknya sudah berakhir: 403 `Kepala Pencuci hanya bisa mengajukan kalau ikut mencuci dan punya kontrak kerja aktif. Minta Admin menambahkan kontrak kerja Anda.` Mandor tetap 403.
 
 Batasan saat ini: penjatahan, Kartu Kerja Harian, dan approval masih hanya untuk peran Pencuci (aturan bisnis yang belum diubah). Jadi Kepala belum bisa menerima jatah, ambil bahan Kepala ditolak 422 (`Jatah ini bukan milik Anda.`), dan serah lembab Kepala belum bisa disetujui siapa pun. Alur lengkap menunggu keputusan klien: siapa yang menyetujui (Mandor?), dan upah tingkat pencuci untuk Kepala.
+
+## 11. Notifikasi dalam aplikasi (Tahap 15D)
+
+Notifikasi dibuat server saat kejadian terjadi dan disimpan per pengguna (tabel `notifications`, sama dengan lonceng di Web App; Mandor dan Kepala Pencuci melihat notifikasi yang sama di web). Belum ada push: aplikasi memanggil `GET /me/notifications/unread-count` saat dibuka dan berkala (mis. tiap 1 sampai 2 menit saat aplikasi aktif) untuk badge, lalu `GET /me/notifications` saat layar notifikasi dibuka.
+
+Aturan:
+
+- Hanya dikirim ke pengguna yang berhak melihat datanya (cakupan tim bagian 1). Akun nonaktif tidak menerima notifikasi.
+- Satu kejadian tidak pernah dikirim dua kali ke orang yang sama (kunci kejadian unik per penerima), juga kalau aksi dikirim ulang.
+- Notifikasi dibuat di dalam transaksi aksinya: aksi yang gagal tidak meninggalkan notifikasi.
+- Notifikasi lebih dari 60 hari dihapus otomatis tiap hari pukul 02.00.
+
+### Objek notifikasi
+
+| Field | Isi |
+|---|---|
+| `id` | Id notifikasi. |
+| `type` | `{code, label}`. `code` = jenis (tabel di bawah). |
+| `title` | Judul singkat. |
+| `body` | Isi satu kalimat, siap ditampilkan. |
+| `created_at` | Waktu kejadian (ISO 8601). |
+| `is_read`, `read_at` | Sudah dibaca dan waktunya (`null` kalau belum). |
+| `target` | `{screen, id}` = layar yang dibuka saat notifikasi diketuk. `id` boleh `null` (layar daftar). `target` = `null` untuk notifikasi lama dari web: cukup tampilkan, tanpa tujuan. |
+| `data` | Objek tambahan per jenis (boleh kosong `{}`), mis. `deadline_at` konfirmasi timbang. |
+
+### Jenis notifikasi dan tujuan layar
+
+| `type.code` | Penerima | Kejadian | `target.screen` | `target.id` | `data` |
+|---|---|---|---|---|---|
+| `pengajuan_baru` | Kepala Pencuci dan Mandor tim pencuci itu (pencuci tanpa Kepala: Mandor batch jatahnya) | Pencuci mengajukan ambil bahan, serah lembab, ambil kerja ulang, atau serah kerja ulang | `approval` (GET /approvals/{id}) | id pengajuan | `submission_type`, `worker_id` |
+| `pengajuan_disetujui` | Pencuci yang mengajukan | Pengajuan disetujui (aplikasi atau web) | `work_today` (GET /work/today, /work/history); kerja ulang: `rework` | id pengajuan; kerja ulang: id kerja ulang | `submission_id`, `submission_type`, `work_date` |
+| `pengajuan_ditolak` | Pencuci yang mengajukan | Pengajuan ditolak, alasan ada di `body` | sama dengan di atas | sama dengan di atas | sama dengan di atas |
+| `timbang_menunggu` | Pencuci pemilik kartu | Hasil timbang menunggu konfirmasi | `weighing` (GET /me/weighings) | id kartu | `deadline_at` (lewat batas ini dianggap setuju), `work_date` |
+| `timbang_ditolak` | Kepala Pencuci dan Mandor kartu itu | Pencuci tidak setuju dengan hasil timbang | `work_card` (GET /work-cards/{id}) | id kartu | `worker_id`, `work_date` |
+| `kerja_ulang_baru` | Pencuci pemilik kartu | QC belum standar membuat kerja ulang | `rework` (GET /me/rework) | id kerja ulang | `daily_work_card_id` |
+| `upah_dihitung` | Pencuci | Kalkulasi upah pencuci itu membayar minimal satu kartu | `earnings` (GET /me/earnings) | id kalkulasi upah | `period_start`, `period_end`, `cards` |
+| `penarikan_diajukan` | Mandor pemilik dana | Pekerja Borongan mengajukan penarikan dari dana Mandor (dana SION diproses Admin di web, tanpa notifikasi) | `team_withdrawal` (GET /team/withdrawals) | id penarikan | `worker_id` |
+| `penarikan_disetujui` | Pekerja pemilik penarikan | Penarikan disetujui | `withdrawal` (GET /me/withdrawals) | id penarikan | - |
+| `penarikan_dibayar` | Pekerja pemilik penarikan | Penarikan dibayar | `withdrawal` | id penarikan | - |
+| `penarikan_ditolak` | Pekerja pemilik penarikan | Penarikan ditolak, alasan ada di `body` | `withdrawal` | id penarikan | - |
+| `bonus_capai` | Pekerja pemilik bonus | Bonus mingguan atau bulanan pertama kali tercatat capai di saldo (sinkron harian 01.30) | `bonuses` (GET /me/bonuses) | `null` | `kind` (`bonus_mingguan`/`bonus_bulanan`), `period_start`, `period_end` |
+| `batch_masuk` | Mandor batch itu | Admin menerbitkan batch baru yang harus diterima (batch hasil penyiapan di rumah pencucian langsung Diterima, tanpa notifikasi) | `incoming_batch` (GET /batches/incoming) | id batch | `batch_code` |
+
+Jenis lama dari web (`batch_assigned`, `assignment_reopened`) bisa muncul di daftar dengan `target` = `null`. Jenis yang belum dikenal aplikasi tampilkan dengan `title` dan `body` saja.
+
+### GET /me/notifications?unread=1&page=1&per_page=20
+
+Notifikasi milik pengguna, terbaru di atas, dipaginasi. `unread=1` = hanya yang belum dibaca.
+
+### GET /me/notifications/unread-count
+
+`{ "data": { "unread": 3 } }` untuk badge.
+
+### POST /me/notifications/{id}/read
+
+Tandai satu notifikasi dibaca, mengembalikan objek notifikasi. Sudah dibaca = tetap 200 (waktu baca tidak berubah). Notifikasi orang lain atau yang sudah dihapus = 404.
+
+### POST /me/notifications/read-all
+
+Tandai semua dibaca: `{ "data": { "updated": 4, "unread": 0 } }`.
+
+### GET /meta tanpa login
+
+`/meta` tetap bisa dipanggil tanpa token (layar login). `company.admin_whatsapp` = nomor WhatsApp Admin dari Pengaturan untuk tombol "Hubungi Admin"; `null` = sembunyikan tombolnya.
 
 ## Lampiran A. Contoh respons asli
 
@@ -1892,7 +1956,8 @@ Status 200.
       "taken_pcs": null,
       "taken_at": null,
       "returned_pcs": null,
-      "returned_at": null
+      "returned_at": null,
+      "pending_submission": true
     },
     "card": null
   }
@@ -3839,7 +3904,8 @@ Status 200.
       "taken_pcs": null,
       "taken_at": null,
       "returned_pcs": null,
-      "returned_at": null
+      "returned_at": null,
+      "pending_submission": false
     }
   ]
 }
@@ -4291,6 +4357,369 @@ Status 200.
       "thr_ditahan": "1587480.00",
       "withdrawal_active": "50000.00",
       "workers": 3
+    }
+  }
+}
+```
+
+### Notifikasi (Tahap 15D)
+
+Diambil 10/10/2026 dari database demo hasil `DemoMobileSeeder` dengan cara yang sama (permintaan dijalankan lalu dibatalkan, daftar dipotong 2 baris).
+
+### GET /me/notifications (Pencuci)
+
+Status 200.
+
+```json
+{
+  "data": [
+    {
+      "id": 25,
+      "type": {
+        "code": "penarikan_ditolak",
+        "label": "Penarikan"
+      },
+      "title": "Penarikan ditolak",
+      "body": "Penarikan Rp 60.000,00 ditolak: Tunggu akhir minggu.",
+      "created_at": "2026-10-10T12:54:00+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "withdrawal",
+        "id": 5
+      },
+      "data": {}
+    },
+    {
+      "id": 23,
+      "type": {
+        "code": "penarikan_dibayar",
+        "label": "Penarikan"
+      },
+      "title": "Penarikan dibayar",
+      "body": "Penarikan Rp 100.000,00 sudah dibayar (tunai).",
+      "created_at": "2026-10-10T12:54:00+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "withdrawal",
+        "id": 4
+      },
+      "data": {}
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 6
+  }
+}
+```
+
+### GET /me/notifications?per_page=1&page=6 (Pencuci, konfirmasi timbang)
+
+Status 200.
+
+```json
+{
+  "data": [
+    {
+      "id": 4,
+      "type": {
+        "code": "timbang_menunggu",
+        "label": "Konfirmasi Timbang"
+      },
+      "title": "Konfirmasi hasil timbang",
+      "body": "Hasil timbang kartu 09/10/2026 (475 gr bersih) menunggu konfirmasi Anda sampai 11/10/2026 12:53.",
+      "created_at": "2026-10-10T12:53:57+07:00",
+      "is_read": true,
+      "read_at": "2026-10-10T12:54:00+07:00",
+      "target": {
+        "screen": "weighing",
+        "id": 16
+      },
+      "data": {
+        "deadline_at": "2026-10-11T12:53:57+07:00",
+        "work_date": "2026-10-09"
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 6,
+    "last_page": 6,
+    "per_page": 1,
+    "total": 6
+  }
+}
+```
+
+### GET /me/notifications?unread=1 (Mandor)
+
+Status 200.
+
+```json
+{
+  "data": [
+    {
+      "id": 26,
+      "type": {
+        "code": "penarikan_diajukan",
+        "label": "Penarikan"
+      },
+      "title": "Penarikan dana diajukan",
+      "body": "Dewi mengajukan penarikan Rp 50.000,00 dari dana Mandor.",
+      "created_at": "2026-10-10T12:54:00+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "team_withdrawal",
+        "id": 6
+      },
+      "data": {
+        "worker_id": 6
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "code": "penarikan_diajukan",
+        "label": "Penarikan"
+      },
+      "title": "Penarikan dana diajukan",
+      "body": "Siti mengajukan penarikan Rp 60.000,00 dari dana Mandor.",
+      "created_at": "2026-10-10T12:54:00+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "team_withdrawal",
+        "id": 5
+      },
+      "data": {
+        "worker_id": 4
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 2
+  }
+}
+```
+
+### GET /me/notifications?unread=1 (Kepala Pencuci)
+
+Status 200.
+
+```json
+{
+  "data": [
+    {
+      "id": 13,
+      "type": {
+        "code": "pengajuan_baru",
+        "label": "Pengajuan Baru"
+      },
+      "title": "Pengajuan baru",
+      "body": "Dewi mengajukan ambil kerja ulang 40 pcs tanggal 10/10/2026.",
+      "created_at": "2026-10-10T12:53:57+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "approval",
+        "id": 4
+      },
+      "data": {
+        "submission_type": "ambil_kerja_ulang",
+        "worker_id": 6
+      }
+    },
+    {
+      "id": 11,
+      "type": {
+        "code": "pengajuan_baru",
+        "label": "Pengajuan Baru"
+      },
+      "title": "Pengajuan baru",
+      "body": "Rina mengajukan ambil bahan 450 gr tanggal 10/10/2026.",
+      "created_at": "2026-10-10T12:53:57+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "approval",
+        "id": 3
+      },
+      "data": {
+        "submission_type": "ambil_bahan",
+        "worker_id": 5
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 2
+  }
+}
+```
+
+### GET /me/notifications (Pencuci, kerja ulang dan upah)
+
+Status 200.
+
+```json
+{
+  "data": [
+    {
+      "id": 17,
+      "type": {
+        "code": "upah_dihitung",
+        "label": "Upah"
+      },
+      "title": "Upah dihitung",
+      "body": "Upah 1 kartu periode 28/09/2026 s.d. 04/10/2026 sudah dihitung: Rp 986.000,00.",
+      "created_at": "2026-10-10T12:53:57+07:00",
+      "is_read": false,
+      "read_at": null,
+      "target": {
+        "screen": "earnings",
+        "id": 3
+      },
+      "data": {
+        "period_start": "2026-09-28",
+        "period_end": "2026-10-04",
+        "cards": 1
+      }
+    },
+    {
+      "id": 5,
+      "type": {
+        "code": "kerja_ulang_baru",
+        "label": "Kerja Ulang"
+      },
+      "title": "Kerja ulang baru",
+      "body": "Hasil kartu 09/10/2026 belum standar, ambil kerja ulang 40 pcs.",
+      "created_at": "2026-10-10T12:53:57+07:00",
+      "is_read": true,
+      "read_at": "2026-10-10T12:54:00+07:00",
+      "target": {
+        "screen": "rework",
+        "id": 1
+      },
+      "data": {
+        "daily_work_card_id": 18
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 2
+  }
+}
+```
+
+### GET /me/notifications/unread-count
+
+Status 200.
+
+```json
+{
+  "data": {
+    "unread": 2
+  }
+}
+```
+
+### POST /me/notifications/{id}/read
+
+Status 200.
+
+```json
+{
+  "data": {
+    "id": 25,
+    "type": {
+      "code": "penarikan_ditolak",
+      "label": "Penarikan"
+    },
+    "title": "Penarikan ditolak",
+    "body": "Penarikan Rp 60.000,00 ditolak: Tunggu akhir minggu.",
+    "created_at": "2026-10-10T12:54:00+07:00",
+    "is_read": true,
+    "read_at": "2026-10-10T12:54:32+07:00",
+    "target": {
+      "screen": "withdrawal",
+      "id": 5
+    },
+    "data": {}
+  }
+}
+```
+
+### POST /me/notifications/{id}/read (notifikasi orang lain)
+
+Status 404.
+
+```json
+{
+  "message": "Data tidak ditemukan."
+}
+```
+
+### POST /me/notifications/read-all
+
+Status 200.
+
+```json
+{
+  "data": {
+    "updated": 1,
+    "unread": 0
+  }
+}
+```
+
+### GET /meta (tanpa login, Tahap 15D)
+
+Status 200.
+
+```json
+{
+  "data": {
+    "api_version": "1.0",
+    "min_app_version": "1.0.0",
+    "server_time": "2026-10-10T12:54:32+07:00",
+    "timezone": "Asia/Jakarta",
+    "settings": {
+      "photo_max_kb": 2048,
+      "photo_types": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "photo_url_minutes": 15,
+      "attendance_radius_m": 100,
+      "week_starts_on": "monday",
+      "show_daily_profit": true,
+      "weighing_confirm_hours": 24,
+      "min_withdrawal": "50000.00",
+      "thr_percent": "8.00",
+      "work_days_per_week": 6,
+      "monthly_accrual_days": 24,
+      "history_max_days": 62,
+      "per_page_max": 100,
+      "idempotency_header": "Idempotency-Key",
+      "idempotency_ttl_hours": 24
+    },
+    "company": {
+      "name": "PT. Sarang Natural Indonesia",
+      "phone": null,
+      "admin_whatsapp": "6281234567890"
     }
   }
 }
