@@ -512,3 +512,8 @@ Aksi utama per peran: tombol melayang (extended FAB) di kanan bawah, tepat di at
 di Beranda (Pencuci: langkah berikutnya hari ini; Mandor: Terima batch bila ada batch masuk).
 Dipilih daripada tombol tengah di bilah tab karena Mandor sudah punya 5 tab: tombol keenam membuat
 label tab mengecil di 360 dp.
+
+Tangkapan dan rekaman layar contoh v2 ada di `docs/screenshots/v2/`: `360-{light,dark}-pencuci-beranda.png`,
+`360-{light,dark}-pendapatan.png`, `360-{light,dark}-mandor-beranda.png`, dan `animasi-v2.webm`
+(pratinjau web, data demo: muncul bertahap, cincin/bilah/donat terisi, saldo menghitung naik, denyut
+tombol absen, pil tab bergeser). Haptic dan worklet hitung naik hanya terasa di HP.
