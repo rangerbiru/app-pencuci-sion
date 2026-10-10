@@ -73,14 +73,20 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 
 ### Masuk dan sesi (semua peran)
 
-1. `GET /meta` saat dibuka: versi minimum, jam server, pengaturan, company.
+1. `GET /meta` saat dibuka: versi minimum, jam server, pengaturan, company. Layar masuk mengambil
+   ulang bila `company` belum ada.
 2. Masuk: email atau nomor HP + password, `POST /auth/login` (`device_name` = nama perangkat).
-   Error 422 tampil di isian; 403 Admin/nonaktif; 429 tampil sisa detik tunggu.
+   Error 422 tampil di isian; 403 Admin/nonaktif; 429 tampil sisa detik tunggu. Isian selalu kosong
+   saat dibuka (tidak pernah diisi akun contoh); placeholder contoh redup "nama@email.com atau 08xx".
+   Keyboard muncul: layar mengecil (Android `softwareKeyboardLayoutMode: resize`, iOS
+   KeyboardAvoidingView), form bisa digulir dan digulir otomatis supaya tombol Masuk terlihat.
+   Logo dan form muncul halus sekali saat layar dibuka (diam bila "Kurangi gerak").
 3. Token di SecureStore (web: hanya memori, muat ulang = keluar). 401 di mana pun = keluar ke
    layar masuk dengan pesan "Sesi Anda berakhir".
-4. Lupa password: tombol Hubungi Admin (WhatsApp) di layar masuk.
-   Build pengembangan (`__DEV__`) menampilkan `API: <alamat>` di bawah tombol Masuk untuk memeriksa
-   `API_URL` yang terbaca; build rilis tidak.
+4. Lupa password: tombol Hubungi Admin membuka WhatsApp ke `company.admin_whatsapp` dengan pesan
+   "Halo Admin, saya <email/no HP yang diketik> lupa password aplikasi SION.". Tanpa nomor: pesan
+   untuk menghubungi Admin langsung. Alamat API tidak tampil di layar (cek dengan
+   `npm run dev:config:public`, kunci `extra.apiUrl`).
 5. Keluar: `POST /auth/logout`; bila masih ada aksi belum terkirim, pengguna diperingatkan.
 
 ### Pencuci

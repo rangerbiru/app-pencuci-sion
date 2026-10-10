@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Linking } from 'react-native';
 import { useAppSlice } from '@/slices';
 import { whatsappUrl } from '@/utils/whatsapp';
@@ -8,14 +9,21 @@ export interface ContactAdminProps extends Omit<ButtonProps, 'title' | 'onPress'
   /** pesan awal di WhatsApp */
   message?: string;
   title?: string;
+  /** tampil bila /meta tidak punya nomor Admin; bawaan: tidak tampil apa pun */
+  fallback?: ReactNode;
 }
 
-/** Tombol Hubungi Admin lewat WhatsApp. Tidak tampil bila /meta tidak punya nomor Admin. */
-function ContactAdmin({ message, title = 'Hubungi Admin', ...others }: ContactAdminProps) {
+/** Tombol Hubungi Admin lewat WhatsApp. Tanpa nomor Admin di /meta: `fallback` (bawaan kosong). */
+function ContactAdmin({
+  message,
+  title = 'Hubungi Admin',
+  fallback = null,
+  ...others
+}: ContactAdminProps) {
   const { company } = useAppSlice();
   const toast = useToast();
   const url = whatsappUrl(company?.admin_whatsapp, message);
-  if (!url) return null;
+  if (!url) return <>{fallback}</>;
   return (
     <Button
       title={title}

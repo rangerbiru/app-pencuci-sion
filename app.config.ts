@@ -29,6 +29,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       package: process.env.EXPO_ANDROID_PACKAGE ?? appId,
+      // keyboard memperkecil layar (bukan menutupi): form login bisa digulir, tombol Masuk terjangkau
+      softwareKeyboardLayoutMode: 'resize',
       permissions: [
         'android.permission.CAMERA',
         'android.permission.ACCESS_COARSE_LOCATION',

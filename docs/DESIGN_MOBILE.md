@@ -627,3 +627,17 @@ konfirmasi bawah, Tolak lewat lembar alasan.
   Daftar lain pendek dan terbatas (tim, satu hari, satu minggu) tetap di ScrollView.
 - `Image` (expo-image) memakai `cachePolicy` memori + disk dan `recyclingKey` = alamat foto.
 
+## Bagian 7 (14C-R2): layar masuk
+
+- Placeholder contoh "nama@email.com atau 08xx" berwarna `placeholder` (redup, tetap AA terhadap
+  isian) sehingga jelas berbeda dari isian asli; nilai awal selalu kosong.
+- KeyboardAvoidingView (iOS) + Android `softwareKeyboardLayoutMode: 'resize'` + ScrollView
+  `keyboardShouldPersistTaps="handled"`, `keyboardDismissMode="on-drag"`. Saat keyboard muncul,
+  layar menggulir sampai dasar tombol Masuk terlihat (posisi diukur lewat onLayout).
+- Teks `API: ...` dihapus dari layar.
+- Hubungi Admin (WhatsApp) memuat isian yang sudah diketik; tanpa nomor Admin tampil kalimat untuk
+  menghubungi Admin langsung. `/meta` diambil ulang dari layar masuk bila `company` belum ada (ini
+  penyebab tombol sempat hilang: /meta gagal saat server belum siap).
+- Masuk halus sekali: logo fade + skala 0,94 ke 1 (260 ms), lalu form fade + naik 8 dp dengan jeda
+  70 ms (FadeInItem). Hanya opacity/transform; diam bila "Kurangi gerak".
+

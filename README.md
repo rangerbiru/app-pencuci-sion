@@ -57,8 +57,8 @@ untuk HP: di HP alamat itu menunjuk ke HP sendiri.
    `npm run dev` memuat `.env.dev` lewat dotenvx. `npx expo start` tidak membaca `.env.dev`, sehingga
    `API_URL` jatuh ke bawaan `127.0.0.1` dan HP tidak bisa menghubungi server.
 8. Web: tekan `w` atau buka `http://localhost:8081`. HP: scan QR dengan Expo Go.
-9. Di layar Masuk (build pengembangan) tertulis `API: ...` di bawah tombol Masuk. Alamat itu harus
-   sama dengan langkah 5. Akun demo ada di `testing.md` repo Laravel.
+9. Cek alamat API yang terbaca: `npm run dev:config:public | grep apiUrl` harus sama dengan
+   langkah 5. Akun demo ada di `testing.md` repo Laravel.
 
 IP laptop bisa berubah saat Wi-Fi tersambung ulang; bila login gagal "server tidak bisa dihubungi",
 ulangi langkah 1, 2, 3, dan 5.
