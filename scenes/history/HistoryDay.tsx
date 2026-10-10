@@ -1,6 +1,4 @@
-import { StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { space } from '@/theme';
 import { toApiError, useGetWorkHistoryQuery } from '@/services';
 import { formatDayLong } from '@/utils/date';
 import Screen from '@/components/layouts/Screen';
@@ -9,12 +7,14 @@ import Section from '@/components/elements/Section';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import WorkCardSummary from '@/scenes/workCards/WorkCardSummary';
-import SubmissionRow from './SubmissionRow';
+import SubmissionItem from './SubmissionItem';
+import { useSingleOpen } from '@/components/elements/Accordion';
 
 /** Detail satu hari: kartu kerja dan pengajuan dengan foto. */
 function HistoryDay({ date }: { date: string }) {
   const q = useGetWorkHistoryQuery({ from: date, to: date });
   const day = q.data?.find(d => d.date === date);
+  const open = useSingleOpen(null);
   return (
     <Screen
       title={formatDayLong(date)}
@@ -35,15 +35,21 @@ function HistoryDay({ date }: { date: string }) {
       ) : (
         <>
           {day.card ? <WorkCardSummary card={day.card} /> : null}
-          <Section title="Pengajuan" description="Ketuk foto untuk memperbesar.">
+          <Section title="Pengajuan" description="Ketuk pengajuan untuk rincian dan foto.">
             {day.submissions.length === 0 ? (
               <Card>
                 <EmptyState icon="inbox" title="Tidak ada pengajuan" />
               </Card>
             ) : (
-              <Card style={styles.tight}>
+              <Card padded={false}>
                 {day.submissions.map((s, i) => (
-                  <SubmissionRow key={s.id} s={s} divider={i < day.submissions.length - 1} />
+                  <SubmissionItem
+                    key={s.id}
+                    s={s}
+                    open={open.openKey === String(s.id)}
+                    onToggle={() => open.toggle(String(s.id))}
+                    divider={i < day.submissions.length - 1}
+                  />
                 ))}
               </Card>
             )}
@@ -53,9 +59,5 @@ function HistoryDay({ date }: { date: string }) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  tight: { paddingVertical: space.xs },
-});
 
 export default HistoryDay;

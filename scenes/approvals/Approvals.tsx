@@ -3,8 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
 import { useToast } from '@/components/elements/Toast';
-import { sizes, space } from '@/theme';
-import { Submission } from '@/types';
+import { space } from '@/theme';
 import {
   toApiError,
   useApproveSubmissionMutation,
@@ -15,20 +14,19 @@ import {
 } from '@/services';
 import { isFeatureEnabled } from '@/utils/config';
 import { useAppSlice } from '@/slices';
-import { formatDate, formatTime } from '@/utils/date';
-import { formatGram, formatPcs } from '@/utils/format';
+import { formatDate } from '@/utils/date';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
-import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Icon from '@/components/elements/Icon';
 import ListRow from '@/components/elements/ListRow';
 import Segmented from '@/components/elements/Segmented';
-import { PhotoThumb } from '@/components/elements/Photo';
-import { ReasonDialog } from '@/components/elements/Dialog';
+import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
+import { useSingleOpen } from '@/components/elements/Accordion';
+import SubmissionItem, { submissionTitle } from '@/scenes/history/SubmissionItem';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
@@ -40,14 +38,6 @@ const FILTER_TYPES: Record<Filter, string[]> = {
   serah: ['serah_lembab'],
   ulang: ['ambil_kerja_ulang', 'serah_kerja_ulang'],
 };
-
-function quantity(s: Submission) {
-  return (
-    [s.gram ? formatGram(s.gram) : null, s.pcs != null ? `${formatPcs(s.pcs)} pcs` : null]
-      .filter(Boolean)
-      .join(', ') || '-'
-  );
-}
 
 /**
  * Verifikasi: antrean ambil bahan, serah hasil, dan kerja ulang anggota tim. Bisa menyetujui
@@ -61,6 +51,9 @@ function Approvals({ back }: { back?: boolean }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [rejectError, setRejectError] = useState<string | undefined>();
+  // konfirmasi setujui (satu atau beberapa) lewat lembar bawah, bukan geser
+  const [confirm, setConfirm] = useState<{ ids: number[]; label: string } | null>(null);
+  const open = useSingleOpen(null);
   const { user } = useAppSlice();
   const isMandor = user?.role.code === 'mandor';
   const approvals = useGetApprovalsQuery();
@@ -84,11 +77,11 @@ function Approvals({ back }: { back?: boolean }) {
   const toggle = (id: number) =>
     setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
 
-  async function approveSelected() {
+  async function approveIds(ids: number[]) {
     setBusy(true);
     let ok = 0;
     const failures: string[] = [];
-    for (const id of selected) {
+    for (const id of ids) {
       try {
         await approve(id).unwrap();
         ok += 1;
@@ -99,6 +92,7 @@ function Approvals({ back }: { back?: boolean }) {
     }
     setBusy(false);
     setSelected([]);
+    setConfirm(null);
     if (failures.length) toast.show(`${ok} disetujui. Gagal: ${failures.join('; ')}`, 'error');
     else toast.show(`${ok} pengajuan disetujui`);
   }
@@ -145,7 +139,9 @@ function Approvals({ back }: { back?: boolean }) {
             />
             <Button
               title={`Setujui ${selected.length}`}
-              onPress={approveSelected}
+              onPress={() =>
+                setConfirm({ ids: selected, label: `${selected.length} pengajuan terpilih` })
+              }
               isLoading={busy}
               style={styles.flex}
             />
@@ -198,58 +194,68 @@ function Approvals({ back }: { back?: boolean }) {
               style={styles.selectAll}
             />
           ) : null}
-          {items.map(s => {
-            const checked = selected.includes(s.id);
-            return (
-              <Card
-                key={s.id}
-                padded={false}
-                style={[styles.item, checked && { borderColor: colors.accent, borderWidth: 2 }]}>
-                <Pressable
-                  onPress={() => toggle(s.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
-                  accessibilityLabel={`Pilih ${s.worker.name}, ${s.type.label}, ${quantity(s)}`}
-                  style={({ pressed }) => [
-                    styles.check,
-                    pressed && { backgroundColor: colors.pressed },
-                  ]}>
-                  <Icon
-                    name={checked ? 'check-square' : 'square'}
-                    size={26}
-                    color={checked ? colors.accentPressed : colors.textSecondary}
-                  />
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.itemBody,
-                    pressed && { backgroundColor: colors.pressed },
-                  ]}
-                  onPress={() =>
-                    router.push({ pathname: '/verifikasi/[id]', params: { id: String(s.id) } })
+          <Card padded={false}>
+            {items.map((s, i) => {
+              const checked = selected.includes(s.id);
+              return (
+                <SubmissionItem
+                  key={s.id}
+                  s={s}
+                  showWorker
+                  hideStatus
+                  open={open.openKey === String(s.id)}
+                  onToggle={() => open.toggle(String(s.id))}
+                  divider={i < items.length - 1}
+                  leading={
+                    <Pressable
+                      onPress={() => toggle(s.id)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked }}
+                      accessibilityLabel={`Pilih ${submissionTitle(s, true)}`}
+                      hitSlop={8}
+                      style={({ pressed }) => [
+                        styles.check,
+                        pressed && { backgroundColor: colors.pressed },
+                      ]}>
+                      <Icon
+                        name={checked ? 'check-square' : 'square'}
+                        size={24}
+                        color={checked ? colors.fieldFocus : colors.textSecondary}
+                      />
+                    </Pressable>
                   }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Buka detail ${s.worker.name}, ${s.type.label}`}>
-                  <PhotoThumb
-                    uri={s.photo_url}
-                    label={`Foto ${s.type.label} ${s.worker.name}`}
-                    size={60}
-                  />
-                  <View style={styles.flex}>
-                    <Text variant="bodyStrong">{s.worker.name}</Text>
-                    <Badge status={s.type} kind="work_submission_type" icon="tag" />
-                    <Text variant="bodyStrong" style={styles.tabular}>
-                      {quantity(s)}
-                    </Text>
-                    <Text variant="small" color="textSecondary">
-                      {formatDate(s.work_date)}, jam {formatTime(s.submitted_at)}
-                    </Text>
-                  </View>
-                  <Icon name="chevron-right" size={20} color={colors.textSecondary} />
-                </Pressable>
-              </Card>
-            );
-          })}
+                  actions={
+                    <>
+                      <Button
+                        title="Setujui"
+                        icon="check"
+                        onPress={() => setConfirm({ ids: [s.id], label: submissionTitle(s, true) })}
+                      />
+                      <Button
+                        title="Tolak"
+                        icon="x"
+                        variant="danger"
+                        onPress={() => {
+                          setSelected([s.id]);
+                          setRejectOpen(true);
+                        }}
+                      />
+                      <Button
+                        title="Buka detail"
+                        variant="ghost"
+                        onPress={() =>
+                          router.push({
+                            pathname: '/verifikasi/[id]',
+                            params: { id: String(s.id) },
+                          })
+                        }
+                      />
+                    </>
+                  }
+                />
+              );
+            })}
+          </Card>
         </View>
       )}
 
@@ -291,14 +297,30 @@ function Approvals({ back }: { back?: boolean }) {
         </Section>
       ) : null}
 
+      <Dialog
+        visible={!!confirm}
+        title="Setujui pengajuan?"
+        message={
+          confirm
+            ? `${confirm.label}. Bahan masuk Kartu Kerja dan sisa jatah berkurang.`
+            : undefined
+        }
+        confirmLabel="Ya, setujui"
+        onConfirm={() => confirm && approveIds(confirm.ids)}
+        onCancel={() => setConfirm(null)}
+        isLoading={busy}
+      />
       <ReasonDialog
         recipient="pencuci"
         visible={rejectOpen}
-        title={`Tolak ${selected.length} pengajuan`}
+        title={selected.length > 1 ? `Tolak ${selected.length} pengajuan` : 'Tolak pengajuan'}
         message="Alasan dikirim ke pencuci. Stok dan upah tidak berubah."
         confirmLabel="Tolak"
         onSubmit={rejectSelected}
-        onCancel={() => setRejectOpen(false)}
+        onCancel={() => {
+          setRejectOpen(false);
+          if (selected.length === 1) setSelected([]);
+        }}
         isLoading={busy}
         serverError={rejectError}
       />
@@ -311,17 +333,13 @@ const styles = StyleSheet.create({
   flexHalf: { flex: 0.7 },
   list: { gap: space.sm },
   selectAll: { alignSelf: 'flex-start', paddingHorizontal: 0 },
-  item: { flexDirection: 'row', alignItems: 'stretch' },
-  check: { width: sizes.touch + 8, alignItems: 'center', justifyContent: 'center' },
-  itemBody: {
-    flex: 1,
-    flexDirection: 'row',
+  check: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    gap: space.md,
-    paddingVertical: space.md,
-    paddingRight: space.md,
+    justifyContent: 'center',
   },
-  tabular: { fontVariant: ['tabular-nums'] },
 });
 
 export default Approvals;

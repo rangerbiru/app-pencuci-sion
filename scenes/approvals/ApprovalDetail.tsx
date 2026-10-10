@@ -19,7 +19,7 @@ import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
 import { PhotoThumb } from '@/components/elements/Photo';
-import { ReasonDialog } from '@/components/elements/Dialog';
+import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
 import { SkeletonList } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
@@ -33,15 +33,18 @@ function ApprovalDetail({ id }: { id: number }) {
   const [approve, approveState] = useApproveSubmissionMutation();
   const [reject, rejectState] = useRejectSubmissionMutation();
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [approveOpen, setApproveOpen] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
   async function doApprove() {
     setError(undefined);
     try {
       await approve(id).unwrap();
+      setApproveOpen(false);
       toast.show('Pengajuan disetujui');
       router.back();
     } catch (e) {
+      setApproveOpen(false);
       setError(toApiError(e).message);
     }
   }
@@ -168,6 +171,15 @@ function ApprovalDetail({ id }: { id: number }) {
           {error}
         </Text>
       ) : null}
+      <Dialog
+        visible={approveOpen}
+        title="Setujui pengajuan?"
+        message={`${s.worker.name}, ${s.type.label}. Masuk Kartu Kerja dan mengurangi sisa jatah.`}
+        confirmLabel="Ya, setujui"
+        onConfirm={doApprove}
+        onCancel={() => setApproveOpen(false)}
+        isLoading={approveState.isLoading}
+      />
       <ReasonDialog
         recipient="pencuci"
         visible={rejectOpen}

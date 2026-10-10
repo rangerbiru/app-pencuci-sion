@@ -103,7 +103,7 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 |---|---|---|
 | Absen masuk/pulang sendiri | sama dengan Pencuci | Lewat kartu Absen saya |
 | Tim hari ini | `GET /team` | Absen, sisa jatah, kartu hari ini, jumlah pengajuan menunggu per anggota |
-| Verifikasi | `GET /approvals?status=menunggu`, `GET /approvals/{id}`, `POST /approvals/{id}/approve`, `POST /approvals/{id}/reject` | Detail menampilkan foto, sisa jatah sebelum pengajuan, kerja ulang. Tolak wajib alasan >= 5 huruf. Pilih banyak untuk setujui sekaligus. |
+| Verifikasi | `GET /approvals?status=menunggu`, `GET /approvals/{id}`, `POST /approvals/{id}/approve`, `POST /approvals/{id}/reject` | Antrean berupa kartu ringkas yang dibuka di tempat (foto, batch, waktu, Setujui/Tolak/Buka detail). Detail menampilkan foto, sisa jatah sebelum pengajuan, kerja ulang. Setujui selalu lewat lembar konfirmasi; tolak wajib alasan >= 5 huruf. Pilih banyak untuk setujui/tolak sekaligus. Tidak ada geser untuk menyetujui. |
 | Kartu Kerja tim dan QC | sama dengan Mandor | Bila diizinkan |
 | Progres bonus tim | `GET /team/bonus-progress?week=` | Bonus Kepala (anggota capai dari aktif, PPE tim) dan per anggota (gram minggu ini vs target x 6, PPE bulan berjalan) |
 | Pendapatan dan Tarik dana | sama dengan Pencuci | Data milik Kepala sendiri |

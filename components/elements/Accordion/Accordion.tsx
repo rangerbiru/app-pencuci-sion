@@ -93,6 +93,7 @@ export function AccordionItem({
         <Animated.View
           style={[styles.clip, bodyStyle]}
           accessibilityElementsHidden={!open}
+          aria-hidden={!open}
           importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
           pointerEvents={open ? 'auto' : 'none'}>
           {/* diukur di posisi absolut supaya tingginya tidak ikut terpotong animasi */}

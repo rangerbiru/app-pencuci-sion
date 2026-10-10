@@ -592,3 +592,14 @@ pertama dibuka lalu tetap terpasang. Hanya satu terbuka (`useSingleOpen`). "Kura
 buka/tutup. Isi yang tertutup disembunyikan dari pembaca layar dan tidak bisa disentuh. Diuji di web:
 tinggi sampel tiap 40 ms 284 > 129 > 61 > 22 > 0 (tutup) bersamaan 0 > 47 > 67 > 79 > 86 (buka).
 Dipakai di Pendapatan per hari, Riwayat, konfirmasi timbang di Beranda, dan kartu pengajuan.
+
+## Bagian 5 (14C-R2): kartu pengajuan ringkas
+
+`scenes/history/SubmissionItem.tsx` (memakai Accordion yang sama). Tertutup: foto 40 dp, "Ambil bahan,
+250 gr, 30 pcs" (kalimat biasa), jam, badge status. Terbuka: Batch dan item, tanggal kerja, dikirim,
+foto diambil, diputuskan oleh siapa dan kapan, alasan ditolak (merah), foto lebar yang bisa diketuk
+untuk diperbesar. Dipakai di Detail hari (Riwayat) dan antrean Verifikasi Kepala/Mandor. Di antrean:
+nama pencuci di judul, tanggal kerja di keterangan, badge status disembunyikan (semuanya Menunggu)
+supaya judul tidak terjepit, kotak centang pilih banyak di kiri, dan di rincian tombol Setujui, Tolak,
+Buka detail. Tidak ada geser untuk menyetujui; Setujui (satu atau beberapa) selalu lewat lembar
+konfirmasi bawah, Tolak lewat lembar alasan.
