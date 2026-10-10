@@ -10,6 +10,7 @@ import {
   useGetBalanceQuery,
   useGetTeamDailyProfitQuery,
   useGetTeamQuery,
+  staleError,
 } from '@/services';
 import { isFeatureEnabled } from '@/utils/config';
 import { formatDayShort, formatTime, jakarta } from '@/utils/date';
@@ -22,7 +23,7 @@ import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import ListRow from '@/components/elements/ListRow';
 import ProgressBar from '@/components/elements/ProgressBar';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 export function isPresent(m: TeamMember) {
@@ -126,6 +127,7 @@ function Team({ back }: { back?: boolean }) {
       subtitle={team.data ? `${present} dari ${workers.length} pencuci hadir` : undefined}
       back={back}
       refreshing={team.isFetching && !team.isLoading}
+      refreshError={staleError(team, approvals, profit)}
       onRefresh={() => {
         team.refetch();
         approvals.refetch();
@@ -191,8 +193,8 @@ function Team({ back }: { back?: boolean }) {
 
       <Section title="Anggota hari ini">
         {team.isLoading ? (
-          <SkeletonList rows={4} />
-        ) : team.error ? (
+          <SkeletonRows rows={4} />
+        ) : team.error && !team.data ? (
           <ErrorState error={toApiError(team.error)} onRetry={team.refetch} />
         ) : members.length === 0 ? (
           <Card>

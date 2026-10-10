@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { toApiError, useGetWorkHistoryQuery } from '@/services';
+import { toApiError, useGetWorkHistoryQuery, staleError } from '@/services';
 import { formatDayLong } from '@/utils/date';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import WorkCardSummary from '@/scenes/workCards/WorkCardSummary';
 import SubmissionItem from './SubmissionItem';
@@ -20,10 +20,11 @@ function HistoryDay({ date }: { date: string }) {
       title={formatDayLong(date)}
       back
       refreshing={q.isFetching && !q.isLoading}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}>
       {q.isLoading ? (
-        <SkeletonList rows={3} />
-      ) : q.error ? (
+        <SkeletonRows rows={3} leading />
+      ) : q.error && !q.data ? (
         <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : !day ? (
         <EmptyState

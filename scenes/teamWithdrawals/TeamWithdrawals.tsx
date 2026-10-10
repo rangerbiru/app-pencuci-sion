@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { toApiError, useGetTeamWithdrawalsQuery } from '@/services';
+import { toApiError, useGetTeamWithdrawalsQuery, staleError, forCurrentArg } from '@/services';
 import { formatDateTime } from '@/utils/date';
 import { formatRupiah } from '@/utils/format';
 import Screen from '@/components/layouts/Screen';
@@ -9,7 +9,7 @@ import Card from '@/components/elements/Card';
 import Badge from '@/components/elements/Badge';
 import ListRow from '@/components/elements/ListRow';
 import Segmented from '@/components/elements/Segmented';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 type Filter = 'diajukan' | 'disetujui' | 'semua';
@@ -17,7 +17,7 @@ type Filter = 'diajukan' | 'disetujui' | 'semua';
 /** Penarikan pencuci Borongan dari dana Mandor. */
 function TeamWithdrawals() {
   const [filter, setFilter] = useState<Filter>('diajukan');
-  const q = useGetTeamWithdrawalsQuery(filter === 'semua' ? {} : { status: filter });
+  const q = forCurrentArg(useGetTeamWithdrawalsQuery(filter === 'semua' ? {} : { status: filter }));
   const items = q.data?.data ?? [];
   return (
     <Screen
@@ -25,6 +25,7 @@ function TeamWithdrawals() {
       subtitle="Dari dana Mandor"
       back
       refreshing={q.isFetching && !q.isLoading}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}>
       <Segmented
         accessibilityLabel="Status penarikan"
@@ -37,8 +38,8 @@ function TeamWithdrawals() {
         ]}
       />
       {q.isLoading ? (
-        <SkeletonList rows={3} />
-      ) : q.error ? (
+        <SkeletonRows rows={3} />
+      ) : q.error && !q.data ? (
         <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : items.length === 0 ? (
         <Card>

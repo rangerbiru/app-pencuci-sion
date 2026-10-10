@@ -6,7 +6,7 @@ import useTheme from '@/hooks/useTheme';
 import useSetThemePreference from '@/hooks/useSetThemePreference';
 import { sizes, space } from '@/theme';
 import { ThemePreference, useAppSlice, useQueueItems } from '@/slices';
-import { useGetBalanceQuery, useGetMeQuery } from '@/services';
+import { useGetBalanceQuery, useGetMeQuery, staleError } from '@/services';
 import { signOut } from '@/services/session';
 import config, { isFeatureEnabled } from '@/utils/config';
 import { formatDate } from '@/utils/date';
@@ -111,6 +111,7 @@ function Profile({ account = false }: { account?: boolean }) {
     <Screen
       title={account ? 'Akun' : 'Profil'}
       refreshing={me.isFetching && !me.isLoading}
+      refreshError={staleError(me)}
       onRefresh={me.refetch}>
       <HeroSurface style={styles.head}>
         <View

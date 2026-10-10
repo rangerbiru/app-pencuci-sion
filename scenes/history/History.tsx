@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
 import { space } from '@/theme';
 import { WorkDay } from '@/types';
-import { toApiError, useGetWorkHistoryQuery } from '@/services';
+import { toApiError, useGetWorkHistoryQuery, staleError, forCurrentArg } from '@/services';
 import { formatDayShort, formatTime, jakarta } from '@/utils/date';
 import { addDecimal } from '@/utils/decimal';
 import { formatGram, formatPcs } from '@/utils/format';
@@ -15,7 +15,7 @@ import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
 import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
 import Segmented from '@/components/elements/Segmented';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 type Range = '7' | '30' | '62';
@@ -43,7 +43,7 @@ function History() {
     from: today.subtract(Number(range) - 1, 'day').format('YYYY-MM-DD'),
     to: today.format('YYYY-MM-DD'),
   };
-  const history = useGetWorkHistoryQuery(args);
+  const history = forCurrentArg(useGetWorkHistoryQuery(args));
   const todayKey = today.format('YYYY-MM-DD');
   // satu hari terbuka; hari ini terbuka bawaan
   const days = useSingleOpen(todayKey);
@@ -59,6 +59,7 @@ function History() {
     <Screen
       title="Riwayat"
       refreshing={history.isFetching && !history.isLoading}
+      refreshError={staleError(history)}
       onRefresh={history.refetch}>
       <Segmented
         accessibilityLabel="Rentang riwayat"
@@ -71,8 +72,8 @@ function History() {
         ]}
       />
       {history.isLoading ? (
-        <SkeletonList rows={5} />
-      ) : history.error ? (
+        <SkeletonRows rows={5} />
+      ) : history.error && !history.data ? (
         <ErrorState error={toApiError(history.error)} onRetry={history.refetch} />
       ) : !history.data || history.data.length === 0 ? (
         <Card>

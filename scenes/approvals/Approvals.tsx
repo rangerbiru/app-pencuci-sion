@@ -11,6 +11,7 @@ import {
   useGetTeamWithdrawalsQuery,
   useGetWorkCardsQuery,
   useRejectSubmissionMutation,
+  staleError,
 } from '@/services';
 import { isFeatureEnabled } from '@/utils/config';
 import { useAppSlice } from '@/slices';
@@ -27,7 +28,7 @@ import Segmented from '@/components/elements/Segmented';
 import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
 import { useSingleOpen } from '@/components/elements/Accordion';
 import SubmissionItem, { submissionTitle } from '@/scenes/history/SubmissionItem';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 type Filter = 'semua' | 'ambil' | 'serah' | 'ulang';
@@ -123,6 +124,7 @@ function Approvals({ back }: { back?: boolean }) {
       subtitle={approvals.data ? `${approvals.data.meta.total} menunggu` : undefined}
       back={back}
       refreshing={approvals.isFetching && !approvals.isLoading}
+      refreshError={staleError(approvals, disputed)}
       onRefresh={() => {
         approvals.refetch();
         disputed.refetch();
@@ -164,8 +166,8 @@ function Approvals({ back }: { back?: boolean }) {
       />
 
       {approvals.isLoading ? (
-        <SkeletonList rows={4} />
-      ) : approvals.error ? (
+        <SkeletonRows rows={4} leading />
+      ) : approvals.error && !approvals.data ? (
         <ErrorState error={toApiError(approvals.error)} onRetry={approvals.refetch} />
       ) : items.length === 0 ? (
         <Card>

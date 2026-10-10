@@ -11,6 +11,7 @@ import {
   useGetAttendanceTodayQuery,
   useGetBalanceQuery,
   useGetTeamBonusProgressQuery,
+  staleError,
 } from '@/services';
 import Screen from '@/components/layouts/Screen';
 import HomeHeader from '@/components/layouts/HomeHeader';
@@ -18,7 +19,7 @@ import Card from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Icon, { IconName } from '@/components/elements/Icon';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonHero, SkeletonRows } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import {
   FadeInItem,
@@ -115,9 +116,10 @@ function KepalaHome() {
       }
       gap={space.xl}
       refreshing={!attendance.isLoading && (attendance.isFetching || bonus.isFetching)}
+      refreshError={staleError(attendance, bonus, approvals, balance)}
       onRefresh={refresh}>
       {attendance.isLoading ? (
-        <SkeletonList rows={3} />
+        <SkeletonHero />
       ) : (
         <FadeInItem index={0}>
           <AttendanceHero
@@ -159,8 +161,8 @@ function KepalaHome() {
       </View>
 
       {bonus.isLoading ? (
-        <SkeletonList rows={2} />
-      ) : bonus.error ? (
+        <SkeletonRows rows={2} />
+      ) : bonus.error && !bonus.data ? (
         <ErrorState error={toApiError(bonus.error)} onRetry={bonus.refetch} />
       ) : (
         <>

@@ -29,7 +29,7 @@ import Badge from '@/components/elements/Badge';
 import Amount from '@/components/elements/Amount';
 import Icon from '@/components/elements/Icon';
 import { PhotoThumb } from '@/components/elements/Photo';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
 import {
@@ -68,7 +68,7 @@ function ReceiveBatch({ batchId }: { batchId: number }) {
   if (incoming.isLoading) {
     return (
       <Screen title="Terima batch" back>
-        <SkeletonList rows={3} />
+        <SkeletonDetail facts={4} photo={false} />
       </Screen>
     );
   }

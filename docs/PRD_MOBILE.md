@@ -153,6 +153,8 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 | Isian | Satu komponen: garis 1 px, fokus emas 2 px, error merah + pesan di bawah, tinggi 52 dp, label di atas, bantuan di bawah, satuan di dalam isian, tanpa outline kedua (web/Android) |
 | Format angka | Rupiah `Rp 30.000`, desimal hanya bila ada sen. Gram `1.250,5 gr`, desimal hanya bila tidak bulat. MoneyInput/GramInput: titik ribuan saat mengetik, koma desimal, tempelan berformat dibaca benar, nilai terkirim angka polos. "Rp" dan "gr" tidak pernah terpisah dari angka (spasi tak terputus). |
 | Tata letak | Tombol yang menempel di bawah diukur, isi diberi ruang bawah setinggi tombol + safe area |
+| Memuat dan menyegarkan | Semua layar daftar dan detail: tarik ke bawah untuk menyegarkan (lingkaran emas di atas permukaan kartu) memanggil refetch RTK Query. Muat pertama dan ganti tanggal/minggu/filter = kerangka berbentuk isi (daftar baris, hero + ubin, atau detail), bukan isi argumen sebelumnya. Saat menyegarkan isi lama tetap tampil. Gagal menyegarkan = pesan singkat di atas isi + Coba lagi, isi lama tidak dihapus; gagal tanpa data = layar galat + Coba lagi. |
+| Daftar panjang | Daftar berhalaman (Notifikasi, Kartu Kerja "Semua") memakai FlashList: hanya baris terlihat yang dirender, halaman berikut dimuat saat mendekati dasar (tombol Muat lebih banyak tetap ada). Foto lewat expo-image dengan cache memori + disk. |
 | Uji | Jest + Testing Library, ESLint, TypeScript strict harus bersih sebelum commit (husky) |
 
 ## 6. Backlog

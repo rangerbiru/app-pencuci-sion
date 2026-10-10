@@ -9,6 +9,7 @@ import {
   useGetWorkCardQuery,
   useSubmitQcMutation,
   useVerifyCardMutation,
+  staleError,
 } from '@/services';
 import { jakarta } from '@/utils/date';
 import { formatGram, formatPcs } from '@/utils/format';
@@ -25,7 +26,7 @@ import BottomBar from '@/components/elements/BottomBar';
 import Segmented from '@/components/elements/Segmented';
 import Icon from '@/components/elements/Icon';
 import { Dialog } from '@/components/elements/Dialog';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import WorkCardSummary from './WorkCardSummary';
 import { emptyQcRow, initialQcInput, QcErrors, QcInput, QcRowInput, validateQc } from './qcForm';
@@ -61,7 +62,7 @@ function WorkCardDetail({ id }: { id: number }) {
         {q.error ? (
           <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
         ) : (
-          <SkeletonList rows={4} />
+          <SkeletonDetail facts={6} />
         )}
       </Screen>
     );
@@ -132,6 +133,7 @@ function WorkCardDetail({ id }: { id: number }) {
       subtitle="Kartu kerja dan QC"
       back
       refreshing={q.isFetching}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}
       footer={
         locked ? undefined : (

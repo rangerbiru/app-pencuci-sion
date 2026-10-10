@@ -14,6 +14,7 @@ import {
   useGetMyWeighingsQuery,
   useGetWorkTodayQuery,
   useGetApprovalsQuery,
+  staleError,
 } from '@/services';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
@@ -22,7 +23,7 @@ import Text from '@/components/elements/Text';
 import Amount from '@/components/elements/Amount';
 import Button from '@/components/elements/Button';
 import ListRow from '@/components/elements/ListRow';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonHero, SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import TodayCard from './TodayCard';
 import WeighingCard from './WeighingCard';
@@ -97,13 +98,14 @@ function WorkerHome() {
       title={`${greeting(now)}, ${user?.name ?? ''}`}
       subtitle={formatDayLong(now.format('YYYY-MM-DD'))}
       refreshing={refreshing && !loadingToday}
+      refreshError={staleError(attendance, work, rework, weighings, rations)}
       onRefresh={refresh}>
       {!washes ? (
         isFeatureEnabled('attendance') ? (
           <AttendanceCard />
         ) : null
       ) : loadingToday ? (
-        <SkeletonList rows={3} />
+        <SkeletonHero />
       ) : todayError && !attendance.data && !work.data ? (
         <ErrorState error={toApiError(todayError)} onRetry={refresh} />
       ) : (
@@ -146,8 +148,8 @@ function WorkerHome() {
       {isFeatureEnabled('work') && washes ? (
         <Section title="Jatah aktif" description="Sisa gram yang masih bisa diambil.">
           {rations.isLoading ? (
-            <SkeletonList rows={1} />
-          ) : rations.error ? (
+            <SkeletonRows rows={1} />
+          ) : rations.error && !rations.data ? (
             <ErrorState error={toApiError(rations.error)} onRetry={rations.refetch} />
           ) : rations.data && rations.data.length > 0 ? (
             <Card style={styles.tight}>

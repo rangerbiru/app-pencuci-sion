@@ -1,1 +1,8 @@
-export { default, Skeleton, SkeletonList } from './Skeleton';
+export {
+  default,
+  Skeleton,
+  SkeletonDetail,
+  SkeletonHero,
+  SkeletonList,
+  SkeletonRows,
+} from './Skeleton';

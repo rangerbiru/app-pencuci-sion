@@ -15,6 +15,7 @@ import {
   useGetMyReworkQuery,
   useGetMyWeighingsQuery,
   useGetWorkTodayQuery,
+  staleError,
 } from '@/services';
 import Screen from '@/components/layouts/Screen';
 import HomeHeader from '@/components/layouts/HomeHeader';
@@ -23,7 +24,7 @@ import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Icon, { IconName } from '@/components/elements/Icon';
 import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonHero } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import { Fab, FadeInItem, PressableScale, ProgressRing } from '@/components/elements/Motion';
 import WeighingCard from '../WeighingCard';
@@ -244,6 +245,7 @@ function PencuciHome() {
       }
       gap={space.xl}
       refreshing={refreshing}
+      refreshError={staleError(attendance, work, rework, weighings, earnings, kpi, balance)}
       onRefresh={refresh}
       fab={
         fabAction ? (
@@ -255,7 +257,7 @@ function PencuciHome() {
         ) : undefined
       }>
       {loading ? (
-        <SkeletonList rows={3} />
+        <SkeletonHero />
       ) : attendance.error && work.error ? (
         <ErrorState error={toApiError(attendance.error)} onRetry={refresh} />
       ) : (

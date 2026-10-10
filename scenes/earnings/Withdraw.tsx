@@ -10,6 +10,7 @@ import {
   useCreateWithdrawalMutation,
   useGetBalanceQuery,
   useGetWithdrawalsQuery,
+  staleError,
 } from '@/services';
 import { formatDateTime } from '@/utils/date';
 import { formatRupiah } from '@/utils/format';
@@ -27,7 +28,7 @@ import Badge from '@/components/elements/Badge';
 import { CountUp, HeroSurface, onHero } from '@/components/elements/Motion';
 import Icon from '@/components/elements/Icon';
 import { Dialog } from '@/components/elements/Dialog';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonHero, SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { validateWithdrawAmount } from './withdrawForm';
 
@@ -153,6 +154,7 @@ function Withdraw() {
       title="Tarik dana"
       back
       refreshing={(balance.isFetching || history.isFetching) && !balance.isLoading}
+      refreshError={staleError(balance, history)}
       onRefresh={() => {
         balance.refetch();
         history.refetch();
@@ -165,8 +167,8 @@ function Withdraw() {
         ) : undefined
       }>
       {balance.isLoading ? (
-        <SkeletonList rows={2} />
-      ) : balance.error ? (
+        <SkeletonHero tiles={0} />
+      ) : balance.error && !balance.data ? (
         <ErrorState error={toApiError(balance.error)} onRetry={balance.refetch} />
       ) : b ? (
         <>
@@ -243,8 +245,8 @@ function Withdraw() {
 
       <Section title="Riwayat penarikan">
         {history.isLoading ? (
-          <SkeletonList rows={2} />
-        ) : history.error ? (
+          <SkeletonRows rows={2} />
+        ) : history.error && !history.data ? (
           <ErrorState error={toApiError(history.error)} onRetry={history.refetch} />
         ) : history.data && history.data.data.length > 0 ? (
           <Card style={styles.tight}>

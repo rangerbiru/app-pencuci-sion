@@ -43,3 +43,21 @@ export function groupByDay(items: AppNotification[], now = jakarta()) {
   }
   return groups;
 }
+
+export type NotificationListItem =
+  | { type: 'day'; key: string; label: string }
+  | { type: 'item'; key: string; n: AppNotification; first: boolean; last: boolean };
+
+/** Ratakan kelompok untuk FlashList: judul hari lalu baris; first/last membentuk satu kartu. */
+export function flattenGroups(groups: ReturnType<typeof groupByDay>): NotificationListItem[] {
+  return groups.flatMap(g => [
+    { type: 'day' as const, key: `day-${g.label}`, label: g.label },
+    ...g.items.map((n, i) => ({
+      type: 'item' as const,
+      key: String(n.id),
+      n,
+      first: i === 0,
+      last: i === g.items.length - 1,
+    })),
+  ]);
+}

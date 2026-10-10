@@ -1,6 +1,6 @@
 import { AppNotification } from '@/types';
 import { jakarta } from '@/utils/date';
-import { dayGroup, groupByDay, notificationKind } from './notificationView';
+import { dayGroup, flattenGroups, groupByDay, notificationKind } from './notificationView';
 
 const now = jakarta('2026-10-10T12:00:00+07:00');
 const n = (id: number, created_at: string, code = 'pengajuan_baru'): AppNotification => ({
@@ -45,5 +45,25 @@ describe('notification view', () => {
       icon: 'bell',
       tone: 'neutral',
     });
+  });
+
+  it('flattens day groups into header + rows with card edges', () => {
+    const rows = flattenGroups(
+      groupByDay(
+        [
+          n(1, '2026-10-10T09:00:00+07:00'),
+          n(2, '2026-10-10T08:00:00+07:00'),
+          n(3, '2026-10-09T08:00:00+07:00'),
+        ],
+        now,
+      ),
+    );
+    expect(rows.map(r => (r.type === 'day' ? r.label : `${r.key}:${r.first}:${r.last}`))).toEqual([
+      'Hari ini',
+      '1:true:false',
+      '2:false:true',
+      'Kemarin',
+      '3:true:true',
+    ]);
   });
 });

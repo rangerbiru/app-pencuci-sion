@@ -54,6 +54,7 @@ const q = <T,>(data: T) => ({
 
 jest.mock('@/services', () => ({
   toApiError: jest.fn(),
+  staleError: () => null,
   useGetEarningsQuery: () => q(earnings),
   useGetBalanceQuery: () => q(balance),
   useGetMyDailyProfitQuery: () => q({ data: [], meta: { from: '', to: '' } }),

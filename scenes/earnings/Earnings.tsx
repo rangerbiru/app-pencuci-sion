@@ -16,6 +16,7 @@ import {
   useGetBalanceQuery,
   useGetEarningsQuery,
   useGetMyDailyProfitQuery,
+  staleError,
 } from '@/services';
 import { EarningsDay, PendingItem } from '@/types';
 import { useAppSlice } from '@/slices';
@@ -27,7 +28,7 @@ import Amount from '@/components/elements/Amount';
 import Badge from '@/components/elements/Badge';
 import { IconButton } from '@/components/elements/Button';
 import { PageHeader } from '@/components/layouts/HomeHeader';
-import { Skeleton, SkeletonList } from '@/components/elements/Skeleton';
+import { Skeleton, SkeletonRows } from '@/components/elements/Skeleton';
 import { FadeInItem, ProgressBarV2 } from '@/components/elements/Motion';
 import BalanceHero from './BalanceHero';
 import { AccordionItem, useSingleOpen } from '@/components/elements/Accordion';
@@ -182,6 +183,7 @@ function Earnings({ back = false }: { back?: boolean }) {
       title="Pendapatan"
       back={back}
       refreshing={(earnings.isFetching || balance.isFetching) && !earnings.isLoading}
+      refreshError={staleError(earnings, balance, profit)}
       onRefresh={refresh}
       header={<PageHeader title="Pendapatan" back={back} />}>
       {b ? (
@@ -215,8 +217,8 @@ function Earnings({ back = false }: { back?: boolean }) {
       </View>
 
       {earnings.isLoading ? (
-        <SkeletonList rows={4} />
-      ) : earnings.error ? (
+        <SkeletonRows rows={4} />
+      ) : earnings.error && !earnings.data ? (
         <ErrorState error={toApiError(earnings.error)} onRetry={earnings.refetch} />
       ) : e ? (
         <>
@@ -407,7 +409,7 @@ function Earnings({ back = false }: { back?: boolean }) {
             />
           </Card>
         </Section>
-      ) : balance.error ? (
+      ) : balance.error && !balance.data ? (
         <ErrorState error={toApiError(balance.error)} onRetry={balance.refetch} />
       ) : null}
 

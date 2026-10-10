@@ -6,7 +6,12 @@ import { isFeatureEnabled } from '@/utils/config';
 import { formatDateTime } from '@/utils/date';
 import { compareDecimal } from '@/utils/decimal';
 import { formatGram } from '@/utils/format';
-import { toApiError, useGetIncomingBatchesQuery, useGetRationBatchesQuery } from '@/services';
+import {
+  toApiError,
+  useGetIncomingBatchesQuery,
+  useGetRationBatchesQuery,
+  staleError,
+} from '@/services';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
@@ -14,7 +19,7 @@ import Badge from '@/components/elements/Badge';
 import Button from '@/components/elements/Button';
 import Amount from '@/components/elements/Amount';
 import Segmented from '@/components/elements/Segmented';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 type Tab = 'masuk' | 'jatah';
@@ -32,6 +37,7 @@ function Batches({ back }: { back?: boolean }) {
       title="Batch"
       back={back}
       refreshing={q.isFetching && !q.isLoading}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}>
       {showRations ? (
         <Segmented
@@ -46,8 +52,8 @@ function Batches({ back }: { back?: boolean }) {
       ) : null}
 
       {q.isLoading ? (
-        <SkeletonList rows={3} />
-      ) : q.error ? (
+        <SkeletonRows rows={3} />
+      ) : q.error && !q.data ? (
         <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : tab === 'masuk' ? (
         incoming.data && incoming.data.length > 0 ? (

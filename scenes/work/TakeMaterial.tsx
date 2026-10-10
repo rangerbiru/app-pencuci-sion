@@ -5,7 +5,7 @@ import useTheme from '@/hooks/useTheme';
 import useFieldSubmit from '@/hooks/useFieldSubmit';
 import { radius, sizes, space } from '@/theme';
 import { MyRation } from '@/types';
-import { toApiError, useGetMyRationsQuery } from '@/services';
+import { toApiError, useGetMyRationsQuery, staleError } from '@/services';
 import { submitTakeMaterial } from '@/services/fieldActions';
 import { compareDecimal, subDecimal } from '@/utils/decimal';
 import { formatGram, formatPcs } from '@/utils/format';
@@ -19,7 +19,7 @@ import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
 import Icon from '@/components/elements/Icon';
 import { PhotoThumb } from '@/components/elements/Photo';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import TakeMaterialForm from './TakeMaterialForm';
 import { TakeMaterialErrors, TakeMaterialValues } from './takeMaterialForm';
@@ -170,6 +170,7 @@ function TakeMaterial() {
       subtitle={STEP_TITLE.pick}
       back
       refreshing={rations.isFetching && !rations.isLoading}
+      refreshError={staleError(rations)}
       onRefresh={rations.refetch}
       footer={
         available.length > 0 ? (
@@ -192,8 +193,8 @@ function TakeMaterial() {
         ) : undefined
       }>
       {rations.isLoading ? (
-        <SkeletonList rows={2} />
-      ) : rations.error ? (
+        <SkeletonRows rows={2} />
+      ) : rations.error && !rations.data ? (
         <ErrorState error={toApiError(rations.error)} onRetry={rations.refetch} />
       ) : available.length === 0 ? (
         <EmptyState

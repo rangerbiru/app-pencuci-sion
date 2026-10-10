@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
 import { space } from '@/theme';
-import { toApiError, useGetMandorFundsQuery } from '@/services';
+import { toApiError, useGetMandorFundsQuery, staleError } from '@/services';
 import { compareDecimal } from '@/utils/decimal';
 import { formatRupiah } from '@/utils/format';
 import Screen from '@/components/layouts/Screen';
@@ -13,7 +13,7 @@ import Badge from '@/components/elements/Badge';
 import Amount from '@/components/elements/Amount';
 import Button from '@/components/elements/Button';
 import MoneyRow from '@/scenes/earnings/MoneyRow';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 /** Dana Mandor: saldo pencuci Borongan yang dibayar dari dana Mandor ini (GET /mandor/funds). */
@@ -27,10 +27,11 @@ function MandorFunds() {
       title="Dana Mandor"
       back
       refreshing={q.isFetching && !q.isLoading}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}>
       {q.isLoading ? (
-        <SkeletonList rows={4} />
-      ) : q.error ? (
+        <SkeletonRows rows={4} />
+      ) : q.error && !q.data ? (
         <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : d ? (
         <>

@@ -21,7 +21,7 @@ import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
 import Icon from '@/components/elements/Icon';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { RationLineInput, validateRations } from './rationForm';
 
@@ -41,7 +41,7 @@ function RationForm({ batchId }: { batchId: number }) {
   if (batches.isLoading || team.isLoading) {
     return (
       <Screen title="Penjatahan" back>
-        <SkeletonList rows={3} />
+        <SkeletonDetail facts={3} photo={false} />
       </Screen>
     );
   }

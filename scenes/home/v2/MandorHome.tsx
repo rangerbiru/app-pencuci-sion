@@ -16,6 +16,7 @@ import {
   useGetTeamQuery,
   useGetTeamWithdrawalsQuery,
   useGetWorkCardsQuery,
+  staleError,
 } from '@/services';
 import { WorkCard } from '@/types';
 import Screen from '@/components/layouts/Screen';
@@ -25,7 +26,7 @@ import Button from '@/components/elements/Button';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Icon, { IconName } from '@/components/elements/Icon';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonHero } from '@/components/elements/Skeleton';
 import { ErrorState } from '@/components/elements/StateViews';
 import {
   Donut,
@@ -160,6 +161,16 @@ function MandorHome() {
       header={<HomeHeader name={user?.name ?? ''} subtitle={user?.role.label} />}
       gap={space.xl}
       refreshing={!loading && (incoming.isFetching || team.isFetching)}
+      refreshError={staleError(
+        incoming,
+        rations,
+        team,
+        approvals,
+        todayCards,
+        recentCards,
+        withdrawals,
+        attendance,
+      )}
       onRefresh={refresh}
       fab={
         firstIncoming ? (
@@ -176,7 +187,7 @@ function MandorHome() {
         ) : undefined
       }>
       {loading ? (
-        <SkeletonList rows={4} />
+        <SkeletonHero />
       ) : incoming.error && team.error ? (
         <ErrorState error={toApiError(incoming.error)} onRetry={refresh} />
       ) : (

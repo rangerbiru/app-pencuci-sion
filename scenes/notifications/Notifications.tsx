@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import useTheme from '@/hooks/useTheme';
@@ -11,26 +11,31 @@ import {
   useGetNotificationsInfiniteQuery,
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
+  staleError,
 } from '@/services';
 import { useToast } from '@/components/elements/Toast';
 import Screen from '@/components/layouts/Screen';
-import Card from '@/components/elements/Card';
+import Card, { CardSegment } from '@/components/elements/Card';
 import Text from '@/components/elements/Text';
 import Button from '@/components/elements/Button';
 import Icon from '@/components/elements/Icon';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
-import { FadeInItem, PressableScale } from '@/components/elements/Motion';
+import { PressableScale } from '@/components/elements/Motion';
+import type { ListRenderItem } from '@shopify/flash-list';
 import { notificationHref } from './notificationTarget';
-import { groupByDay, notificationKind } from './notificationView';
+import {
+  flattenGroups,
+  groupByDay,
+  NotificationListItem,
+  notificationKind,
+} from './notificationView';
 
 const Row = memo(function Row({
   n,
-  last,
   onOpen,
 }: {
   n: AppNotification;
-  last: boolean;
   onOpen: (n: AppNotification) => void;
 }) {
   const { colors, badges } = useTheme();
@@ -42,11 +47,7 @@ const Row = memo(function Row({
       haptic={false}
       accessibilityLabel={`${n.is_read ? '' : 'Belum dibaca. '}${n.title}. ${n.body}. Jam ${formatTime(n.created_at)}`}
       accessibilityHint={n.target ? 'Membuka halaman terkait' : undefined}
-      style={[
-        styles.row,
-        !n.is_read && { backgroundColor: colors.infoBg },
-        !last && { borderBottomWidth: 1, borderBottomColor: colors.border },
-      ]}>
+      style={[styles.row, !n.is_read && { backgroundColor: colors.infoBg }]}>
       <View style={[styles.icon, { backgroundColor: tone.bg }]}>
         <Icon name={kind.icon} size={18} color={tone.text} />
       </View>
@@ -86,9 +87,9 @@ function Notifications() {
   const q = useGetNotificationsInfiniteQuery(undefined, { refetchOnMountOrArgChange: true });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAll, markAllState] = useMarkAllNotificationsReadMutation();
-  const items = q.data?.pages.flatMap(p => p.data) ?? [];
+  const items = useMemo(() => q.data?.pages.flatMap(p => p.data) ?? [], [q.data]);
   const unread = items.filter(n => !n.is_read).length;
-  const groups = groupByDay(items);
+  const rows = useMemo(() => flattenGroups(groupByDay(items)), [items]);
   const role = user?.role.code;
 
   const open = useCallback(
@@ -100,14 +101,55 @@ function Notifications() {
     [markRead, role],
   );
 
-  let index = 0;
+  const renderItem: ListRenderItem<NotificationListItem> = useCallback(
+    ({ item, index }) =>
+      item.type === 'day' ? (
+        <Text
+          type="label"
+          color="textSecondary"
+          accessibilityRole="header"
+          style={[styles.day, index === 0 && styles.firstDay]}>
+          {item.label}
+        </Text>
+      ) : (
+        <CardSegment first={item.first} last={item.last}>
+          <Row n={item.n} onOpen={open} />
+        </CardSegment>
+      ),
+    [open],
+  );
+  const loadMore = () => {
+    if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+  };
+
   return (
     <Screen
       title="Notifikasi"
       subtitle={unread > 0 ? `${unread} belum dibaca` : 'Semua sudah dibaca'}
       back
       refreshing={q.isFetching && !q.isLoading && !q.isFetchingNextPage}
-      onRefresh={q.refetch}>
+      refreshError={staleError(q)}
+      onRefresh={q.refetch}
+      list={{
+        data: rows,
+        renderItem,
+        keyExtractor,
+        getItemType,
+        onEndReached: loadMore,
+        footer:
+          items.length === 0 ? null : q.hasNextPage ? (
+            <Button
+              title="Muat lebih banyak"
+              variant="secondary"
+              onPress={loadMore}
+              isLoading={q.isFetchingNextPage}
+            />
+          ) : (
+            <Text type="small" color="textSecondary" align="center">
+              Notifikasi lebih dari 60 hari dihapus otomatis.
+            </Text>
+          ),
+      }}>
       {unread > 0 ? (
         <Button
           title="Tandai semua dibaca"
@@ -126,60 +168,29 @@ function Notifications() {
       ) : null}
 
       {q.isLoading ? (
-        <SkeletonList rows={5} />
-      ) : items.length === 0 ? (
-        q.error ? (
-          <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
-        ) : (
-          <Card>
-            <EmptyState
-              icon="bell"
-              title="Belum ada notifikasi"
-              message="Kabar pengajuan, hasil timbang, upah, dan penarikan akan muncul di sini."
-            />
-          </Card>
-        )
+        <SkeletonRows rows={5} leading />
+      ) : items.length > 0 ? null : q.error ? (
+        <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : (
-        <>
-          {q.error ? (
-            // gagal menyegarkan: isi lama tetap tampil
-            <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
-          ) : null}
-          {groups.map(g => (
-            <View key={g.label} style={styles.group}>
-              <Text type="label" color="textSecondary" accessibilityRole="header">
-                {g.label}
-              </Text>
-              <Card padded={false}>
-                {g.items.map((n, i) => (
-                  <FadeInItem key={n.id} index={index++}>
-                    <Row n={n} last={i === g.items.length - 1} onOpen={open} />
-                  </FadeInItem>
-                ))}
-              </Card>
-            </View>
-          ))}
-          {q.hasNextPage ? (
-            <Button
-              title="Muat lebih banyak"
-              variant="secondary"
-              onPress={() => q.fetchNextPage()}
-              isLoading={q.isFetchingNextPage}
-            />
-          ) : (
-            <Text type="small" color="textSecondary" align="center">
-              Notifikasi lebih dari 60 hari dihapus otomatis.
-            </Text>
-          )}
-        </>
+        <Card>
+          <EmptyState
+            icon="bell"
+            title="Belum ada notifikasi"
+            message="Kabar pengajuan, hasil timbang, upah, dan penarikan akan muncul di sini."
+          />
+        </Card>
       )}
     </Screen>
   );
 }
 
+const keyExtractor = (item: NotificationListItem) => item.key;
+const getItemType = (item: NotificationListItem) => item.type;
+
 const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
-  group: { gap: space.sm },
+  day: { paddingTop: space.lg, paddingBottom: space.sm },
+  firstDay: { paddingTop: 0 },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import useTheme from '@/hooks/useTheme';
 import { space } from '@/theme';
 import { KepalaBonusProgress, MemberBonusProgress } from '@/types';
-import { toApiError, useGetTeamBonusProgressQuery } from '@/services';
+import { toApiError, useGetTeamBonusProgressQuery, staleError, forCurrentArg } from '@/services';
 import { useAppSlice } from '@/slices';
 import { formatRange, isoWeekKey, jakarta, shiftWeek } from '@/utils/date';
 import { formatGram, formatRupiah, progressRatio } from '@/utils/format';
@@ -14,7 +14,7 @@ import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import { IconButton } from '@/components/elements/Button';
 import ProgressBar from '@/components/elements/ProgressBar';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 function weekNumber(week: string) {
@@ -101,7 +101,7 @@ function TeamBonus() {
   const { user } = useAppSlice();
   const currentWeek = isoWeekKey();
   const [week, setWeek] = useState(currentWeek);
-  const q = useGetTeamBonusProgressQuery({ week });
+  const q = forCurrentArg(useGetTeamBonusProgressQuery({ week }));
   const d = q.data;
   const isMandor = user?.role.code === 'mandor';
 
@@ -110,6 +110,7 @@ function TeamBonus() {
       title="Progres bonus tim"
       back
       refreshing={q.isFetching && !q.isLoading}
+      refreshError={staleError(q)}
       onRefresh={q.refetch}>
       <View style={styles.weekPicker}>
         <IconButton
@@ -135,8 +136,8 @@ function TeamBonus() {
       </View>
 
       {q.isLoading ? (
-        <SkeletonList rows={4} />
-      ) : q.error ? (
+        <SkeletonRows rows={4} />
+      ) : q.error && !q.data ? (
         <ErrorState error={toApiError(q.error)} onRetry={q.refetch} />
       ) : d ? (
         <>

@@ -1,78 +1,137 @@
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { space } from '@/theme';
 import { WorkCard } from '@/types';
-import { toApiError, useGetAllWorkCardsInfiniteQuery, useGetWorkCardsQuery } from '@/services';
+import {
+  toApiError,
+  useGetAllWorkCardsInfiniteQuery,
+  useGetWorkCardsQuery,
+  staleError,
+  forCurrentArg,
+} from '@/services';
 import { formatDayLong, formatDayShort, jakarta } from '@/utils/date';
 import { formatGram } from '@/utils/format';
 import Screen from '@/components/layouts/Screen';
-import Card from '@/components/elements/Card';
+import Card, { CardSegment } from '@/components/elements/Card';
+import type { ListRenderItem } from '@shopify/flash-list';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Button, { IconButton } from '@/components/elements/Button';
 import ListRow from '@/components/elements/ListRow';
 import Segmented from '@/components/elements/Segmented';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 
 type Mode = 'tanggal' | 'semua';
 
-function CardRows({ cards, showDate }: { cards: WorkCard[]; showDate: boolean }) {
+function openCard(c: WorkCard) {
+  router.push({ pathname: '/kartu/[id]', params: { id: String(c.id) } });
+}
+
+const WorkCardRow = memo(function WorkCardRow({
+  c,
+  showDate,
+  divider,
+}: {
+  c: WorkCard;
+  showDate: boolean;
+  divider: boolean;
+}) {
+  return (
+    <ListRow
+      title={showDate ? `${c.worker.name}, ${formatDayShort(c.work_date)}` : c.worker.name}
+      subtitle={`Bahan ${formatGram(c.material.gram)}, hasil ${formatGram(c.result.gram)}`}
+      divider={divider}
+      onPress={() => openCard(c)}
+      below={
+        <View style={styles.badges}>
+          <Badge status={c.status} kind="daily_work" />
+          {c.qc_status ? (
+            <Badge status={c.qc_status} kind="qc" prefix="QC" />
+          ) : (
+            <Badge label="Belum QC" tone="gold" />
+          )}
+          {c.weighing_confirmation ? (
+            <Badge
+              status={c.weighing_confirmation.status}
+              kind="weighing_confirmation"
+              icon="clipboard"
+              prefix="Timbang"
+            />
+          ) : null}
+        </View>
+      }
+    />
+  );
+});
+
+function CardRows({ cards }: { cards: WorkCard[] }) {
   return (
     <Card padded={false}>
       {cards.map((c, i) => (
-        <ListRow
-          key={c.id}
-          title={showDate ? `${c.worker.name}, ${formatDayShort(c.work_date)}` : c.worker.name}
-          subtitle={`Bahan ${formatGram(c.material.gram)}, hasil ${formatGram(c.result.gram)}`}
-          divider={i < cards.length - 1}
-          onPress={() => router.push({ pathname: '/kartu/[id]', params: { id: String(c.id) } })}
-          below={
-            <View style={styles.badges}>
-              <Badge status={c.status} kind="daily_work" />
-              {c.qc_status ? (
-                <Badge status={c.qc_status} kind="qc" prefix="QC" />
-              ) : (
-                <Badge label="Belum QC" tone="gold" />
-              )}
-              {c.weighing_confirmation ? (
-                <Badge
-                  status={c.weighing_confirmation.status}
-                  kind="weighing_confirmation"
-                  icon="clipboard"
-                  prefix="Timbang"
-                />
-              ) : null}
-            </View>
-          }
-        />
+        <WorkCardRow key={c.id} c={c} showDate={false} divider={i < cards.length - 1} />
       ))}
     </Card>
   );
 }
+
+const keyExtractor = (c: WorkCard) => String(c.id);
 
 /** Kartu Kerja: per tanggal, atau semua kartu (terbaru dulu, per halaman). */
 function WorkCards({ back }: { back?: boolean }) {
   const today = jakarta().format('YYYY-MM-DD');
   const [mode, setMode] = useState<Mode>('tanggal');
   const [date, setDate] = useState(today);
-  const byDate = useGetWorkCardsQuery({ date }, { skip: mode !== 'tanggal' });
+  const byDate = forCurrentArg(useGetWorkCardsQuery({ date }, { skip: mode !== 'tanggal' }));
   const all = useGetAllWorkCardsInfiniteQuery(undefined, { skip: mode !== 'semua' });
   const dayCards = byDate.data?.data ?? [];
-  const allCards = all.data?.pages.flatMap(p => p.data) ?? [];
+  const allCards = useMemo(() => all.data?.pages.flatMap(p => p.data) ?? [], [all.data]);
   const total = all.data?.pages[0]?.meta.total ?? 0;
   const shift = (n: number) =>
     setDate(d => jakarta(`${d}T12:00:00+07:00`).add(n, 'day').format('YYYY-MM-DD'));
   const notQc = dayCards.filter(c => !c.qc_status).length;
   const q = mode === 'tanggal' ? byDate : all;
+  const lastIndex = allCards.length - 1;
+  const renderAll: ListRenderItem<WorkCard> = useCallback(
+    ({ item, index }) => (
+      <CardSegment first={index === 0} last={index === lastIndex}>
+        <WorkCardRow c={item} showDate divider={false} />
+      </CardSegment>
+    ),
+    [lastIndex],
+  );
+  const loadMore = () => {
+    if (all.hasNextPage && !all.isFetchingNextPage) all.fetchNextPage();
+  };
+  // "Semua" tidak berbatas: FlashList (hanya baris terlihat yang dirender) + muat saat mendekati dasar
+  const showAll = mode === 'semua' && allCards.length > 0;
 
   return (
     <Screen
       title="Kartu Kerja"
       back={back}
       refreshing={q.isFetching && !q.isLoading && !all.isFetchingNextPage}
-      onRefresh={q.refetch}>
+      refreshError={staleError(q)}
+      onRefresh={q.refetch}
+      list={
+        showAll
+          ? {
+              data: allCards,
+              renderItem: renderAll,
+              keyExtractor,
+              onEndReached: loadMore,
+              footer: all.hasNextPage ? (
+                <Button
+                  title="Muat lebih banyak"
+                  variant="secondary"
+                  onPress={loadMore}
+                  isLoading={all.isFetchingNextPage}
+                />
+              ) : null,
+            }
+          : undefined
+      }>
       <Segmented<Mode>
         accessibilityLabel="Tampilan kartu"
         value={mode}
@@ -107,8 +166,8 @@ function WorkCards({ back }: { back?: boolean }) {
             />
           </View>
           {byDate.isLoading ? (
-            <SkeletonList rows={4} />
-          ) : byDate.error ? (
+            <SkeletonRows rows={4} />
+          ) : byDate.error && !byDate.data ? (
             <ErrorState error={toApiError(byDate.error)} onRetry={byDate.refetch} />
           ) : dayCards.length === 0 ? (
             <Card>
@@ -121,11 +180,11 @@ function WorkCards({ back }: { back?: boolean }) {
               />
             </Card>
           ) : (
-            <CardRows cards={dayCards} showDate={false} />
+            <CardRows cards={dayCards} />
           )}
         </>
       ) : all.isLoading ? (
-        <SkeletonList rows={5} />
+        <SkeletonRows rows={5} />
       ) : all.error && allCards.length === 0 ? (
         <ErrorState error={toApiError(all.error)} onRetry={all.refetch} />
       ) : allCards.length === 0 ? (
@@ -133,20 +192,9 @@ function WorkCards({ back }: { back?: boolean }) {
           <EmptyState icon="clipboard" title="Belum ada kartu kerja" />
         </Card>
       ) : (
-        <>
-          <Text variant="small" color="textSecondary">
-            {allCards.length} dari {total} kartu, terbaru di atas.
-          </Text>
-          <CardRows cards={allCards} showDate />
-          {all.hasNextPage ? (
-            <Button
-              title="Muat lebih banyak"
-              variant="secondary"
-              onPress={() => all.fetchNextPage()}
-              isLoading={all.isFetchingNextPage}
-            />
-          ) : null}
-        </>
+        <Text variant="small" color="textSecondary">
+          {allCards.length} dari {total} kartu, terbaru di atas.
+        </Text>
       )}
     </Screen>
   );

@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useToast } from '@/components/elements/Toast';
 import { space } from '@/theme';
 import {
+  staleError,
   toApiError,
   useApproveTeamWithdrawalMutation,
   useGetTeamWithdrawalsQuery,
@@ -24,7 +25,7 @@ import Amount from '@/components/elements/Amount';
 import Segmented from '@/components/elements/Segmented';
 import { PhotoThumb } from '@/components/elements/Photo';
 import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
 
@@ -47,7 +48,7 @@ function TeamWithdrawalDetail({ id, status }: { id: number; status?: string }) {
     return (
       <Screen title="Penarikan" back>
         {q.isLoading || all.isLoading ? (
-          <SkeletonList rows={3} />
+          <SkeletonDetail facts={5} photo={false} />
         ) : (
           <EmptyState
             icon="credit-card"
@@ -107,6 +108,12 @@ function TeamWithdrawalDetail({ id, status }: { id: number; status?: string }) {
       title={w.worker?.name ?? 'Penarikan'}
       subtitle="Penarikan dari dana Mandor"
       back
+      refreshing={(q.isFetching || all.isFetching) && !q.isLoading}
+      refreshError={staleError(q, all)}
+      onRefresh={() => {
+        q.refetch();
+        all.refetch();
+      }}
       footer={
         code === 'diajukan' ? (
           <BottomBar>

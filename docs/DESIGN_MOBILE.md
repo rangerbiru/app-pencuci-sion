@@ -603,3 +603,27 @@ nama pencuci di judul, tanggal kerja di keterangan, badge status disembunyikan (
 supaya judul tidak terjepit, kotak centang pilih banyak di kiri, dan di rincian tombol Setujui, Tolak,
 Buka detail. Tidak ada geser untuk menyetujui; Setujui (satu atau beberapa) selalu lewat lembar
 konfirmasi bawah, Tolak lewat lembar alasan.
+
+## Bagian 6 (14C-R2): menyegarkan, kerangka muat, daftar efisien
+
+- Tarik untuk menyegarkan ada di semua layar daftar/detail (termasuk detail penarikan tim). Warna
+  merek: lingkaran emas (`accentPressed`, lalu navy) di atas `surface` (Android), emas di iOS.
+- `staleError(...queries)` (`services/api/staleError.ts`) mengambil galat kueri yang masih punya isi.
+  `Screen refreshError` menampilkan pita kuning kecil "Belum bisa menyegarkan. <pesan> Data di bawah
+  dari pembaruan terakhir." + Coba lagi di atas isi; isi lama tetap. ErrorState layar penuh hanya
+  bila belum ada isi sama sekali (`error && !data`).
+- `forCurrentArg(query)`: layar yang argumennya berganti (Kartu Kerja per tanggal, Riwayat 7/30/62
+  hari, Progres bonus per minggu, Penarikan tim per status) memakai `currentData`, jadi saat berganti
+  tampil kerangka, bukan "0 kartu" milik tanggal sebelumnya.
+- Kerangka mengikuti bentuk isi (`components/elements/Skeleton`): `SkeletonRows` (kartu berisi baris
+  bergaris, opsi gambar 40 dp di kiri, pil status di kanan), `SkeletonHero` (hero 196 + ubin), dan
+  `SkeletonDetail` (judul + pil, pasangan label/nilai, foto 4:3). Kilau bergeser 1,2 detik, diam
+  bila "Kurangi gerak".
+- Daftar tak berbatas memakai FlashList 2 lewat `Screen list={...}`: FlashList menjadi penggulir,
+  `children` jadi kepala daftar, header/bilah bawah/tarik-segarkan sama seperti layar biasa.
+  `CardSegment` membuat baris-baris FlashList tampak sebagai satu kartu (sudut hanya di baris pertama
+  dan terakhir). Baris di-memo, `keyExtractor`/`getItemType` di luar render, `onEndReached` memuat
+  halaman berikut. Dipakai di Notifikasi (judul hari + baris, dua jenis item) dan Kartu Kerja "Semua".
+  Daftar lain pendek dan terbatas (tim, satu hari, satu minggu) tetap di ScrollView.
+- `Image` (expo-image) memakai `cachePolicy` memori + disk dan `recyclingKey` = alamat foto.
+

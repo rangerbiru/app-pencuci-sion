@@ -8,6 +8,7 @@ import {
   useApproveSubmissionMutation,
   useGetApprovalDetailQuery,
   useRejectSubmissionMutation,
+  staleError,
 } from '@/services';
 import { formatDate, formatDateTime } from '@/utils/date';
 import { formatGram, formatPcs } from '@/utils/format';
@@ -20,7 +21,7 @@ import BottomBar from '@/components/elements/BottomBar';
 import Amount from '@/components/elements/Amount';
 import { PhotoThumb } from '@/components/elements/Photo';
 import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
 
@@ -65,7 +66,7 @@ function ApprovalDetail({ id }: { id: number }) {
   if (detail.isLoading) {
     return (
       <Screen title="Detail pengajuan" back>
-        <SkeletonList rows={3} />
+        <SkeletonDetail facts={5} />
       </Screen>
     );
   }
@@ -97,6 +98,7 @@ function ApprovalDetail({ id }: { id: number }) {
       subtitle={s.type.label}
       back
       refreshing={detail.isFetching && !detail.isLoading}
+      refreshError={staleError(detail)}
       onRefresh={detail.refetch}
       footer={
         waiting ? (

@@ -24,7 +24,7 @@ import TextField from '@/components/elements/TextField';
 import ItemPicker from '@/components/elements/ItemPicker';
 import { GramInput, PcsInput } from '@/components/elements/NumberInput';
 import { Dialog } from '@/components/elements/Dialog';
-import { SkeletonList } from '@/components/elements/Skeleton';
+import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
 import {
@@ -63,7 +63,7 @@ function Preparation({ batchId }: { batchId: number }) {
   if (batches.isLoading) {
     return (
       <Screen title="Penyiapan" back>
-        <SkeletonList rows={3} />
+        <SkeletonDetail facts={3} photo={false} />
       </Screen>
     );
   }

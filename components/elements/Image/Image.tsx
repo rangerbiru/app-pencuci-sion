@@ -10,9 +10,24 @@ export interface ImageProps extends Omit<ExpoImageProps, 'source' | 'placeholder
   onTouchStart?: () => void;
 }
 
-function Image({ transition, contentFit, ...others }: ImageProps) {
+/**
+ * expo-image dengan cache memori + disk (foto timbangan dan bukti tidak diunduh ulang saat daftar
+ * digulir atau layar dibuka lagi). `recyclingKey` = alamat foto, supaya baris yang didaur ulang
+ * FlashList tidak sempat menampilkan foto baris lain.
+ */
+function Image({ transition, contentFit, cachePolicy, recyclingKey, ...others }: ImageProps) {
+  const uri =
+    typeof others.source === 'object' && others.source && 'uri' in others.source
+      ? others.source.uri
+      : undefined;
   return (
-    <ExpoImage transition={transition ?? 0} contentFit={contentFit ?? 'contain'} {...others} />
+    <ExpoImage
+      transition={transition ?? 0}
+      contentFit={contentFit ?? 'contain'}
+      cachePolicy={cachePolicy ?? 'memory-disk'}
+      recyclingKey={recyclingKey ?? uri}
+      {...others}
+    />
   );
 }
 
