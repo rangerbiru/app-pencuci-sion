@@ -23,6 +23,7 @@ import Image from '@/components/elements/Image';
 import Icon from '@/components/elements/Icon';
 import ContactAdmin from '@/components/elements/ContactAdmin';
 import OfflineBanner from '@/components/layouts/OfflineBanner';
+import config from '@/utils/config';
 import type { Dispatch } from '@/utils/store';
 
 const schema = z.object({
@@ -155,6 +156,12 @@ function Login() {
           ) : null}
 
           <Button title="Masuk" onPress={onSubmit} isLoading={isSubmitting} />
+          {__DEV__ ? (
+            // hanya build pengembangan: alamat API yang benar-benar terbaca, untuk dicek dari HP
+            <Text variant="caption" color="textSecondary" align="center" selectable>
+              API: {config.apiBase}
+            </Text>
+          ) : null}
 
           <View style={styles.forgot}>
             <Text variant="small" color="textSecondary" align="center">

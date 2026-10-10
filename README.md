@@ -21,17 +21,47 @@ cp .env.dev.example .env.dev
 | `API_URL` | alamat API lengkap, mis. `http://127.0.0.1:8000/api/v1` (tanpa akhiran pun diterima; aplikasi menambahkan `/api/v1`) |
 | `EXPO_OWNER`, `EXPO_PROJECT_ID` | akun dan project EAS Anda |
 
-### Uji di HP fisik dengan Laravel di laptop
+## Menjalankan (web dan HP), urutan persis
 
-1. Sambungkan HP dan laptop ke Wi-Fi yang sama.
-2. Cari IP laptop (Linux: `ip addr`, macOS: `ipconfig getifaddr en0`, Windows: `ipconfig`), mis. `192.168.1.10`.
-3. Jalankan Laravel dengan database demo agar bisa diakses dari jaringan:
+Satu `API_URL` berisi **IP laptop** dipakai untuk web dan HP sekaligus. Jangan pakai `127.0.0.1`
+untuk HP: di HP alamat itu menunjuk ke HP sendiri.
+
+1. Sambungkan HP dan laptop ke Wi-Fi yang sama, lalu cari IP laptop
+   (Linux: `ip -4 addr`, macOS: `ipconfig getifaddr en0`, Windows: `ipconfig`), mis. `10.78.124.18`.
+2. Di repo Laravel (`web-gudang/.env`), pastikan **satu** baris CORS memuat semua origin pratinjau web
+   (baris kedua dengan nama sama menimpa yang pertama):
+   ```
+   CORS_ALLOWED_ORIGINS=http://localhost:8081,http://127.0.0.1:8081,http://<IP-laptop>:8081
+   ```
+3. Jalankan Laravel dengan database demo (terminal 1, di repo Laravel). Hentikan dulu `artisan serve`
+   lama: perubahan `.env` baru terbaca setelah server dijalankan ulang.
    ```bash
    DB_DATABASE=sion_wms_mobile php artisan serve --host=0.0.0.0 --port=8000
    ```
-4. Isi `API_URL=http://192.168.1.10:8000/api/v1` di `.env.dev` (pratinjau web cukup
-   `http://127.0.0.1:8000/api/v1`). Akun demo ada di `testing.md` repo Laravel.
-5. Jalankan `npm run dev`, lalu scan QR dengan Expo Go atau development build.
+4. Cek server dari laptop:
+   ```bash
+   curl -s http://<IP-laptop>:8000/api/v1/meta | head -c 80
+   curl -si -X OPTIONS http://<IP-laptop>:8000/api/v1/auth/login \
+     -H 'Origin: http://localhost:8081' -H 'Access-Control-Request-Method: POST' \
+     | grep -i access-control-allow-origin
+   ```
+   Harus keluar JSON `{"data":{"api_version"...` dan `Access-Control-Allow-Origin: http://localhost:8081`.
+5. Isi `.env.dev` repo ini: `API_URL=http://<IP-laptop>:8000/api/v1`.
+6. Pastikan tidak ada Metro lain yang berjalan (port 8081 harus kosong:
+   `ss -ltnp | grep 8081`). Kalau port 8081 terpakai, Expo pindah ke 8082 dan origin web itu
+   tidak ada di CORS.
+7. Jalankan Metro (terminal 2, repo ini) **lewat npm**, bukan `npx expo start` langsung:
+   ```bash
+   npm run dev
+   ```
+   `npm run dev` memuat `.env.dev` lewat dotenvx. `npx expo start` tidak membaca `.env.dev`, sehingga
+   `API_URL` jatuh ke bawaan `127.0.0.1` dan HP tidak bisa menghubungi server.
+8. Web: tekan `w` atau buka `http://localhost:8081`. HP: scan QR dengan Expo Go.
+9. Di layar Masuk (build pengembangan) tertulis `API: ...` di bawah tombol Masuk. Alamat itu harus
+   sama dengan langkah 5. Akun demo ada di `testing.md` repo Laravel.
+
+IP laptop bisa berubah saat Wi-Fi tersambung ulang; bila login gagal "server tidak bisa dihubungi",
+ulangi langkah 1, 2, 3, dan 5.
 
 `.env.prod` memakai server hosting (`https://floralwhite-barracuda-635556.hostingersite.com/api/v1`),
 dipakai setelah server diperbarui ke Tahap 15B dan 15C.

@@ -65,6 +65,8 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 3. Token di SecureStore (web: hanya memori, muat ulang = keluar). 401 di mana pun = keluar ke
    layar masuk dengan pesan "Sesi Anda berakhir".
 4. Lupa password: tombol Hubungi Admin (WhatsApp) di layar masuk.
+   Build pengembangan (`__DEV__`) menampilkan `API: <alamat>` di bawah tombol Masuk untuk memeriksa
+   `API_URL` yang terbaca; build rilis tidak.
 5. Keluar: `POST /auth/logout`; bila masih ada aksi belum terkirim, pengguna diperingatkan.
 
 ### Pencuci
