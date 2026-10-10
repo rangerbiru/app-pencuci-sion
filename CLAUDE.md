@@ -1,5 +1,14 @@
 # Claude AI Development Guide
 
+## Baca dulu: spesifikasi produk
+
+- **Baca `docs/PRD_MOBILE.md` sebelum mengerjakan apa pun.** Isinya peran, navigasi, alur per peran
+  beserta endpoint dan validasinya, aturan bisnis yang ditampilkan, aturan non-fungsional, backlog,
+  dan keputusan/asumsi yang menunggu klien.
+- **Perbarui `docs/PRD_MOBILE.md` di commit yang sama setiap ada perubahan perilaku** (tab, layar,
+  alur, validasi, feature flag, format, aturan offline). Kontrak API tetap di `docs/API_MOBILE.md`.
+- Tab Riwayat Kepala Pencuci tetap tersembunyi selama `flags.kepalaWashing = false`.
+
 This React Native Expo project follows specific patterns and uses built-in features for consistency and reusability.
 
 ## Project Context
