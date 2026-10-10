@@ -155,7 +155,7 @@ function Login() {
             </View>
           ) : null}
 
-          <Button title="Masuk" onPress={onSubmit} isLoading={isSubmitting} />
+          <Button title="Masuk" onPress={onSubmit} isLoading={isSubmitting} fullWidth />
           {__DEV__ ? (
             // hanya build pengembangan: alamat API yang benar-benar terbaca, untuk dicek dari HP
             <Text variant="caption" color="textSecondary" align="center" selectable>

@@ -1,13 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import useTheme from '@/hooks/useTheme';
 import { radius, space } from '@/theme';
 import { Balance } from '@/types';
 import { isFeatureEnabled } from '@/utils/config';
 import { formatRupiah } from '@/utils/format';
 import Text from '@/components/elements/Text';
-import Icon from '@/components/elements/Icon';
-import { CountUp, HeroSurface, onHero, PressableScale } from '@/components/elements/Motion';
+import Button from '@/components/elements/Button';
+import { CountUp, HeroSurface, onHero } from '@/components/elements/Motion';
 
 function GlassTile({ label, value }: { label: string; value: string }) {
   return (
@@ -27,7 +26,6 @@ function GlassTile({ label, value }: { label: string; value: string }) {
  * tombol Tarik dana, dan dua ubin kaca Bonus menunggu dan THR ditahan.
  */
 function BalanceHero({ balance }: { balance: Balance }) {
-  const { colors } = useTheme();
   const byMandor = balance.paid_by.code === 'mandor';
   const fund = byMandor ? balance.mandor_funds?.[0] : null;
   const available = byMandor ? (fund?.dapat_dicairkan ?? '0.00') : balance.dapat_dicairkan;
@@ -60,15 +58,11 @@ function BalanceHero({ balance }: { balance: Balance }) {
         <GlassTile label="THR ditahan" value={formatRupiah(thr, { style: 'whole' })} />
       </View>
       {isFeatureEnabled('withdrawals') ? (
-        <PressableScale
+        <Button
+          title="Tarik dana"
+          icon="arrow-down-circle"
           onPress={() => router.push('/tarik-dana')}
-          accessibilityLabel="Tarik dana"
-          style={[styles.button, { backgroundColor: colors.accent }]}>
-          <Icon name="arrow-down-circle" size={18} color={colors.onAccent} />
-          <Text type="bodyStrong" style={{ color: colors.onAccent }}>
-            Tarik dana
-          </Text>
-        </PressableScale>
+        />
       ) : null}
     </HeroSurface>
   );
@@ -85,14 +79,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: onHero.glassBorder,
     gap: 2,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.sm,
-    minHeight: 48,
-    borderRadius: radius.button,
   },
 });
 

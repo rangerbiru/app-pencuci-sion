@@ -21,6 +21,7 @@ import { WorkCard } from '@/types';
 import Screen from '@/components/layouts/Screen';
 import HomeHeader from '@/components/layouts/HomeHeader';
 import Card from '@/components/elements/Card';
+import Button from '@/components/elements/Button';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Icon, { IconName } from '@/components/elements/Icon';
@@ -214,20 +215,17 @@ function MandorHome() {
                         {formatGram(firstIncoming.sent_gram)}
                       </Text>
                     </View>
-                    <PressableScale
+                    <Button
+                      title="Terima"
+                      icon="inbox"
+                      accessibilityLabel={`Terima batch ${firstIncoming.batch_code}`}
                       onPress={() =>
                         router.push({
                           pathname: '/batch/terima/[id]',
                           params: { id: String(firstIncoming.id) },
                         })
                       }
-                      accessibilityLabel={`Terima batch ${firstIncoming.batch_code}`}
-                      style={[styles.heroButton, { backgroundColor: colors.accent }]}>
-                      <Icon name="inbox" size={18} color={colors.onAccent} />
-                      <Text type="bodyStrong" style={{ color: colors.onAccent }}>
-                        Terima
-                      </Text>
-                    </PressableScale>
+                    />
                   </View>
                 </>
               ) : (
@@ -374,14 +372,6 @@ const styles = StyleSheet.create({
   section: { gap: space.md },
   heroHead: { flexDirection: 'row', justifyContent: 'space-between' },
   heroRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
-  heroButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    minHeight: 48,
-    paddingHorizontal: space.xl,
-    borderRadius: radius.pill,
-  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   half: { flexBasis: '48%', flexGrow: 1 },
   stat: {

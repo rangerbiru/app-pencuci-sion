@@ -14,7 +14,8 @@ export const space = {
 
 export const radius = {
   badge: tokens.radius.badge,
-  button: tokens.radius.button,
+  /** v2: tombol 12 (web 8) */
+  button: 12,
   /** v2: isian 12 (web 8) */
   input: 12,
   table: tokens.radius.table,

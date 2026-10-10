@@ -554,3 +554,20 @@ setujui `check`, tolak `x`, foto `camera`, galeri `image`, scan wadah `maximize`
 notifikasi `bell`, hubungi Admin `message-circle`. Diperbaiki: tombol absen tidak lagi memakai
 `camera`, uang tidak lagi `dollar-sign`, terima batch dibedakan dari ambil bahan, verifikasi kartu
 `shield` (bukan gembok).
+
+## Bagian 2 (14C-R2): tombol
+
+Satu komponen `components/elements/Button` untuk semua tombol berteks:
+
+| Hal | Aturan |
+|---|---|
+| Tinggi | utama 48 dp, sekunder/danger/ghost 44 dp (hitSlop 2 dp atas-bawah, target sentuh tetap 48) |
+| Bentuk | radius 12, teks 15 semibold, kalimat biasa (tidak kapital semua), ikon 18 di kiri |
+| Lebar | selebar isinya (`alignSelf: flex-start`); lebar penuh hanya `fullWidth` atau di BottomBar (`flex: 1`). Pengecualian: tombol Masuk di layar masuk (satu-satunya aksi form). |
+| Tekan | warna tekan + skala 0,97 (spring, shared value) + haptic ringan |
+| Nonaktif | opasitas 0,45, `accessibilityState.disabled` |
+| Memuat | spinner kecil menggantikan ikon, label tetap terlihat (lebar tidak melompat), `busy` |
+
+Pressable + shared value, bukan Gesture.Tap: tombol juga dipakai di dalam `Modal` (lembar konfirmasi),
+tempat gesture handler tidak berjalan di Android tanpa root tambahan. Tombol hero (Tarik dana, Terima
+batch) kini memakai komponen yang sama.
