@@ -5,12 +5,16 @@ import { radius, space } from '@/theme';
 import { useAppSlice, useQueueItems } from '@/slices';
 import { isFeatureEnabled } from '@/utils/config';
 import { formatGram, formatRupiah, progressRatio } from '@/utils/format';
+import { jakarta } from '@/utils/date';
+import { isPresent } from '@/scenes/team/Team';
 import {
   toApiError,
   useGetApprovalsQuery,
   useGetAttendanceTodayQuery,
   useGetBalanceQuery,
   useGetTeamBonusProgressQuery,
+  useGetTeamQuery,
+  useGetWorkCardsQuery,
   staleError,
 } from '@/services';
 import Screen from '@/components/layouts/Screen';
@@ -86,12 +90,22 @@ function KepalaHome() {
   const bonus = useGetTeamBonusProgressQuery();
   const approvals = useGetApprovalsQuery(undefined, { skip: !isFeatureEnabled('approvals') });
   const balance = useGetBalanceQuery(undefined, { skip: !isFeatureEnabled('earnings') });
+  const team = useGetTeamQuery(undefined, { skip: !isFeatureEnabled('team') });
+  const todayCards = useGetWorkCardsQuery(
+    { date: jakarta().format('YYYY-MM-DD') },
+    { skip: !isFeatureEnabled('workCards') },
+  );
+  const workers = (team.data ?? []).filter(m => m.role.code === 'pencuci');
+  const present = workers.filter(isPresent).length;
+  const notQc = (todayCards.data?.data ?? []).filter(c => !c.qc_status).length;
 
   const refresh = () => {
     attendance.refetch();
     bonus.refetch();
     approvals.refetch();
     balance.refetch();
+    team.refetch();
+    todayCards.refetch();
   };
   const k = bonus.data?.kepala[0];
   const members = bonus.data?.members ?? [];
@@ -116,7 +130,7 @@ function KepalaHome() {
       }
       gap={space.xl}
       refreshing={!attendance.isLoading && (attendance.isFetching || bonus.isFetching)}
-      refreshError={staleError(attendance, bonus, approvals, balance)}
+      refreshError={staleError(attendance, bonus, approvals, balance, team, todayCards)}
       onRefresh={refresh}>
       {attendance.isLoading ? (
         <SkeletonHero />
@@ -142,13 +156,17 @@ function KepalaHome() {
         <LinkTile
           index={2}
           icon="users"
-          label="Tim saya hari ini"
+          label="Pencuci hadir hari ini"
+          value={team.data ? `${present}/${workers.length}` : undefined}
+          attention={!!team.data && present < workers.length}
           onPress={() => router.push('/tim')}
         />
         <LinkTile
           index={3}
           icon="clipboard"
-          label="Kartu Kerja tim"
+          label="Kartu belum QC hari ini"
+          value={todayCards.data ? String(notQc) : undefined}
+          attention={notQc > 0}
           onPress={() => router.push('/tim-kartu')}
         />
         <LinkTile

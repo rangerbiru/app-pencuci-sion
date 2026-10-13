@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FabCollapseContext } from '@/components/elements/Motion/fabCollapse';
 import useTheme from '@/hooks/useTheme';
-import { duration, sizes, space } from '@/theme';
+import { duration, radius, sizes, space } from '@/theme';
 import { AppHeaderProps } from '../AppHeader';
 import { PageHeader } from '../HomeHeader';
 import type { ApiError } from '@/services/api/errors';
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   content: { padding: sizes.gutter, gap: space.xxl },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   fab: { position: 'absolute', right: sizes.gutter, bottom: space.lg },
-  banner: { borderRadius: 12, padding: space.md, gap: space.sm },
+  banner: { borderRadius: radius.tile, padding: space.md, gap: space.sm },
   bannerText: { flexShrink: 1 },
   contentStatic: { padding: sizes.gutter },
   // FlashList tidak mengenal `gap` di contentContainerStyle: jarak diberi di kepala dan kaki daftar

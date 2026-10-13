@@ -108,6 +108,7 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 | Langkah | Endpoint | Aturan |
 |---|---|---|
 | Absen masuk/pulang sendiri | sama dengan Pencuci | Lewat kartu Absen saya |
+| Beranda | `GET /approvals`, `GET /team`, `GET /work-cards?date=hari ini`, `GET /me/balance`, `GET /team/bonus-progress` | Ubin berangka: Menunggu verifikasi, Pencuci hadir hari ini (hadir/jumlah pencuci), Kartu belum QC hari ini, Saldo saya; ubin ditandai emas bila perlu tindakan. Lalu progres Anggota capai target dan kartu anggota. |
 | Tim hari ini | `GET /team` | Absen, sisa jatah, kartu hari ini, jumlah pengajuan menunggu per anggota |
 | Verifikasi | `GET /approvals?status=menunggu`, `GET /approvals/{id}`, `POST /approvals/{id}/approve`, `POST /approvals/{id}/reject` | Antrean berupa kartu ringkas yang dibuka di tempat (foto, batch, waktu, Setujui/Tolak/Buka detail). Detail menampilkan foto, sisa jatah sebelum pengajuan, kerja ulang. Setujui selalu lewat lembar konfirmasi; tolak wajib alasan >= 5 huruf. Pilih banyak untuk setujui/tolak sekaligus. Tidak ada geser untuk menyetujui. |
 | Kartu Kerja tim dan QC | sama dengan Mandor | Bila diizinkan |
@@ -168,6 +169,14 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 
 - [CAKUPAN] Uji Android di HP fisik (Expo Go/APK preview) untuk semua alur, termasuk pembesaran
   huruf 130% di 360 dp. Sejauh ini Android hanya diuji sebagian di emulator; sisanya di pratinjau web.
+  Daftar uji 14C-R2 di HP: (1) Masuk: keyboard muncul, form tergulir, tombol Masuk terlihat;
+  Hubungi Admin membuka WhatsApp dengan isian. (2) Lonceng > Notifikasi > ketuk satu > pindah ke
+  layar tujuan, badge berkurang. (3) Riwayat > Detail hari: accordion satu terbuka, halus.
+  (4) Tarik ke bawah di Beranda/Tim/Kartu Kerja: lingkaran emas, isi lama tetap; mode pesawat lalu
+  tarik: pita "Belum bisa menyegarkan" + Coba lagi. (5) Absen: penjelasan lokasi > Izinkan lokasi >
+  dialog sistem; tolak > Izinkan lagi / Buka Pengaturan; matikan GPS > Nyalakan lokasi; di dalam
+  gedung > Coba lagi; hasil "Di lokasi kerja"/"Di luar lokasi (± n m)". (6) Gulir cepat Kartu Kerja
+  "Semua" dan Notifikasi: tidak patah-patah; tab pill bergeser halus.
 - [CAKUPAN] Penyesuaian rumus PPE dan THR sesuai SOP klien. Dikerjakan di server; aplikasi hanya
   menampilkan, tidak perlu diubah selama bentuk respons tetap.
 - [CAKUPAN] Baca angka timbangan dari foto (PRD v2 bagian 8.3 "Foto auto-read gram" dan bagian 11).
