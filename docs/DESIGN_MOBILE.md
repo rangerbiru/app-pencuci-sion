@@ -654,3 +654,34 @@ konfirmasi bawah, Tolak lewat lembar alasan.
   titik lokasi kerja. Keputusan akhir selalu `location_flag` server; layar hasil memakai tanda dan
   `distance_m` itu ("Di luar lokasi (± 1.112 m)").
 
+## Verifikasi akhir 14C-R2
+
+Tangkapan v2 menggantikan set 14C-R di `docs/screenshots/` (14/10/2026, pratinjau web, API asli
+dengan database demo `sion_wms_mobile`, 88 berkas): `{360|412}-{light|dark}-...` untuk Masuk;
+Pencuci: Beranda, Pendapatan, Tarik dana, Riwayat, Profil, Absen (baru, kamera uji kanvas),
+Notifikasi (baru); Kepala: Beranda, Verifikasi, Tim, Progres bonus tim, Pendapatan; Mandor: Beranda,
+Batch (penjatahan), Verifikasi, Kartu Kerja (semua), Detail kartu dan QC, Notifikasi (baru), Akun,
+Dana Mandor, Penarikan Borongan. `pencuci-02-ambil-bahan` dihapus: sebelum absen masuk tombol Ambil
+bahan memang terkunci, dan absen tidak dibuat hanya demi tangkapan.
+
+Tinjauan dengan keempat skill (vercel-react-native-skills, ui-ux-pro-max pro-rules Pre-Delivery
+Checklist, design-taste-frontend, frontend-design), putaran 1 lalu diperbaiki dan diulang:
+
+| Temuan | Perbaikan |
+|---|---|
+| Beranda Kepala: ubin "Tim saya hari ini" dan "Kartu Kerja tim" tanpa angka, kotak kanan atas kosong dan tidak seimbang dengan ubin lain | Ubin berangka seperti Beranda Mandor: "Pencuci hadir hari ini" (0/3) dan "Kartu belum QC hari ini" (0), emas bila perlu tindakan |
+| Pita gagal-menyegarkan memakai radius 12 tertulis langsung | `radius.tile` |
+| Foto 40 dp di antrean Verifikasi tampak hitam | Bukan galat: berkas foto demo memang hitam (diunduh dan diperiksa) |
+| "-" dan "–" tampak berbeda | Semua memakai "-"; beda hanya bentuk huruf |
+
+Diperiksa dan lolos: kontras AA kedua mode (`theme/contrast.test.ts`), garis pemisah terlihat di
+mode gelap, ikon satu keluarga (Feather) dengan ukuran 18/20, target sentuh >= 44 dp, tidak ada isi
+tertutup bilah bawah/tab bar, "Kurangi gerak" (`prefers-reduced-motion`): saldo langsung bernilai
+penuh dalam 39 ms tanpa hitung naik, Reanimated mematikan animasi dekoratif. Daftar panjang memakai
+FlashList, baris di-memo, foto expo-image dengan cache.
+
+Belum bisa diuji di sini (laptop tidak kuat menjalankan emulator, dan HP tidak terhubung ke sesi
+ini): perilaku di HP Android lewat Expo Go (keyboard di layar masuk, tarik untuk menyegarkan, dialog
+izin lokasi dan GPS, kelancaran animasi saat menggulir), serta pembesaran huruf 130%. Daftar uji ada
+di `docs/PRD_MOBILE.md` bagian Backlog.
+
