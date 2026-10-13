@@ -93,7 +93,7 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 
 | Langkah | Layar | Endpoint | Aturan |
 |---|---|---|---|
-| Absen masuk | Beranda > Absen masuk (kamera depan) | `POST /attendance/check-in` (antrean) | Selfie wajib; lokasi opsional (luar radius tetap diterima, ditandai). Jam = jam server. 409 = sudah absen, dianggap selesai. |
+| Absen masuk | Beranda > Absen masuk (kamera depan) | `POST /attendance/check-in` (antrean) | Selfie wajib; lokasi opsional (luar radius tetap diterima, ditandai). Jam = jam server. 409 = sudah absen, dianggap selesai. Lokasi: lihat aturan Lokasi absen di bagian 5. |
 | Ambil bahan | pilih jatah > foto timbangan > isi gram dan pcs > periksa > kirim | `GET /me/rations`, `POST /work/take-material` (antrean) | Gram wajib, > 0, <= `remaining_gram` (ditolak langsung di isian). Pcs opsional, bilangan bulat. Foto wajib. Boleh ambil lagi setelah pengajuan pertama. |
 | Serah hasil lembab | Beranda > Serah hasil | `POST /work/hand-over-damp` (antrean) | Hanya setelah ada bahan yang **disetujui** hari itu. Pcs wajib >= 1, foto wajib, gram tidak diminta. |
 | Kerja ulang | Beranda > Ambil/Serah kerja ulang | `GET /me/rework`, `POST /work/take-rework`, `POST /work/hand-over-rework` (antrean) | Ambil: foto opsional, pcs bawaan dari kerja ulang. Serah: hanya setelah diambil, foto wajib. Selesai setelah kartu asal QC Standard. |
@@ -161,6 +161,7 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 | Tata letak | Tombol yang menempel di bawah diukur, isi diberi ruang bawah setinggi tombol + safe area |
 | Memuat dan menyegarkan | Semua layar daftar dan detail: tarik ke bawah untuk menyegarkan (lingkaran emas di atas permukaan kartu) memanggil refetch RTK Query. Muat pertama dan ganti tanggal/minggu/filter = kerangka berbentuk isi (daftar baris, hero + ubin, atau detail), bukan isi argumen sebelumnya. Saat menyegarkan isi lama tetap tampil. Gagal menyegarkan = pesan singkat di atas isi + Coba lagi, isi lama tidak dihapus; gagal tanpa data = layar galat + Coba lagi. |
 | Daftar panjang | Daftar berhalaman (Notifikasi, Kartu Kerja "Semua") memakai FlashList: hanya baris terlihat yang dirender, halaman berikut dimuat saat mendekati dasar (tombol Muat lebih banyak tetap ada). Foto lewat expo-image dengan cache memori + disk. |
+| Lokasi absen | Izin belum pernah diminta: penjelasan singkat + tombol Izinkan lokasi dulu, baru dialog sistem. Lokasi dibaca dengan akurasi seimbang, batas 10 detik, cadangan lokasi terakhir (maks. 2 menit), lalu dikirim bersama absen. Gagal = alasan jelas + satu tombol: izin ditolak (Izinkan lokasi, atau Buka Pengaturan bila tidak bisa diminta lagi), GPS mati (Nyalakan lokasi: dialog sistem Android), sinyal lemah (Coba lagi), pratinjau web (tidak tersedia). Kembali dari Pengaturan = diperiksa ulang. Absen selalu tetap bisa dikirim; tanpa koordinat server menandai Tanpa lokasi. Sebelum absen, "Di lokasi kerja / Di luar lokasi (± n m)" hanya bila `/me` mengirim koordinat dan radius lokasi kerja (belum dikirim; radius cadangan `settings.attendance_radius_m`). Setelah absen: tanda dan jarak dari server (`location_flag`, `distance_m`). |
 | Uji | Jest + Testing Library, ESLint, TypeScript strict harus bersih sebelum commit (husky) |
 
 ## 6. Backlog
@@ -179,6 +180,9 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 - [TAMBAHAN/FASE 2] Settlement 3 nota.
 - [TAMBAHAN/FASE 2] Push notification (token FCM sudah bisa didaftarkan lewat `POST /me/device-token`,
   pengiriman belum dibuat).
+- Catatan API (bukan aplikasi): `GET /me` belum mengirim `location.latitude`, `location.longitude`,
+  dan `location.radius_m`, jadi perkiraan di lokasi / di luar lokasi sebelum absen belum tampil
+  (aplikasi sudah siap membacanya).
 - Catatan API (bukan aplikasi): `/me/rework` tidak menandai pengajuan ambil kerja ulang yang masih
   menunggu, jadi tombol tetap tampil lalu ditolak 409; beberapa status dikirim dengan label = kode
   (`belum_dihitung`, `pending`), aplikasi memakai label dari tokens; pesan "Prepared at tidak boleh

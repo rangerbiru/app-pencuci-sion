@@ -7,6 +7,9 @@ import useLocation from '@/hooks/useLocation';
 import useFieldSubmit from '@/hooks/useFieldSubmit';
 import { sizes, space } from '@/theme';
 import { Attendance } from '@/types';
+import { useAppSlice } from '@/slices';
+import { locationVerdict } from '@/utils/geo';
+import { formatPcs } from '@/utils/format';
 import { submitAttendance } from '@/services/fieldActions';
 import { formatDayLong, formatTime } from '@/utils/date';
 import Screen from '@/components/layouts/Screen';
@@ -18,6 +21,7 @@ import Button from '@/components/elements/Button';
 import BottomBar from '@/components/elements/BottomBar';
 import Card from '@/components/elements/Card';
 import { PhotoThumb } from '@/components/elements/Photo';
+import LocationStatus from './LocationStatus';
 
 export interface AttendanceCaptureProps {
   mode: 'masuk' | 'pulang';
@@ -29,7 +33,12 @@ type Result = { kind: 'sent'; attendance: Attendance | null } | { kind: 'queued'
 function AttendanceCapture({ mode }: AttendanceCaptureProps) {
   const { colors } = useTheme();
   const now = useNow(15000);
-  const location = useLocation();
+  const { user, settings } = useAppSlice();
+  const { state: location, request, retry, openSettings, enableGps } = useLocation();
+  const verdict =
+    location.status === 'ok'
+      ? locationVerdict(location.coords, user?.location, settings?.attendance_radius_m)
+      : null;
   const { submit, submitting, error } = useFieldSubmit();
   const [result, setResult] = useState<Result | null>(null);
   const title = mode === 'masuk' ? 'Absen masuk' : 'Absen pulang';
@@ -41,7 +50,7 @@ function AttendanceCapture({ mode }: AttendanceCaptureProps) {
           ? result.attendance?.check_in
           : result.attendance?.check_out
         : null;
-    const outside = mark?.location_flag?.code === 'luar_lokasi';
+    const flag = mark?.location_flag?.code;
     return (
       <Screen
         title={title}
@@ -77,10 +86,20 @@ function AttendanceCapture({ mode }: AttendanceCaptureProps) {
           {mark?.location_flag ? (
             <Badge status={mark.location_flag} kind="attendance_location" />
           ) : null}
-          {outside ? (
+          {flag === 'luar_lokasi' ? (
             <Text variant="small" color="danger" align="center">
-              Anda di luar lokasi kerja{mark?.distance_m ? ` (sekitar ${mark.distance_m} m)` : ''}.
-              Absen tetap diterima dan Mandor bisa memeriksanya.
+              Di luar lokasi
+              {mark?.distance_m != null ? ` (± ${formatPcs(mark.distance_m)}\u00a0m)` : ''}. Absen
+              tetap diterima dan Mandor bisa memeriksanya.
+            </Text>
+          ) : flag === 'tanpa_lokasi' ? (
+            <Text variant="small" color="textSecondary" align="center">
+              Tanpa lokasi: lokasi HP tidak terbaca atau lokasi kerja belum punya titik di server.
+            </Text>
+          ) : flag ? (
+            <Text variant="small" color="textSecondary" align="center">
+              Di lokasi kerja
+              {mark?.distance_m != null ? ` (± ${formatPcs(mark.distance_m)}\u00a0m)` : ''}.
             </Text>
           ) : null}
           {mark?.photo_url ? (
@@ -90,29 +109,6 @@ function AttendanceCapture({ mode }: AttendanceCaptureProps) {
       </Screen>
     );
   }
-
-  const locationInfo = {
-    loading: {
-      icon: 'map-pin' as const,
-      text: 'Membaca lokasi HP...',
-      tone: 'textSecondary' as const,
-    },
-    ok: {
-      icon: 'map-pin' as const,
-      text: 'Lokasi HP terbaca. Server menentukan di lokasi atau di luar lokasi.',
-      tone: 'textSecondary' as const,
-    },
-    denied: {
-      icon: 'alert-triangle' as const,
-      text: 'Izin lokasi ditolak. Absen tetap bisa dikirim, ditandai Tanpa Lokasi.',
-      tone: 'warning' as const,
-    },
-    unavailable: {
-      icon: 'alert-triangle' as const,
-      text: 'Lokasi HP tidak terbaca. Absen tetap bisa dikirim, ditandai Tanpa Lokasi.',
-      tone: 'warning' as const,
-    },
-  }[location.status];
 
   return (
     <Screen
@@ -154,12 +150,14 @@ function AttendanceCapture({ mode }: AttendanceCaptureProps) {
           }}
           footerInfo={
             <View style={styles.info}>
-              <View style={styles.infoRow}>
-                <Icon name={locationInfo.icon} size={18} color={colors[locationInfo.tone]} />
-                <Text variant="small" color={locationInfo.tone} style={styles.flex}>
-                  {locationInfo.text}
-                </Text>
-              </View>
+              <LocationStatus
+                state={location}
+                verdict={verdict}
+                onRequest={request}
+                onRetry={retry}
+                onOpenSettings={openSettings}
+                onEnableGps={enableGps}
+              />
               {error ? (
                 <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
                   {error.message}
@@ -188,7 +186,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   info: { gap: space.sm },
-  infoRow: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
   result: { alignItems: 'center', gap: space.md, paddingVertical: space.xxl },
 });
 

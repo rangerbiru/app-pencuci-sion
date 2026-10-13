@@ -1,3 +1,5 @@
+import type { WorkPlace } from '@/utils/geo';
+
 /**
  * Bentuk data API mobile SION v1 (docs/API_MOBILE.md). Uang dan gram = string desimal.
  */
@@ -78,7 +80,11 @@ export interface Me {
   photo_url: string | null;
   kepala_pencuci: Ref | null;
   mandor: Ref | null;
-  location: Ref | null;
+  /**
+   * Lokasi kerja. Koordinat dan radius belum dikirim GET /me; bila kelak ada, layar absen
+   * menampilkan perkiraan di lokasi / di luar lokasi sebelum absen dikirim.
+   */
+  location: (Ref & WorkPlace) | null;
   contract: {
     id: number;
     peran: string;

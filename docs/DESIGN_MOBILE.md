@@ -641,3 +641,16 @@ konfirmasi bawah, Tolak lewat lembar alasan.
 - Masuk halus sekali: logo fade + skala 0,94 ke 1 (260 ms), lalu form fade + naik 8 dp dengan jeda
   70 ms (FadeInItem). Hanya opacity/transform; diam bila "Kurangi gerak".
 
+## Bagian 8 (14C-R2): lokasi saat absen
+
+- `hooks/useLocation.ts`: keadaan `web`, `checking`, `ask`, `loading`, `ok` (+ akurasi), `denied`
+  (`canAskAgain`), `gps_off`, `weak`. Izin tidak diminta otomatis: layar menjelaskan dulu, dialog
+  sistem baru muncul setelah tombol Izinkan lokasi. Batas baca 10 detik, akurasi seimbang.
+- `scenes/attendance/LocationStatus.tsx`: satu baris ikon + alasan + satu tombol sekunder di bawah
+  pratinjau kamera. Warna: redup untuk info, kuning peringatan untuk gagal, hijau untuk di lokasi.
+  Pemutar kecil saat membaca. Setiap pesan gagal menutup dengan "Absen tetap bisa dikirim,
+  ditandai Tanpa lokasi." supaya pencuci tidak mengira absen terhalang.
+- `utils/geo.ts`: jarak haversine dan perkiraan di dalam/luar radius, hanya bila server mengirim
+  titik lokasi kerja. Keputusan akhir selalu `location_flag` server; layar hasil memakai tanda dan
+  `distance_m` itu ("Di luar lokasi (± 1.112 m)").
+
