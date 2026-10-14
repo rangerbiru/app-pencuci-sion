@@ -21,56 +21,75 @@ cp .env.dev.example .env.dev
 | `API_URL` | alamat API lengkap, mis. `http://127.0.0.1:8000/api/v1` (tanpa akhiran pun diterima; aplikasi menambahkan `/api/v1`) |
 | `EXPO_OWNER`, `EXPO_PROJECT_ID` | akun dan project EAS Anda |
 
-## Menjalankan (web dan HP), urutan persis
+## Menjalankan dengan Laravel lokal (web dan HP), urutan persis
 
-Satu `API_URL` berisi **IP laptop** dipakai untuk web dan HP sekaligus. Jangan pakai `127.0.0.1`
-untuk HP: di HP alamat itu menunjuk ke HP sendiri.
+`npm run dev:lan` mendeteksi IP LAN laptop setiap kali dijalankan dan memakai
+`API_URL=http://<IP>:8000/api/v1` untuk sesi itu saja (`.env.dev` tidak diubah). Jadi IP yang berubah
+setelah Wi-Fi tersambung ulang tidak perlu diketik ulang di mana pun.
 
-1. Sambungkan HP dan laptop ke Wi-Fi yang sama, lalu cari IP laptop
-   (Linux: `ip -4 addr`, macOS: `ipconfig getifaddr en0`, Windows: `ipconfig`), mis. `10.78.124.18`.
-2. Di repo Laravel (`web-gudang/.env`), pastikan **satu** baris CORS memuat semua origin pratinjau web
-   (baris kedua dengan nama sama menimpa yang pertama):
-   ```
-   CORS_ALLOWED_ORIGINS=http://localhost:8081,http://127.0.0.1:8081,http://<IP-laptop>:8081
-   ```
-3. Jalankan Laravel dengan database demo (terminal 1, di repo Laravel). Hentikan dulu `artisan serve`
-   lama: perubahan `.env` baru terbaca setelah server dijalankan ulang.
+1. Sambungkan laptop dan HP ke Wi-Fi yang sama. Pastikan tidak ada Metro lain di port 8081
+   (`ss -ltnp | grep 8081` kosong); bila terpakai, Expo pindah ke 8082 dan origin itu tidak ada
+   di CORS.
+2. Lihat IP, `API_URL`, dan perintah Laravel yang sudah berisi IP itu:
    ```bash
-   DB_DATABASE=sion_wms_mobile php artisan serve --host=0.0.0.0 --port=8000
+   npm run dev:lan:info
    ```
-4. Cek server dari laptop:
+   Contoh keluaran:
+   ```
+   IP LAN      10.78.124.18 (wlp4s0), dari rute bawaan
+   API_URL     http://10.78.124.18:8000/api/v1
+   Cek /meta   koneksi ditolak (connection refused): Laravel belum jalan di port ini
+   Laravel (terminal lain, di repo web-gudang):
+     DB_DATABASE=sion_wms_mobile CORS_ALLOWED_ORIGINS=http://localhost:8081,http://127.0.0.1:8081,http://10.78.124.18:8081 PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=0.0.0.0 --port=8000 --no-reload
+   ```
+3. Terminal 1, di repo **web-gudang**: hentikan `artisan serve` lama (Ctrl+C), lalu salin perintah
+   Laravel dari langkah 2 apa adanya:
    ```bash
-   curl -s http://<IP-laptop>:8000/api/v1/meta | head -c 80
-   curl -si -X OPTIONS http://<IP-laptop>:8000/api/v1/auth/login \
-     -H 'Origin: http://localhost:8081' -H 'Access-Control-Request-Method: POST' \
-     | grep -i access-control-allow-origin
+   DB_DATABASE=sion_wms_mobile \
+   CORS_ALLOWED_ORIGINS=http://localhost:8081,http://127.0.0.1:8081,http://<IP>:8081 \
+   PHP_CLI_SERVER_WORKERS=4 php artisan serve --host=0.0.0.0 --port=8000 --no-reload
    ```
-   Harus keluar JSON `{"data":{"api_version"...` dan `Access-Control-Allow-Origin: http://localhost:8081`.
-5. Isi `.env.dev` repo ini: `API_URL=http://<IP-laptop>:8000/api/v1`.
-6. Pastikan tidak ada Metro lain yang berjalan (port 8081 harus kosong:
-   `ss -ltnp | grep 8081`). Kalau port 8081 terpakai, Expo pindah ke 8082 dan origin web itu
-   tidak ada di CORS.
-7. Jalankan Metro (terminal 2, repo ini) **lewat npm**, bukan `npx expo start` langsung:
+   - `--host=0.0.0.0` supaya HP bisa menjangkau laptop (bawaan 127.0.0.1 hanya dari laptop).
+   - `DB_DATABASE` dan `CORS_ALLOWED_ORIGINS` di depan perintah berlaku untuk proses ini saja dan
+     menang atas `.env` repo web; `.env` repo web tidak perlu diubah.
+   - `PHP_CLI_SERVER_WORKERS=4` + `--no-reload`: beberapa permintaan dilayani sekaligus (tanpa ini
+     pratinjau web lambat karena permintaan antre). Akibatnya perubahan `.env` web baru terbaca
+     setelah Laravel dijalankan ulang.
+4. Terminal 2, di repo ini:
    ```bash
-   npm run dev
+   npm run dev:lan        # HP (Expo Go) dan web; tekan w untuk web
+   npm run dev:lan:web    # langsung membuka pratinjau web
    ```
-   `npm run dev` memuat `.env.dev` lewat dotenvx. `npx expo start` tidak membaca `.env.dev`, sehingga
-   `API_URL` jatuh ke bawaan `127.0.0.1` dan HP tidak bisa menghubungi server.
-8. Web: tekan `w` atau buka `http://localhost:8081`. HP: scan QR dengan Expo Go.
-9. Cek alamat API yang terbaca: `npm run dev:config:public | grep apiUrl` harus sama dengan
-   langkah 5. Akun demo ada di `testing.md` repo Laravel.
+   Di awal terminal tampil IP, `API_URL`, dan hasil "Cek /meta". Harus `OK`; bila belum, Laravel
+   langkah 3 belum jalan atau IP-nya beda. QR Expo Go memakai IP yang sama.
+5. Web: `http://localhost:8081`. HP: scan QR dengan Expo Go. Masuk dengan akun demo
+   (`testing.md` repo Laravel).
 
-IP laptop bisa berubah saat Wi-Fi tersambung ulang; bila login gagal "server tidak bisa dihubungi",
-ulangi langkah 1, 2, 3, dan 5.
+Bila gagal terhubung di build pengembangan, pesan di layar menyebut alamat yang dicoba dan
+penyebabnya:
 
-`.env.prod` memakai server hosting (`https://floralwhite-barracuda-635556.hostingersite.com/api/v1`),
-dipakai setelah server diperbarui ke Tahap 15B dan 15C.
+| Penyebab di layar | Artinya | Perbaikan |
+|---|---|---|
+| koneksi ditolak (connection refused) | tidak ada server di IP:port itu | jalankan langkah 3; IP berubah: ulangi langkah 2 s.d. 4 |
+| CORS, origin ... tidak ada di CORS_ALLOWED_ORIGINS | Laravel hidup, tetapi menolak origin pratinjau web | jalankan ulang Laravel dengan `CORS_ALLOWED_ORIGINS` dari langkah 2 (port Metro harus sama) |
+| timeout, tidak ada jawaban dalam n detik | permintaan tidak sampai | IP lama, firewall laptop (izinkan port 8000), atau HP di Wi-Fi lain |
+| koneksi ditolak atau alamat tidak terjangkau (HP) | HP tidak bisa mencapai laptop | Laravel harus `--host=0.0.0.0`, HP dan laptop di Wi-Fi yang sama |
+| 127.0.0.1/localhost menunjuk ke HP sendiri | `API_URL` masih 127.0.0.1 | pakai `npm run dev:lan`, bukan `npm run dev` |
+
+Pilihan: `LAN_IP=192.168.1.5 npm run dev:lan` memaksa IP (mis. ada VPN), `LARAVEL_PORT=8001`
+mengganti port Laravel, argumen lain diteruskan ke Expo (`npm run dev:lan -- --port 8082`; origin
+CORS di keluaran ikut berubah).
+
+`npm run dev` tetap ada dan memakai `API_URL` dari `.env.dev` apa adanya (mis. server lain).
+`.env.prod` memakai server hosting (`https://floralwhite-barracuda-635556.hostingersite.com/api/v1`).
 
 ## Perintah
 
 | Perintah | Guna |
 |---|---|
-| `npm run dev` | server pengembangan (cache dibersihkan) |
+| `npm run dev:lan`, `npm run dev:lan:web` | Expo dengan `API_URL` = IP LAN laptop terdeteksi (cache dibersihkan) |
+| `npm run dev:lan:info` | tampilkan IP, `API_URL`, CORS, dan perintah Laravel |
+| `npm run dev` | server pengembangan dengan `API_URL` dari `.env.dev` (cache dibersihkan) |
 | `npm run dev:android` | langsung buka di emulator/HP Android |
 | `npm run lint`, `npm run format` | ESLint dan Prettier |
 | `npm run test` | Jest + Testing Library |

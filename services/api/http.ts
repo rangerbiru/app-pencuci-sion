@@ -1,6 +1,8 @@
+import { Platform } from 'react-native';
 import config from '@/utils/config';
 import { getToken } from '@/services/auth/tokenStorage';
 import { ApiError, httpError, NETWORK_MESSAGE, TIMEOUT_MESSAGE } from './errors';
+import { devNetworkDetail, diagnoseNetworkFailure } from './networkDiagnosis';
 
 /**
  * Klien HTTP tunggal untuk RTK Query dan antrean kirim ulang.
@@ -64,30 +66,40 @@ export async function http<T>(req: HttpRequest): Promise<HttpResult<T>> {
 
   const controller = new AbortController();
   let timedOut = false;
+  const timeoutMs = req.timeoutMs ?? config.requestTimeoutMs;
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, req.timeoutMs ?? config.requestTimeoutMs);
+  }, timeoutMs);
 
+  const url = buildUrl(req.path, req.params);
   let res: Response;
   try {
-    res = await fetch(buildUrl(req.path, req.params), {
+    res = await fetch(url, {
       method: req.method ?? 'GET',
       headers,
       body,
       signal: controller.signal,
     });
-  } catch {
+  } catch (e) {
     clearTimeout(timer);
-    return {
-      ok: false,
-      error: {
-        kind: timedOut ? 'timeout' : 'network',
-        status: null,
-        message: timedOut ? TIMEOUT_MESSAGE : NETWORK_MESSAGE,
-        fieldErrors: {},
-      },
+    const error: ApiError = {
+      kind: timedOut ? 'timeout' : 'network',
+      status: null,
+      message: timedOut ? TIMEOUT_MESSAGE : NETWORK_MESSAGE,
+      fieldErrors: {},
     };
+    if (__DEV__) {
+      // build pengembangan: tampilkan alamat yang dicoba dan penyebabnya
+      const platform = Platform.OS;
+      error.cause = await diagnoseNetworkFailure(url, { timedOut, platform, error: e });
+      error.message += `\n${devNetworkDetail(url, error.cause, {
+        platform,
+        timeoutMs,
+        origin: platform === 'web' ? globalThis.location?.origin : undefined,
+      })}`;
+    }
+    return { ok: false, error };
   }
   clearTimeout(timer);
 

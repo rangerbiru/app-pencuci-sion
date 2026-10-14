@@ -1,3 +1,5 @@
+import type { NetworkCause } from './networkDiagnosis';
+
 /**
  * Error API yang sudah dinormalkan supaya layar cukup membaca `message` dan `fieldErrors`.
  */
@@ -11,6 +13,8 @@ export interface ApiError {
   fieldErrors: Record<string, string>;
   /** 429: detik tunggu dari header Retry-After */
   retryAfter?: number;
+  /** __DEV__: penyebab galat koneksi (lihat networkDiagnosis.ts) */
+  cause?: NetworkCause;
 }
 
 export const NETWORK_MESSAGE =

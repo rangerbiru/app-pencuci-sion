@@ -86,7 +86,9 @@ Semua POST memakai `Idempotency-Key` (bagian 5). "Antrean" = aksi lewat antrean 
 4. Lupa password: tombol Hubungi Admin membuka WhatsApp ke `company.admin_whatsapp` dengan pesan
    "Halo Admin, saya <email/no HP yang diketik> lupa password aplikasi SION.". Tanpa nomor: pesan
    untuk menghubungi Admin langsung. Alamat API tidak tampil di layar (cek dengan
-   `npm run dev:config:public`, kunci `extra.apiUrl`).
+   `npm run dev:lan:info` atau `npm run dev:config:public`). Build pengembangan: galat koneksi
+   menambahkan alamat yang dicoba dan penyebabnya (connection refused, timeout, CORS; di web CORS
+   dibedakan dengan permintaan `no-cors`); build rilis hanya pesan ramah.
 5. Keluar: `POST /auth/logout`; bila masih ada aksi belum terkirim, pengguna diperingatkan.
 
 ### Pencuci

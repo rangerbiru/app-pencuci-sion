@@ -82,6 +82,14 @@ describe('http client', () => {
     expect(res.error.message).toMatch(/Tidak ada sinyal/);
   });
 
+  it('adds the attempted address and cause in development builds', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Network request failed'));
+    const res = await http({ path: '/auth/login', method: 'POST', auth: false });
+    if (res.ok) throw new Error('expected failure');
+    expect(res.error.cause).toBe('unreachable');
+    expect(res.error.message).toContain(`[Dev] Alamat: ${buildUrl('/auth/login')}. Penyebab:`);
+  });
+
   it('reads Retry-After on 429', async () => {
     fetchMock.mockReturnValue(
       respond(429, { message: 'Too Many Attempts.' }, { 'Retry-After': '42' }),
