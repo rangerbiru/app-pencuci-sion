@@ -113,7 +113,7 @@ npm run check:eas             # profil preview
 npm run check:eas production
 ```
 
-Harus menampilkan `owner rafizaweb`, `projectId ce08ff3b-ab74-438b-832d-280671888257`, dan `API_URL`
+Harus menampilkan `owner rafizaweb`, `projectId 80696f49-4622-4fd6-8d96-3dc22f8d03d5`, dan `API_URL`
 server hosting. Skrip ini menjalankan `npx expo config --type public` dengan `env` dari `eas.json`
 saja, tanpa `.env`.
 

@@ -6,7 +6,7 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
  * Build development memakai package id.sion.mobile.dev supaya bisa dipasang berdampingan.
  */
 const EAS_OWNER = 'rafizaweb';
-const EAS_PROJECT_ID = 'ce08ff3b-ab74-438b-832d-280671888257';
+const EAS_PROJECT_ID = '80696f49-4622-4fd6-8d96-3dc22f8d03d5';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const env = process.env.ENV ?? 'development';
