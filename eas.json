@@ -20,7 +20,9 @@
       "channel": "development",
       "developmentClient": false,
       "distribution": "internal",
-      "env": { "ENV": "development" },
+      "env": {
+        "ENV": "development"
+      },
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
@@ -35,7 +37,10 @@
       "environment": "preview",
       "channel": "preview",
       "distribution": "internal",
-      "env": { "ENV": "development" },
+      "env": {
+        "ENV": "development",
+        "API_URL": "https://floralwhite-barracuda-635556.hostingersite.com/api/v1"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -47,7 +52,10 @@
       "extends": "base",
       "environment": "production",
       "channel": "production",
-      "env": { "ENV": "production" },
+      "env": {
+        "ENV": "production",
+        "API_URL": "https://floralwhite-barracuda-635556.hostingersite.com/api/v1"
+      },
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"

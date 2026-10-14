@@ -11,6 +11,7 @@
     "dev:lan": "node scripts/dev-lan.js",
     "dev:lan:web": "node scripts/dev-lan.js --web",
     "dev:lan:info": "node scripts/dev-lan.js --info",
+    "check:eas": "node scripts/check-eas-config.js",
     "dev:doctor": "EXPO_NO_DOTENV=1 dotenvx run -f .env.dev -- npx expo-doctor",
     "dev:secret:push": "dotenvx run -f .env.dev -- eas secret:push --scope project --env-file .env.dev --force",
     "dev:secret:list": "dotenvx run -f .env.dev -- eas env:list",

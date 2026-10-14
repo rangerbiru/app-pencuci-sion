@@ -19,7 +19,6 @@ cp .env.dev.example .env.dev
 |---|---|
 | `ENV` | `development` |
 | `API_URL` | alamat API lengkap, mis. `http://127.0.0.1:8000/api/v1` (tanpa akhiran pun diterima; aplikasi menambahkan `/api/v1`) |
-| `EXPO_OWNER`, `EXPO_PROJECT_ID` | akun dan project EAS Anda |
 
 ## Menjalankan dengan Laravel lokal (web dan HP), urutan persis
 
@@ -94,9 +93,31 @@ CORS di keluaran ikut berubah).
 | `npm run lint`, `npm run format` | ESLint dan Prettier |
 | `npm run test` | Jest + Testing Library |
 
-## Build APK untuk dibagikan
+## Rilis APK
 
-Profil `preview` di `eas.json` menghasilkan APK (distribusi internal):
+Build cloud EAS **tidak membawa `.env`** (di-gitignore). Karena itu:
+
+- `owner` (`rafizaweb`) dan `extra.eas.projectId` ditulis langsung di `app.config.ts`; keduanya bukan
+  rahasia.
+- Nilai non-rahasia per profil ada di `eas.json` > `env`. Profil `preview` dan `production` memakai
+  `API_URL=https://floralwhite-barracuda-635556.hostingersite.com/api/v1`. Profil `development`
+  hanya menyetel `ENV`; `API_URL`-nya tetap dari `.env.dev`.
+- `app.config.ts` membaca `process.env.API_URL`: `eas.json` menang di cloud, `.env.dev` di laptop.
+- **Jangan menaruh rahasia (token, kunci, kata sandi) di `eas.json`**; berkasnya masuk git. Rahasia
+  lewat `eas env:create` atau `eas secret`.
+
+Cek konfigurasi sebelum build (tanpa menjalankan build):
+
+```bash
+npm run check:eas             # profil preview
+npm run check:eas production
+```
+
+Harus menampilkan `owner rafizaweb`, `projectId ce08ff3b-ab74-438b-832d-280671888257`, dan `API_URL`
+server hosting. Skrip ini menjalankan `npx expo config --type public` dengan `env` dari `eas.json`
+saja, tanpa `.env`.
+
+Bangun APK (profil `preview`, distribusi internal):
 
 ```bash
 # di cloud EAS

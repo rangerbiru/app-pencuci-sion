@@ -1,20 +1,23 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
 /**
- * Identitas aplikasi. Owner dan EXPO_PROJECT_ID diisi lewat .env.dev / .env.prod.
+ * Identitas aplikasi. Owner dan project ID EAS ditulis langsung di sini (bukan rahasia) supaya build
+ * cloud EAS, yang tidak membawa .env, tetap benar. API_URL: eas.json "env" (build cloud) menang atas .env.
  * Build development memakai package id.sion.mobile.dev supaya bisa dipasang berdampingan.
  */
+const EAS_OWNER = 'rafizaweb';
+const EAS_PROJECT_ID = 'ce08ff3b-ab74-438b-832d-280671888257';
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const env = process.env.ENV ?? 'development';
   const isProd = env === 'production';
-  const expoProjectId = process.env.EXPO_PROJECT_ID;
   const appId = isProd ? 'id.sion.mobile' : 'id.sion.mobile.dev';
 
   const expoConfig: ExpoConfig = {
     ...config,
     name: process.env.EXPO_NAME ?? (isProd ? 'SION' : 'SION Dev'),
     slug: process.env.EXPO_SLUG ?? 'sion-mobile',
-    owner: process.env.EXPO_OWNER || undefined,
+    owner: EAS_OWNER,
     ios: {
       ...config.ios,
       bundleIdentifier: process.env.EXPO_IOS_BUNDLE_IDENTIFIER ?? appId,
@@ -44,10 +47,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       output: 'single',
       favicon: './assets/images/icon-1024.png',
     },
-    ...(expoProjectId ? { updates: { url: `https://u.expo.dev/${expoProjectId}` } } : {}),
+    updates: { url: `https://u.expo.dev/${EAS_PROJECT_ID}` },
     extra: {
       ...config.extra,
-      ...(expoProjectId ? { eas: { projectId: expoProjectId } } : {}),
+      eas: { projectId: EAS_PROJECT_ID },
       env,
       apiUrl: process.env.API_URL ?? 'http://127.0.0.1:8000/api/v1',
     },
