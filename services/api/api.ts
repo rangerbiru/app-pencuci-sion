@@ -52,6 +52,9 @@ export const api = createApi({
   tagTypes,
   // data ringan; HP kelas bawah: simpan cache 5 menit, segarkan saat layar dibuka lagi
   keepUnusedDataFor: 300,
+  // URL foto bertanda tangan hanya berlaku 15 menit: data lebih tua dari 10 menit dimuat ulang saat
+  // layar dibuka lagi, supaya foto tidak 403
+  refetchOnMountOrArgChange: 600,
   refetchOnReconnect: true,
   endpoints: () => ({}),
 });

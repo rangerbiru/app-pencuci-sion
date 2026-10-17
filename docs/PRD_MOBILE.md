@@ -153,7 +153,7 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 |---|---|
 | Offline | Aksi lapangan (absen, ambil bahan, serah hasil, kerja ulang, konfirmasi timbang, terima batch) disimpan dulu di antrean (AsyncStorage + foto di folder dokumen), tampil "Belum terkirim", dikirim otomatis saat sinyal kembali, saat aplikasi aktif, dan tiap 60 detik. Hanya dikirim milik pengguna yang masuk. Ditolak server (4xx) = dikembalikan ke form. |
 | Idempotency-Key | Antrean: key = id aksi, sama di setiap kiriman ulang. Aksi online (RTK Query): key per aksi, dipakai ulang bila kiriman tidak terjawab, baru setelah server menjawab. Teruji: jawaban pertama hilang, kiriman ulang dijawab `Idempotency-Replayed`, data tercatat sekali. |
-| Foto | Kompres di HP: sisi terpanjang 1280 px, JPEG 0,7 (server maks 2 MB). Waktu foto diambil dikirim (`photo_taken_at`). URL foto dari server berlaku 15 menit. |
+| Foto | Kompres di HP: sisi terpanjang 1280 px, JPEG 0,7 (server maks 2 MB). Waktu foto diambil dikirim (`photo_taken_at`). URL foto dari server berlaku 15 menit dan memakai host API yang dipanggil aplikasi (bukan `APP_URL`). Data API yang lebih tua dari 10 menit dimuat ulang saat layar dibuka lagi supaya URL foto tidak kedaluwarsa (403). |
 | Versi | `min_app_version` dari `/meta` lebih tinggi dari versi aplikasi = layar Perbarui aplikasi |
 | Waktu | Asia/Jakarta untuk semua tanggal; jam absen = jam server |
 | Tampilan | Terang (bawaan, ruang cuci terang), Gelap, Ikuti sistem; disimpan di AsyncStorage, berlaku tanpa restart. Semua warna dari `theme/tokens.json`; header navy di kedua mode, bilah status terang. |
