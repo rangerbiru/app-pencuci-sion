@@ -1,7 +1,11 @@
 import { AppNotification } from '@/types';
 import { notificationHref } from './notificationTarget';
 
-const n = (screen: string | null, id: number | null = 7): AppNotification => ({
+const n = (
+  screen: string | null,
+  id: number | null = 7,
+  data: Record<string, unknown> = {},
+): AppNotification => ({
   id: 1,
   type: { code: 'x', label: 'x' },
   title: 't',
@@ -10,7 +14,7 @@ const n = (screen: string | null, id: number | null = 7): AppNotification => ({
   is_read: false,
   read_at: null,
   target: screen ? { screen, id } : null,
-  data: {},
+  data,
 });
 
 describe('notificationHref', () => {
@@ -34,5 +38,24 @@ describe('notificationHref', () => {
   it('has no destination for old web notifications or unknown screens', () => {
     expect(notificationHref(n(null), 'pencuci')).toBeNull();
     expect(notificationHref(n('unknown_screen'), 'pencuci')).toBeNull();
+  });
+
+  it('opens the Jatah screen for jatah_dari_gudang and marks the related assignment', () => {
+    const note = n('rations', 14, { batch_assignment_id: 31, batch_code: 'B-MB' });
+    expect(notificationHref(note, 'mandor')).toEqual({
+      pathname: '/batch',
+      params: { tab: 'jatah', batch: '14', assignment: '31' },
+    });
+    expect(notificationHref(note, 'kepala_pencuci')).toEqual({
+      pathname: '/tim-batch',
+      params: { tab: 'jatah', batch: '14', assignment: '31' },
+    });
+  });
+
+  it('still opens Jatah when the assignment id is missing', () => {
+    expect(notificationHref(n('rations', null), 'mandor')).toEqual({
+      pathname: '/batch',
+      params: { tab: 'jatah' },
+    });
   });
 });

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { sizes, space } from '@/theme';
+import useTheme from '@/hooks/useTheme';
 import { isFeatureEnabled } from '@/utils/config';
 import { formatDateTime } from '@/utils/date';
 import { compareDecimal } from '@/utils/decimal';
@@ -27,9 +28,25 @@ import { needsPreparation } from './rationForm';
 type Tab = 'masuk' | 'jatah';
 
 /** Batch: batch masuk (terima) dan penjatahan dari batch yang sudah diterima. */
-function Batches({ back }: { back?: boolean }) {
+function Batches({
+  back,
+  initialTab,
+  highlightBatchId,
+  highlightAssignmentId,
+}: {
+  back?: boolean;
+  initialTab?: Tab;
+  /** dari notifikasi jatah_dari_gudang: batch dan jatah yang disorot */
+  highlightBatchId?: number;
+  highlightAssignmentId?: number;
+}) {
+  const { colors } = useTheme();
   const showRations = isFeatureEnabled('rations');
-  const [tab, setTab] = useState<Tab>('masuk');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'masuk');
+  // tab layar tidak dibuat ulang: notifikasi berikutnya mengganti param, bukan layar
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab, highlightBatchId, highlightAssignmentId]);
   const incoming = useGetIncomingBatchesQuery(undefined, { skip: tab !== 'masuk' });
   const rations = useGetRationBatchesQuery(undefined, { skip: tab !== 'jatah' });
   const q = tab === 'masuk' ? incoming : rations;
@@ -103,83 +120,104 @@ function Batches({ back }: { back?: boolean }) {
         )
       ) : rations.data && rations.data.length > 0 ? (
         <View style={styles.list}>
-          {rations.data.map(b => {
-            const notReady = needsPreparation(b);
-            const canRation =
-              !notReady && b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
-            return (
-              <Card key={b.id} style={styles.card}>
-                <View style={styles.row}>
-                  <View style={styles.flex}>
-                    <Text variant="subheading">{b.batch_code}</Text>
-                    <Text variant="small" color="textSecondary">
-                      {b.item}, diterima {formatDateTime(b.received_at)}
-                    </Text>
+          {[...rations.data]
+            .sort((a, z) => Number(z.id === highlightBatchId) - Number(a.id === highlightBatchId))
+            .map(b => {
+              const notReady = needsPreparation(b);
+              const canRation =
+                !notReady && b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
+              return (
+                <Card
+                  key={b.id}
+                  style={[
+                    styles.card,
+                    b.id === highlightBatchId && { borderColor: colors.fieldFocus, borderWidth: 2 },
+                  ]}>
+                  <View style={styles.row}>
+                    <View style={styles.flex}>
+                      <Text variant="subheading">{b.batch_code}</Text>
+                      <Text variant="small" color="textSecondary">
+                        {b.item}, diterima {formatDateTime(b.received_at)}
+                      </Text>
+                    </View>
+                    <Badge status={b.status} kind="batch" />
                   </View>
-                  <Badge status={b.status} kind="batch" />
-                </View>
-                <BatchFlags grade={b.grade} needsPreparation={notReady} />
-                <View style={styles.row}>
-                  <View style={styles.flex}>
-                    <Text variant="small" color="textSecondary">
-                      Sisa belum dijatah
-                    </Text>
-                    <Amount value={b.remaining_gram} unit="gram" size="m" />
+                  <BatchFlags grade={b.grade} needsPreparation={notReady} />
+                  <View style={styles.row}>
+                    <View style={styles.flex}>
+                      <Text variant="small" color="textSecondary">
+                        Sisa belum dijatah
+                      </Text>
+                      <Amount value={b.remaining_gram} unit="gram" size="m" />
+                    </View>
+                    <View style={styles.flex}>
+                      <Text variant="small" color="textSecondary">
+                        Diterima
+                      </Text>
+                      <Text variant="bodyStrong">{formatGram(b.received_gram)}</Text>
+                    </View>
                   </View>
-                  <View style={styles.flex}>
-                    <Text variant="small" color="textSecondary">
-                      Diterima
-                    </Text>
-                    <Text variant="bodyStrong">{formatGram(b.received_gram)}</Text>
-                  </View>
-                </View>
-                {b.assignments.length > 0 ? (
-                  <View style={styles.assignments}>
-                    {b.assignments.map(a => (
-                      <View key={a.id} style={styles.row}>
-                        <View style={styles.flex}>
-                          <Text variant="body">{a.worker.name}</Text>
-                          <BatchFlags executorRole={a.executor_role} />
+                  {b.assignments.length > 0 ? (
+                    <View style={styles.assignments}>
+                      {b.assignments.map(a => (
+                        <View
+                          key={a.id}
+                          accessibilityLabel={
+                            a.id === highlightAssignmentId ? 'Jatah baru dari gudang' : undefined
+                          }
+                          style={[
+                            styles.row,
+                            a.id === highlightAssignmentId && [
+                              styles.mark,
+                              { backgroundColor: colors.navIndicator },
+                            ],
+                          ]}>
+                          <View style={styles.flex}>
+                            <Text variant="body">{a.worker.name}</Text>
+                            <BatchFlags executorRole={a.executor_role} />
+                          </View>
+                          <Text variant="bodyStrong" style={styles.tabular}>
+                            {formatGram(a.target_gram)}
+                          </Text>
+                          <Badge status={a.status} kind="assignment" />
                         </View>
-                        <Text variant="bodyStrong" style={styles.tabular}>
-                          {formatGram(a.target_gram)}
-                        </Text>
-                        <Badge status={a.status} kind="assignment" />
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
-                {(notReady || b.can_prepare) && isFeatureEnabled('preparation') ? (
-                  <Button
-                    title={notReady ? 'Siapkan dulu' : 'Penyiapan'}
-                    variant="secondary"
-                    icon="layers"
-                    onPress={() =>
-                      router.push({ pathname: '/batch/siapkan/[id]', params: { id: String(b.id) } })
-                    }
-                  />
-                ) : null}
-                {canRation ? (
-                  <Button
-                    title="Buat penjatahan"
-                    variant="secondary"
-                    icon="users"
-                    onPress={() =>
-                      router.push({ pathname: '/batch/jatah/[id]', params: { id: String(b.id) } })
-                    }
-                  />
-                ) : notReady ? (
-                  <Text variant="small" color="textSecondary">
-                    Stok ini belum G1. Siapkan dulu sebelum dijatahkan.
-                  </Text>
-                ) : (
-                  <Text variant="small" color="textSecondary">
-                    Seluruh gram sudah dijatahkan.
-                  </Text>
-                )}
-              </Card>
-            );
-          })}
+                      ))}
+                    </View>
+                  ) : null}
+                  {(notReady || b.can_prepare) && isFeatureEnabled('preparation') ? (
+                    <Button
+                      title={notReady ? 'Siapkan dulu' : 'Penyiapan'}
+                      variant="secondary"
+                      icon="layers"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/batch/siapkan/[id]',
+                          params: { id: String(b.id) },
+                        })
+                      }
+                    />
+                  ) : null}
+                  {canRation ? (
+                    <Button
+                      title="Buat penjatahan"
+                      variant="secondary"
+                      icon="users"
+                      onPress={() =>
+                        router.push({ pathname: '/batch/jatah/[id]', params: { id: String(b.id) } })
+                      }
+                    />
+                  ) : notReady ? (
+                    <Text variant="small" color="textSecondary">
+                      Stok ini belum G1. Siapkan dulu sebelum dijatahkan.
+                    </Text>
+                  ) : (
+                    <Text variant="small" color="textSecondary">
+                      Seluruh gram sudah dijatahkan.
+                    </Text>
+                  )}
+                </Card>
+              );
+            })}
         </View>
       ) : (
         <Card>
@@ -202,6 +240,7 @@ const styles = StyleSheet.create({
   card: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   assignments: { gap: space.sm, paddingTop: space.xs },
+  mark: { padding: space.sm, borderRadius: 8 },
   tabular: { fontVariant: ['tabular-nums'], minWidth: sizes.touch * 2, textAlign: 'right' },
 });
 

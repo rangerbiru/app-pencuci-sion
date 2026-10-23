@@ -18,6 +18,7 @@ const KIND: Record<string, { icon: IconName; tone: BadgeTone }> = {
   penarikan_ditolak: { icon: 'x-circle', tone: 'error' },
   bonus_capai: { icon: 'award', tone: 'accent' },
   batch_masuk: { icon: 'inbox', tone: 'primary' },
+  jatah_dari_gudang: { icon: 'users', tone: 'primary' },
 };
 
 export function notificationKind(n: AppNotification): { icon: IconName; tone: BadgeTone } {

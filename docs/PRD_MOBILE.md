@@ -52,7 +52,7 @@ Bottom tab, **maksimal 5**, tanpa drawer. Tab ditentukan dari `GET /me` `role.co
   atas dikelompokkan per hari (Hari ini, Kemarin, tanggal), ikon per jenis, belum dibaca ditandai
   (latar, huruf tebal, titik emas), 20 per halaman dengan Muat lebih banyak, tarik untuk menyegarkan,
   diambil ulang setiap dibuka. Ketuk = tandai dibaca seketika (badge ikut berkurang) lalu buka
-  `target.screen`/`target.id`; `target` kosong (notifikasi lama dari web) = hanya ditandai dibaca.
+  `target.screen`/`target.id`; `target` kosong (notifikasi lama dari web) = hanya ditandai dibaca. `jatah_dari_gudang` (`target.screen` = `rations`) membuka tab Batch > Penjatahan (Mandor) atau Batch tim (Kepala) dan menyorot jatah `data.batch_assignment_id` (batch-nya naik ke atas, jatahnya berlatar emas).
   Tandai semua dibaca. Push notification belum (fase berikutnya).
 - Aksi utama melayang di kanan bawah, hanya di Beranda: Pencuci = langkah berikutnya (Ambil bahan /
   Serah hasil), Mandor = Terima batch bila ada batch masuk. Mengecil menjadi ikon saat isi digulir

@@ -9,6 +9,11 @@ export function notificationHref(n: AppNotification, role: RoleCode | undefined)
   const t = n.target;
   if (!t) return null;
   const id = t.id != null ? String(t.id) : null;
+  const rawAssignment = n.data?.batch_assignment_id;
+  const assignmentId =
+    typeof rawAssignment === 'number' || typeof rawAssignment === 'string'
+      ? String(rawAssignment)
+      : null;
   switch (t.screen) {
     case 'approval':
       return id ? { pathname: '/verifikasi/[id]', params: { id } } : '/verifikasi';
@@ -28,6 +33,16 @@ export function notificationHref(n: AppNotification, role: RoleCode | undefined)
       return id ? { pathname: '/penarikan-tim/[id]', params: { id } } : '/penarikan-tim';
     case 'incoming_batch':
       return id ? { pathname: '/batch/terima/[id]', params: { id } } : '/batch';
+    case 'rations':
+      // jatah dari gudang: buka layar Jatah dan sorot jatah terkait (data.batch_assignment_id)
+      return {
+        pathname: role === 'kepala_pencuci' ? '/tim-batch' : '/batch',
+        params: {
+          tab: 'jatah',
+          ...(id ? { batch: id } : {}),
+          ...(assignmentId ? { assignment: assignmentId } : {}),
+        },
+      };
     default:
       return null;
   }
