@@ -9,6 +9,8 @@ export interface ApiError {
   kind: ApiErrorKind;
   status: number | null;
   message: string;
+  /** 422: kode mesin dari server (revisi 22/10), mis. "grade_not_ready"; tidak selalu ada */
+  code?: string;
   /** 422: pesan per isian, mis. { weight: "Gram melebihi sisa jatah ..." } */
   fieldErrors: Record<string, string>;
   /** 429: detik tunggu dari header Retry-After */
@@ -39,6 +41,7 @@ export function messageForStatus(status: number): string {
 
 interface LaravelErrorBody {
   message?: unknown;
+  code?: unknown;
   errors?: Record<string, unknown>;
 }
 
@@ -56,7 +59,8 @@ export function httpError(status: number, body: unknown, retryAfter?: number): A
     typeof b.message === 'string' && b.message.trim() && !/^Server Error$/i.test(b.message)
       ? b.message
       : messageForStatus(status);
-  return { kind: 'http', status, message, fieldErrors, retryAfter };
+  const code = typeof b.code === 'string' ? b.code : undefined;
+  return { kind: 'http', status, message, fieldErrors, retryAfter, ...(code ? { code } : {}) };
 }
 
 export function isApiError(e: unknown): e is ApiError {

@@ -134,6 +134,10 @@ export interface MyRation {
   remaining_gram: Decimal;
   taken_pcs: number | null;
   status: Status;
+  grade?: number | null;
+  ready_for_ration?: boolean;
+  needs_preparation?: boolean;
+  executor_role?: ExecutorRole | null;
 }
 
 export type SubmissionType =
@@ -421,7 +425,18 @@ export interface Batch {
   receipt_photo_url: string | null;
   remaining_gram: Decimal | null;
   can_prepare: boolean;
+  // Revisi 22/10: server lama tidak mengirim field ini, jadi semuanya opsional
+  /** 1 = siap dijatah; 2/3 = grade tertinggi yang belum siap; null = tidak tertelusur */
+  grade?: number | null;
+  ready_for_ration?: boolean;
+  needs_preparation?: boolean;
+  /** Putaran 2: susut hancur dan hilang (negatif) saat penerimaan */
+  receipt_crushed_gram?: Decimal | null;
+  receipt_lost_gram?: Decimal | null;
 }
+
+/** Pelaksana penjatahan/penyiapan: gudang (Admin web) atau mandor (Mandor / Kepala Pencuci) */
+export type ExecutorRole = 'gudang' | 'mandor';
 
 export interface RationBatch extends Batch {
   assignments: {
@@ -430,6 +445,7 @@ export interface RationBatch extends Batch {
     target_gram: Decimal;
     modal_bahan: Decimal | null;
     status: Status;
+    executor_role?: ExecutorRole | null;
   }[];
 }
 
@@ -457,6 +473,8 @@ export interface Item {
   grup_hasil: Status<'utuh' | 'kecil' | 'hancur'> | null;
   warna: string | null;
   unit: string;
+  /** belum ada di server saat ini; bila ada, dipakai untuk memilih item susut hancur */
+  susut_hancur?: boolean;
 }
 
 /** GET /approvals/{id}: objek pengajuan + foto, jatah, kerja ulang, kartu. */
@@ -554,6 +572,15 @@ export interface PreparationResult {
   output_gram: Decimal;
   susut_gram: Decimal;
   batches: Batch[];
+  // Revisi 22/10 (bentuk baru)
+  g1_gram?: Decimal;
+  crushed_gram?: Decimal;
+  crushed?: { id: number; kode_stok: string | null; item: string; gram: Decimal }[];
+  /** negatif, mis. "-120.00" */
+  lost_gram?: Decimal;
+  /** negatif, mis. "-4.00" */
+  lost_percent?: Decimal;
+  executor_role?: ExecutorRole | null;
 }
 
 // ---------- Tahap 15D: notifikasi ----------

@@ -48,6 +48,12 @@ Error:
 | 422 | Isian tidak valid. `errors` berisi pesan per kolom; `message` = pesan pertama. Pesan selalu berbahasa Indonesia dan siap ditampilkan apa adanya: nama kolom diterjemahkan (`prepared_at` = "Tanggal penyiapan", `received_qty` = "Gram diterima", `outputs.*.weight` = "Gram hasil"), begitu juga kata tanggal relatif dan format (mis. `Tanggal penyiapan tidak boleh melebihi hari ini.`, `Format tanggal awal harus tahun-bulan-tanggal (mis. 2026-10-10).`). |
 | 429 | Terlalu banyak percobaan. Header `Retry-After` berisi detik tunggu. |
 
+Beberapa 422 juga membawa `code` (revisi 22/10) supaya aplikasi bisa memilih tindakan tanpa membaca pesan. Field ini tambahan, dan error tanpa `code` tetap seperti sebelumnya.
+
+| `code` | Kapan |
+|---|---|
+| `grade_not_ready` | POST /rations dari batch yang belum G1: "Stok Grade 2/3 harus melalui Penyiapan dulu sebelum dijatahkan ke pencuci." Tampilkan tombol Penyiapan (POST /batches/{id}/preparation). |
+
 ### Cakupan data per peran
 
 | Peran | Boleh melihat | Boleh menyetujui |
@@ -200,13 +206,17 @@ Alurnya: ambil bahan dan serah hasil lembab **diajukan** Pencuci, lalu **disetuj
       "pending_gram": "500.00",
       "remaining_gram": "27000.00",
       "taken_pcs": 100,
-      "status": { "code": "running", "label": "Berjalan" }
+      "status": { "code": "running", "label": "Berjalan" },
+      "grade": 1,
+      "ready_for_ration": true,
+      "needs_preparation": false,
+      "executor_role": "mandor"
     }
   ]
 }
 ```
 
-`remaining_gram` = target - sudah masuk kartu - pengajuan yang masih menunggu. Jatah dihitung dalam gram; pcs hanya dicatat.
+`remaining_gram` = target - sudah masuk kartu - pengajuan yang masih menunggu. Jatah dihitung dalam gram; pcs hanya dicatat. Revisi 22/10 (field tambahan): `grade`, `ready_for_ration`, `needs_preparation` dari batch jatah, dan `executor_role` (`gudang`/`mandor`). Jatah G2/G3 yang sudah terbuka sebelum revisi tetap bisa diambil sampai selesai (J4).
 
 ### POST /work/take-material (multipart, Pencuci; Kepala Pencuci dengan kontrak aktif, lihat bagian 10)
 
@@ -503,7 +513,7 @@ Status batch: `assigned` Diserahkan (belum diterima), `received` Diterima, `in_p
 | Endpoint | Isi |
 |---|---|
 | GET /batches/incoming | Batch yang menunggu diterima. |
-| POST /batches/{id}/receive (multipart) | `received_qty` (gram, wajib, tidak boleh melebihi gram kirim), `received_pcs`, `photo` (opsional), `receipt_notes` (wajib minimal 5 karakter kalau ada selisih). Selisih = susut penerimaan batch; nilai HPP batch tidak berubah dan dibagi ke gram diterima. 422 kalau sudah diterima. |
+| POST /batches/{id}/receive (multipart) | `received_qty` (gram, wajib, tidak boleh melebihi gram kirim), `received_pcs`, `photo` (opsional), `receipt_notes` (wajib minimal 5 karakter kalau ada selisih). Revisi 22/10 Putaran 2 (tambahan, opsional): `crushed[]` (`item_id` bertanda susut hancur, `gram`, `pcs`) = susut hancur yang fisiknya ada, tidak boleh melebihi selisih; objek batch menambah `receipt_crushed_gram` dan `receipt_lost_gram` (negatif). Tidak ada label yang dicetak dari HP (J5). Selisih = susut penerimaan batch; nilai HPP batch tidak berubah dan dibagi ke gram diterima. 422 kalau sudah diterima. |
 
 Penjatahan dari batch yang belum diterima ditolak (web maupun aplikasi).
 
@@ -511,12 +521,31 @@ Penjatahan dari batch yang belum diterima ditolak (web maupun aplikasi).
 
 | Endpoint | Isi |
 |---|---|
-| GET /rations | Batch yang sudah diterima (Diterima atau Berjalan) dengan `assignments[]` (`id`, `worker`, `target_gram`, `modal_bahan`, `status`). |
-| POST /rations | `production_batch_id`, `lines[]` (`pencuci_id`, `target_qty`), validasi sama dengan web. Pencuci harus anggota tim; total tidak boleh melebihi `remaining_gram`. 201 dengan objek batch. |
+| GET /rations | Batch yang sudah diterima (Diterima atau Berjalan) dengan `assignments[]` (`id`, `worker`, `target_gram`, `modal_bahan`, `status`, `executor_role`). |
+| POST /rations | `production_batch_id`, `lines[]` (`pencuci_id`, `target_qty`), validasi sama dengan web. Pencuci harus anggota tim; total tidak boleh melebihi `remaining_gram`. 201 dengan objek batch. **Revisi 22/10:** hanya batch G1 (`ready_for_ration` = true); batch G2/G3 ditolak 422 `code` = `grade_not_ready`. |
+
+**Revisi 22/10, field tambahan di objek batch** (GET /batches/incoming, GET /rations, POST /rations, `batches[]` penyiapan):
+
+| Field | Isi |
+|---|---|
+| `grade` | `1` kalau semua sumber sudah G1 (hasil grading G1, grup lama G1, atau hasil penyiapan); selain itu grade tertinggi yang belum siap (`2`/`3`), atau `null` kalau tidak tertelusur. |
+| `ready_for_ration` | `true` = boleh dijatahkan ke pencuci. |
+| `needs_preparation` | Kebalikan `ready_for_ration`: tampilkan badge "Perlu Penyiapan" dan arahkan ke penyiapan. |
+
+`assignments[].executor_role`: pelaksana penjatahan, `gudang` (Admin web) atau `mandor` (Mandor atau Kepala Pencuci), `null` untuk data yang tidak tertelusur. Jatah G2/G3 yang sudah terbuka sebelum revisi dibiarkan selesai (J4).
 
 ### Penyiapan di rumah pencucian (B3)
 
 POST /batches/{id}/preparation: `prepared_at`, `process_type` (`kering`/`basah`), `notes`, `outputs[]` (`item_id` bahan utama atau sampingan, `weight`, `jumlah_keping`). Hanya batch Cuci Langsung (semua sumber hasil grading G2/G3 ber-SPK Kirim Pencucian) yang sudah diterima dan belum dijatahkan (`can_prepare`). Dicatat lewat service penyiapan gudang (HPP batch dibagi ke hasil dengan aturan alokasi penyiapan, susut = masuk - hasil). Tiap hasil langsung menjadi batch baru `{kode}-P{n}` untuk Mandor yang sama, berstatus Diterima; batch asal menjadi Selesai. Respons 201: `preparation_id`, `input_gram`, `output_gram`, `susut_gram`, `batches[]`.
+
+**Revisi 22/10 (bentuk baru, disarankan):** kirim `g1_gram` (gram G1 hasil, ditimbang), `g1_item_id` (opsional, bawaan item batch), `g1_pcs`, dan `crushed[]` (susut hancur: `item_id`, `gram`, `pcs`; boleh kosong). `outputs[]` lama tetap diterima kalau `g1_gram` tidak dikirim. Penyiapan berlaku untuk **semua batch yang belum G1** (`can_prepare`), tidak lagi hanya Cuci Langsung. Aturannya:
+
+- G1 + hancur tidak boleh melebihi gram masuk (gram diterima batch).
+- Seluruh nilai HPP batch masuk ke G1 hasil, dan hanya G1 yang menjadi batch baru `{kode}-P1`, langsung siap dijatahkan.
+- Tiap baris hancur menjadi stok sendiri (kode `PS`) di Grup Stok Jual dengan HPP 0. Item boleh tanpa harga.
+- Susut hilang = masuk - G1 - hancur.
+
+Respons 201 menambah field `g1_gram`, `crushed_gram`, `crushed[]` (`id`, `kode_stok`, `item`, `gram`), `lost_gram` (negatif, mis. `"-120.00"`), `lost_percent` (negatif, mis. `"-4.00"`), dan `executor_role`. Field lama (`input_gram`, `output_gram`, `susut_gram`, `batches[]`) tetap ada. Mandor di HP **tidak mencetak label** (J5); tampilkan kode stok dan gram di layar. Pengguna selain Mandor dan Kepala Pencuci tim batch itu: 403.
 
 ### Kerja ulang hasil belum standar (B4)
 
@@ -671,6 +700,7 @@ Aturan:
 | `penarikan_dibayar` | Pekerja pemilik penarikan | Penarikan dibayar | `withdrawal` | id penarikan | - |
 | `penarikan_ditolak` | Pekerja pemilik penarikan | Penarikan ditolak, alasan ada di `body` | `withdrawal` | id penarikan | - |
 | `bonus_capai` | Pekerja pemilik bonus | Bonus mingguan atau bulanan pertama kali tercatat capai di saldo (sinkron harian 01.30) | `bonuses` (GET /me/bonuses) | `null` | `kind` (`bonus_mingguan`/`bonus_bulanan`), `period_start`, `period_end` |
+| `jatah_dari_gudang` | Mandor pencuci itu (dan Mandor batchnya) | Admin gudang menjatahkan langsung ke pencuci (revisi 22/10); upah tetap lewat Mandor | `rations` (GET /rations) | id batch | `batch_code`, `batch_assignment_id`, `pencuci` |
 | `batch_masuk` | Mandor batch itu | Admin menerbitkan batch baru yang harus diterima (batch hasil penyiapan di rumah pencucian langsung Diterima, tanpa notifikasi) | `incoming_batch` (GET /batches/incoming) | id batch | `batch_code` |
 
 Jenis lama dari web (`batch_assigned`, `assignment_reopened`) bisa muncul di daftar dengan `target` = `null`. Jenis yang belum dikenal aplikasi tampilkan dengan `title` dan `body` saja.
