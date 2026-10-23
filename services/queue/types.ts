@@ -10,7 +10,8 @@ export type QueueKind =
   | 'take_rework'
   | 'hand_over_rework'
   | 'weighing'
-  | 'receive_batch';
+  | 'receive_batch'
+  | 'prepare_batch';
 
 export type QueueStatus = 'pending' | 'sending' | 'failed';
 
@@ -49,6 +50,7 @@ export const QUEUE_LABELS: Record<QueueKind, string> = {
   hand_over_rework: 'Serah kerja ulang',
   weighing: 'Konfirmasi hasil timbang',
   receive_batch: 'Terima batch',
+  prepare_batch: 'Penyiapan batch',
 };
 
 type Tag = (typeof tagTypes)[number];
@@ -63,6 +65,7 @@ export const QUEUE_INVALIDATES: Record<QueueKind, Tag[]> = {
   hand_over_rework: ['Rework', 'WorkToday'],
   weighing: ['Weighings', 'WorkHistory', 'Earnings', 'Balance'],
   receive_batch: ['Batches', 'RationBatches'],
+  prepare_batch: ['Batches', 'RationBatches'],
 };
 
 /** 409 untuk absen berarti sudah tercatat (mis. kiriman sebelumnya sampai tetapi jawabannya hilang). */

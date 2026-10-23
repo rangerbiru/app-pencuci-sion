@@ -1,12 +1,16 @@
 import { api, unwrapData } from './api/api';
 import { http } from './api/http';
-import { Batch, Container, Item, Paginated, PreparationResult, RationBatch } from '@/types';
+import { Batch, Container, Item, Paginated, RationBatch } from '@/types';
 
 export interface PreparationPayload {
   prepared_at: string;
   process_type: 'kering' | 'basah';
   notes?: string | null;
-  outputs: { item_id: number; weight: string; jumlah_keping?: number | null }[];
+  /** gram G1 hasil timbang; item G1 bawaan = item batch (g1_item_id tidak dikirim) */
+  g1_gram: string;
+  g1_pcs?: number | null;
+  /** susut hancur, boleh kosong */
+  crushed: { item_id: number; gram: string; pcs?: number | null }[];
 }
 
 export const batchesApi = api.injectEndpoints({
@@ -38,19 +42,6 @@ export const batchesApi = api.injectEndpoints({
       // daftar item jarang berubah
       keepUnusedDataFor: 1800,
     }),
-    prepareBatch: build.mutation<
-      PreparationResult,
-      { id: number; body: PreparationPayload; idempotencyKey: string }
-    >({
-      query: ({ id, body, idempotencyKey }) => ({
-        path: `/batches/${id}/preparation`,
-        method: 'POST',
-        body,
-        idempotencyKey,
-      }),
-      transformResponse: unwrapData<PreparationResult>,
-      invalidatesTags: ['Batches', 'RationBatches'],
-    }),
   }),
 });
 
@@ -59,7 +50,6 @@ export const {
   useGetRationBatchesQuery,
   useCreateRationsMutation,
   useGetItemsQuery,
-  usePrepareBatchMutation,
 } = batchesApi;
 
 /** Hasil scan QR berisi URL `/wadah/{kode}`; ambil kode di akhir URL. */
