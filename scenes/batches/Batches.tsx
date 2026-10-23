@@ -24,6 +24,8 @@ import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import BatchFlags from './BatchFlags';
 import { needsPreparation } from './rationForm';
+import { batchSusut } from './batchSusut';
+import Susut from '@/components/elements/Susut';
 
 type Tab = 'masuk' | 'jatah';
 
@@ -143,6 +145,7 @@ function Batches({
                     <Badge status={b.status} kind="batch" />
                   </View>
                   <BatchFlags grade={b.grade} needsPreparation={notReady} />
+                  {batchSusut(b) ? <Susut {...batchSusut(b)!} /> : null}
                   <View style={styles.row}>
                     <View style={styles.flex}>
                       <Text variant="small" color="textSecondary">

@@ -15,6 +15,7 @@ import { submitReceiveBatch } from '@/services/fieldActions';
 import { isFeatureEnabled } from '@/utils/config';
 import { formatGram } from '@/utils/format';
 import { Photo } from '@/utils/photo';
+import Susut from '@/components/elements/Susut';
 import Screen from '@/components/layouts/Screen';
 import CameraCapture from '@/components/elements/CameraCapture';
 import QrScanner from '@/components/elements/QrScanner';
@@ -215,8 +216,12 @@ function ReceiveBatch({ batchId }: { batchId: number }) {
             <Amount value={values.receivedGram} unit="gram" size="xl" />
           </SummaryRow>
           <SummaryRow label="Gram dikirim">{formatGram(batch.sent_gram)}</SummaryRow>
-          <SummaryRow label="Selisih (susut penerimaan)">
-            {formatGram(values.shrinkGram)}
+          <SummaryRow label="Susut penerimaan">
+            <Susut
+              legacyGram={values.shrinkGram}
+              baseGram={batch.sent_gram}
+              hideWhenEmpty={false}
+            />
           </SummaryRow>
           <SummaryRow label="Pcs">
             {values.receivedPcs === null ? '-' : `${values.receivedPcs} pcs`}
