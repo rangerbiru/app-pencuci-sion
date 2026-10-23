@@ -21,6 +21,8 @@ import Amount from '@/components/elements/Amount';
 import Segmented from '@/components/elements/Segmented';
 import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
+import BatchFlags from './BatchFlags';
+import { needsPreparation } from './rationForm';
 
 type Tab = 'masuk' | 'jatah';
 
@@ -70,6 +72,7 @@ function Batches({ back }: { back?: boolean }) {
                   </View>
                   <Badge status={b.status} kind="batch" />
                 </View>
+                <BatchFlags grade={b.grade} needsPreparation={needsPreparation(b)} />
                 <View>
                   <Text variant="small" color="textSecondary">
                     Dikirim
@@ -101,8 +104,9 @@ function Batches({ back }: { back?: boolean }) {
       ) : rations.data && rations.data.length > 0 ? (
         <View style={styles.list}>
           {rations.data.map(b => {
+            const notReady = needsPreparation(b);
             const canRation =
-              b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
+              !notReady && b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
             return (
               <Card key={b.id} style={styles.card}>
                 <View style={styles.row}>
@@ -114,6 +118,7 @@ function Batches({ back }: { back?: boolean }) {
                   </View>
                   <Badge status={b.status} kind="batch" />
                 </View>
+                <BatchFlags grade={b.grade} needsPreparation={notReady} />
                 <View style={styles.row}>
                   <View style={styles.flex}>
                     <Text variant="small" color="textSecondary">
@@ -132,9 +137,10 @@ function Batches({ back }: { back?: boolean }) {
                   <View style={styles.assignments}>
                     {b.assignments.map(a => (
                       <View key={a.id} style={styles.row}>
-                        <Text variant="body" style={styles.flex}>
-                          {a.worker.name}
-                        </Text>
+                        <View style={styles.flex}>
+                          <Text variant="body">{a.worker.name}</Text>
+                          <BatchFlags executorRole={a.executor_role} />
+                        </View>
                         <Text variant="bodyStrong" style={styles.tabular}>
                           {formatGram(a.target_gram)}
                         </Text>
@@ -143,9 +149,9 @@ function Batches({ back }: { back?: boolean }) {
                     ))}
                   </View>
                 ) : null}
-                {b.can_prepare && isFeatureEnabled('preparation') ? (
+                {(notReady || b.can_prepare) && isFeatureEnabled('preparation') ? (
                   <Button
-                    title="Penyiapan"
+                    title={notReady ? 'Siapkan dulu' : 'Penyiapan'}
                     variant="secondary"
                     icon="layers"
                     onPress={() =>
@@ -162,6 +168,10 @@ function Batches({ back }: { back?: boolean }) {
                       router.push({ pathname: '/batch/jatah/[id]', params: { id: String(b.id) } })
                     }
                   />
+                ) : notReady ? (
+                  <Text variant="small" color="textSecondary">
+                    Stok ini belum G1. Siapkan dulu sebelum dijatahkan.
+                  </Text>
                 ) : (
                   <Text variant="small" color="textSecondary">
                     Seluruh gram sudah dijatahkan.

@@ -28,3 +28,17 @@ export function validateRations(lines: RationLineInput[], remaining: string) {
   const ok = Object.keys(errors).length === 0 && !totalError;
   return { ok, errors, totalError, total, lines: parsed };
 }
+
+/** Kode 422 dari POST /rations untuk batch yang belum G1 (revisi 22/10). */
+export const GRADE_NOT_READY = 'grade_not_ready';
+
+/**
+ * Batch belum boleh dijatah: server menandai `ready_for_ration` false / `needs_preparation` true.
+ * Server lama tidak mengirim field itu: dianggap siap (server tetap menolak lewat 422).
+ */
+export function needsPreparation(b: {
+  ready_for_ration?: boolean;
+  needs_preparation?: boolean;
+}): boolean {
+  return b.needs_preparation === true || b.ready_for_ration === false;
+}

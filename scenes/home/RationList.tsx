@@ -8,6 +8,7 @@ import Badge from '@/components/elements/Badge';
 import ProgressBar from '@/components/elements/ProgressBar';
 import Amount from '@/components/elements/Amount';
 import useTheme from '@/hooks/useTheme';
+import BatchFlags from '@/scenes/batches/BatchFlags';
 
 /** Jatah aktif: sisa gram besar, progres diambil / target. */
 function RationList({ rations }: { rations: MyRation[] }) {
@@ -26,6 +27,7 @@ function RationList({ rations }: { rations: MyRation[] }) {
                 <Text variant="small" color="textSecondary">
                   Batch {r.batch_code}
                 </Text>
+                <BatchFlags grade={r.grade} executorRole={r.executor_role} />
               </View>
               <Badge status={r.status} kind="assignment" />
             </View>

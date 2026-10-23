@@ -11,6 +11,7 @@ import {
   useGetTeamQuery,
 } from '@/services';
 import { formatGram } from '@/utils/format';
+import { isFeatureEnabled } from '@/utils/config';
 import { compareDecimal, subDecimal } from '@/utils/decimal';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
@@ -23,7 +24,8 @@ import Amount from '@/components/elements/Amount';
 import Icon from '@/components/elements/Icon';
 import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
-import { RationLineInput, validateRations } from './rationForm';
+import BatchFlags from './BatchFlags';
+import { GRADE_NOT_READY, RationLineInput, needsPreparation, validateRations } from './rationForm';
 
 /** Penjatahan: buat jatah (box) per pencuci dari batch yang sudah diterima. */
 function RationForm({ batchId }: { batchId: number }) {
@@ -37,6 +39,8 @@ function RationForm({ batchId }: { batchId: number }) {
   const [lines, setLines] = useState<RationLineInput[]>([]);
   const [shown, setShown] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  // 422 grade_not_ready: pesan server + tombol Siapkan dulu, bukan galat umum
+  const [gradeBlocked, setGradeBlocked] = useState<string | null>(null);
 
   if (batches.isLoading || team.isLoading) {
     return (
@@ -68,6 +72,23 @@ function RationForm({ batchId }: { batchId: number }) {
     );
   }
 
+  const goPrepare = () =>
+    router.replace({ pathname: '/batch/siapkan/[id]', params: { id: String(batch.id) } });
+  if (needsPreparation(batch)) {
+    return (
+      <Screen title="Penjatahan" subtitle={`${batch.batch_code}, ${batch.item}`} back>
+        <BatchFlags grade={batch.grade} needsPreparation />
+        <EmptyState
+          icon="layers"
+          title="Stok belum G1"
+          message="Hanya stok Grade 1 yang bisa dijatahkan. Siapkan dulu, lalu jatahkan hasilnya."
+          actionLabel={isFeatureEnabled('preparation') ? 'Siapkan dulu' : 'Kembali'}
+          onAction={isFeatureEnabled('preparation') ? goPrepare : () => router.back()}
+        />
+      </Screen>
+    );
+  }
+
   const remaining = batch.remaining_gram ?? '0.00';
   const result = validateRations(lines, remaining);
 
@@ -82,13 +103,16 @@ function RationForm({ batchId }: { batchId: number }) {
   async function save() {
     setShown(true);
     setServerError(null);
+    setGradeBlocked(null);
     if (!result.ok) return;
     try {
       await create({ production_batch_id: batch!.id, lines: result.lines }).unwrap();
       toast.show('Penjatahan disimpan');
       router.back();
     } catch (e) {
-      setServerError(toApiError(e).message);
+      const err = toApiError(e);
+      if (err.code === GRADE_NOT_READY) setGradeBlocked(err.message);
+      else setServerError(err.message);
     }
   }
 
@@ -107,6 +131,7 @@ function RationForm({ batchId }: { batchId: number }) {
           />
         </BottomBar>
       }>
+      <BatchFlags grade={batch.grade} />
       <Card style={styles.summary}>
         <View style={styles.flex}>
           <Text variant="small" color="textSecondary">
@@ -196,6 +221,18 @@ function RationForm({ batchId }: { batchId: number }) {
         <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
           {result.totalError}
         </Text>
+      ) : null}
+      {gradeBlocked ? (
+        <Card style={[styles.summary, { backgroundColor: colors.dangerBg }]}>
+          <View style={styles.flex}>
+            <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
+              {gradeBlocked}
+            </Text>
+            {isFeatureEnabled('preparation') ? (
+              <Button title="Siapkan dulu" variant="secondary" icon="layers" onPress={goPrepare} />
+            ) : null}
+          </View>
+        </Card>
       ) : null}
       {serverError ? (
         <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
