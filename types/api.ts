@@ -473,8 +473,8 @@ export interface Item {
   grup_hasil: Status<'utuh' | 'kecil' | 'hancur'> | null;
   warna: string | null;
   unit: string;
-  /** belum ada di server saat ini; bila ada, dipakai untuk memilih item susut hancur */
-  susut_hancur?: boolean;
+  /** item susut hancur (jenis sampingan); server lama belum mengirimnya */
+  is_crushed_item?: boolean;
 }
 
 /** GET /approvals/{id}: objek pengajuan + foto, jatah, kerja ulang, kartu. */

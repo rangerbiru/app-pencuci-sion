@@ -45,7 +45,7 @@ const newLine = (): CrushedLine => ({ key: `l${++lineSeq}`, itemId: null, gram: 
 function Preparation({ batchId }: { batchId: number }) {
   const { colors } = useTheme();
   const batches = useGetRationBatchesQuery();
-  const items = useGetItemsQuery({ jenis: 'hasil_produksi' });
+  const items = useGetItemsQuery({ crushed: 1 });
   const me = useGetMeQuery();
   const { submit, submitting } = useFieldSubmit();
   const batch = batches.data?.find(b => b.id === batchId);
@@ -61,11 +61,11 @@ function Preparation({ batchId }: { batchId: number }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [result, setResult] = useState<PreparationResult | null>(null);
 
-  // item susut hancur: yang bertanda `susut_hancur` dari server; kalau belum ada tandanya,
-  // hasil produksi grup "hancur"; kalau itu pun kosong, semua hasil produksi
+  // pilihan hancur: ?crushed=1 dari server; server lama mengabaikan filter itu, jadi saring
+  // yang bertanda is_crushed_item, lalu grup "hancur", lalu semuanya
   const crushedItems = useMemo(() => {
     const all = items.data?.data ?? [];
-    const flagged = all.filter(i => i.susut_hancur);
+    const flagged = all.filter(i => i.is_crushed_item);
     if (flagged.length) return flagged;
     const hancur = all.filter(i => i.grup_hasil?.code === 'hancur');
     return hancur.length ? hancur : all;

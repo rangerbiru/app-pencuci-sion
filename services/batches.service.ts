@@ -35,7 +35,7 @@ export const batchesApi = api.injectEndpoints({
     }),
     getItems: build.query<
       Paginated<Item>,
-      { purpose?: 'penyiapan' | 'kartu_kerja'; jenis?: string; q?: string }
+      { purpose?: 'penyiapan' | 'kartu_kerja'; jenis?: string; crushed?: 0 | 1; q?: string }
     >({
       query: params => ({ path: '/items', params: { per_page: 200, ...params } }),
       providesTags: ['Items'],

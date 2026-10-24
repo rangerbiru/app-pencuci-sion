@@ -89,6 +89,8 @@ Semua aksi tulis dicatat di Log Aktivitas web dengan sumber `mobile`.
 
 Kalau versi aplikasi lebih rendah dari `min_app_version`, minta pengguna memperbarui aplikasi. Contoh respons lengkap: Lampiran A.
 
+**Menaikkan versi minimum.** Nilainya dari `config/sion.php` (`mobile.min_app_version`), diisi env **`MOBILE_MIN_APP_VERSION`** (bawaan `1.0.0`). Setelah APK revisi 22/10 dibagikan, naikkan di `.env` server (mis. `MOBILE_MIN_APP_VERSION=1.1.0`) lalu `php artisan config:clear`; tidak perlu migration atau kode baru. Bentuk Penyiapan yang baru (`g1_gram`, `crushed[]`) berbeda dari `outputs[]` lama, jadi APK lama tidak kompatibel penuh dengan alur penyiapan baru. Sampai dinaikkan, server tetap menerima bentuk lama.
+
 ### POST /auth/login
 
 | Kolom | Isi |
@@ -531,6 +533,8 @@ Penjatahan dari batch yang belum diterima ditolak (web maupun aplikasi).
 | `grade` | `1` kalau semua sumber sudah G1 (hasil grading G1, grup lama G1, atau hasil penyiapan); selain itu grade tertinggi yang belum siap (`2`/`3`), atau `null` kalau tidak tertelusur. |
 | `ready_for_ration` | `true` = boleh dijatahkan ke pencuci. |
 | `needs_preparation` | Kebalikan `ready_for_ration`: tampilkan badge "Perlu Penyiapan" dan arahkan ke penyiapan. |
+| `can_prepare` | `true` = batch sudah diterima, belum dijatahkan, dan belum G1: tombol Penyiapan boleh tampil. |
+| `executor_role` | Pelaksana penyiapan yang menghasilkan batch ini (`gudang`/`mandor`), `null` untuk batch yang bukan hasil penyiapan. |
 
 `assignments[].executor_role`: pelaksana penjatahan, `gudang` (Admin web) atau `mandor` (Mandor atau Kepala Pencuci), `null` untuk data yang tidak tertelusur. Jatah G2/G3 yang sudah terbuka sebelum revisi dibiarkan selesai (J4).
 
@@ -544,6 +548,8 @@ POST /batches/{id}/preparation: `prepared_at`, `process_type` (`kering`/`basah`)
 - Seluruh nilai HPP batch masuk ke G1 hasil, dan hanya G1 yang menjadi batch baru `{kode}-P1`, langsung siap dijatahkan.
 - Tiap baris hancur menjadi stok sendiri (kode `PS`) di Grup Stok Jual dengan HPP 0. Item boleh tanpa harga.
 - Susut hilang = masuk - G1 - hancur.
+
+G1 + hancur melebihi gram masuk dijawab **422** tanpa menyimpan apa pun, mis. `{"message":"G1 hasil (3.900,00 gr) + susut hancur (300,00 gr) melebihi berat masuk (4.000,00 gr). Periksa timbangannya.","errors":{"g1.weight":["..."]}}`. Header `Idempotency-Key` berlaku: kiriman ulang dengan key yang sama membalas respons pertama dan tidak membuat batch `-P1` kedua. Batch lama tanpa rincian hancur dan hilang tetap mengirim `receipt_shrink_gram` (angka lama), dengan `receipt_crushed_gram` dan `receipt_lost_gram` `null` sampai batch diterima.
 
 Respons 201 menambah field `g1_gram`, `crushed_gram`, `crushed[]` (`id`, `kode_stok`, `item`, `gram`), `lost_gram` (negatif, mis. `"-120.00"`), `lost_percent` (negatif, mis. `"-4.00"`), dan `executor_role`. Field lama (`input_gram`, `output_gram`, `susut_gram`, `batches[]`) tetap ada. Mandor di HP **tidak mencetak label** (J5); tampilkan kode stok dan gram di layar. Pengguna selain Mandor dan Kepala Pencuci tim batch itu: 403.
 
@@ -616,7 +622,19 @@ Daftar item aktif yang ringkas, untuk hasil Penyiapan dan baris hasil Kartu Kerj
 | `jenis` | Satu atau beberapa jenis dipisah koma: `bahan_baku`, `hasil_produksi`, `sampingan`, `bahan_kotor`. 422 kalau jenis tidak dikenal. |
 | `q` | Cari di nama atau kode. |
 
-Isi per item: `id`, `kode`, `name`, `jenis` (`{code,label}`), `grup_hasil` (`utuh`/`kecil`/`hancur` untuk hasil produksi, selain itu `null`), `warna`, `unit`. **Item tidak punya grade**: grade melekat ke stok (hasil grading G1/G2/G3, batch), bukan ke item.
+Isi per item: `id`, `kode`, `name`, `jenis` (`{code,label}`), `grup_hasil` (`utuh`/`kecil`/`hancur` untuk hasil produksi, selain itu `null`), `warna`, `unit`. **Revisi 22/10:** `is_crushed_item` (boolean) menandai item **susut hancur** (mis. Pecahan, Bulu/Sesetan) yang dipakai baris "Hancur" di form Penyiapan; item lain `false`. Filter tambahan `crushed=1` (hanya item hancur) atau `crushed=0`. Item hancur berjenis `sampingan`, jadi muncul di `purpose=penyiapan` atau `jenis=sampingan`, **tidak** di `jenis=hasil_produksi`; isi pilihan hancur dengan `?crushed=1`.
+
+```json
+{
+  "data": [
+    { "id": 7, "kode": null, "name": "Pecahan", "jenis": { "code": "sampingan", "label": "Sampingan" }, "grup_hasil": null, "warna": null, "unit": "gram", "is_crushed_item": true },
+    { "id": 8, "kode": null, "name": "Bulu/Sesetan", "jenis": { "code": "sampingan", "label": "Sampingan" }, "grup_hasil": null, "warna": null, "unit": "gram", "is_crushed_item": true }
+  ],
+  "meta": { "current_page": 1, "per_page": 100, "total": 2, "last_page": 1 }
+}
+```
+
+Item hancur baru dibuat lewat `CrushedItemSeeder` (idempoten, bagian dari `ProductionSeeder`) atau dengan menandai item di Master Item web. Baris hancur yang memakai item tak bertanda ditolak 422. **Item tidak punya grade**: grade melekat ke stok (hasil grading G1/G2/G3, batch), bukan ke item.
 
 ### GET /approvals/{id} (Kepala Pencuci dan Mandor)
 

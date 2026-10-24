@@ -50,6 +50,7 @@ jest.mock('@/services', () => ({
           grup_hasil: { code: 'hancur', label: 'Hancur' },
           warna: null,
           unit: 'gr',
+          is_crushed_item: true,
         },
       ],
     },
