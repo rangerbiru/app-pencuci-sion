@@ -187,7 +187,7 @@ function Batches({
                       ))}
                     </View>
                   ) : null}
-                  {(notReady || b.can_prepare) && isFeatureEnabled('preparation') ? (
+                  {b.can_prepare && isFeatureEnabled('preparation') ? (
                     <Button
                       title={notReady ? 'Siapkan dulu' : 'Penyiapan'}
                       variant="secondary"
@@ -211,7 +211,9 @@ function Batches({
                     />
                   ) : notReady ? (
                     <Text variant="small" color="textSecondary">
-                      Stok ini belum G1. Siapkan dulu sebelum dijatahkan.
+                      {b.can_prepare
+                        ? 'Stok ini belum G1. Siapkan dulu sebelum dijatahkan.'
+                        : 'Stok ini belum G1 dan sebagian sudah dijatah, jadi tidak bisa disiapkan lagi. Jatah yang sudah terbuka tetap bisa diambil pencuci.'}
                     </Text>
                   ) : (
                     <Text variant="small" color="textSecondary">

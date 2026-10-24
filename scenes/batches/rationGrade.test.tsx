@@ -62,7 +62,13 @@ describe('RationForm grade gate', () => {
   });
 
   it('rejects a G2 batch up front with a Siapkan dulu button', () => {
-    mockBatch = { ...base, grade: 2, ready_for_ration: false, needs_preparation: true };
+    mockBatch = {
+      ...base,
+      grade: 2,
+      ready_for_ration: false,
+      needs_preparation: true,
+      can_prepare: true,
+    };
     render(<RationForm batchId={14} />);
     expect(screen.getByText('Perlu Penyiapan')).toBeTruthy();
     expect(screen.queryByText('Simpan penjatahan')).toBeNull();
@@ -74,7 +80,7 @@ describe('RationForm grade gate', () => {
   });
 
   it('shows the server message and Siapkan dulu on 422 grade_not_ready, not a generic error', async () => {
-    mockBatch = { ...base, grade: 1, ready_for_ration: true };
+    mockBatch = { ...base, grade: 1, ready_for_ration: true, can_prepare: true };
     const msg = 'Stok Grade 2/3 harus melalui Penyiapan dulu sebelum dijatahkan ke pencuci.';
     mockCreate.mockReturnValue({
       unwrap: () => Promise.reject(httpError(422, { message: msg, code: 'grade_not_ready' })),

@@ -80,6 +80,7 @@ describe('Batches > Penjatahan', () => {
         grade: 3,
         ready_for_ration: false,
         needs_preparation: true,
+        can_prepare: true,
       }),
     ];
     render(<Batches initialTab="jatah" />);
@@ -91,5 +92,23 @@ describe('Batches > Penjatahan', () => {
       pathname: '/batch/siapkan/[id]',
       params: { id: '2' },
     });
+  });
+
+  it('does not offer a dead-end Siapkan dulu when the batch is no longer preparable', () => {
+    mockRations = [
+      batch({
+        id: 3,
+        batch_code: 'B-3',
+        grade: 3,
+        ready_for_ration: false,
+        needs_preparation: true,
+        can_prepare: false,
+      }),
+    ];
+    render(<Batches initialTab="jatah" />);
+    expect(screen.getByText('Perlu Penyiapan')).toBeTruthy();
+    expect(screen.queryByText('Siapkan dulu')).toBeNull();
+    expect(screen.queryByText('Buat penjatahan')).toBeNull();
+    expect(screen.getByText(/sebagian sudah dijatah/)).toBeTruthy();
   });
 });

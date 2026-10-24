@@ -74,6 +74,7 @@ function RationForm({ batchId }: { batchId: number }) {
 
   const goPrepare = () =>
     router.replace({ pathname: '/batch/siapkan/[id]', params: { id: String(batch.id) } });
+  const canPrepare = batch.can_prepare && isFeatureEnabled('preparation');
   if (needsPreparation(batch)) {
     return (
       <Screen title="Penjatahan" subtitle={`${batch.batch_code}, ${batch.item}`} back>
@@ -82,8 +83,8 @@ function RationForm({ batchId }: { batchId: number }) {
           icon="layers"
           title="Stok belum G1"
           message="Hanya stok Grade 1 yang bisa dijatahkan. Siapkan dulu, lalu jatahkan hasilnya."
-          actionLabel={isFeatureEnabled('preparation') ? 'Siapkan dulu' : 'Kembali'}
-          onAction={isFeatureEnabled('preparation') ? goPrepare : () => router.back()}
+          actionLabel={canPrepare ? 'Siapkan dulu' : 'Kembali'}
+          onAction={canPrepare ? goPrepare : () => router.back()}
         />
       </Screen>
     );
@@ -228,7 +229,7 @@ function RationForm({ batchId }: { batchId: number }) {
             <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
               {gradeBlocked}
             </Text>
-            {isFeatureEnabled('preparation') ? (
+            {canPrepare ? (
               <Button title="Siapkan dulu" variant="secondary" icon="layers" onPress={goPrepare} />
             ) : null}
           </View>
