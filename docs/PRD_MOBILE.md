@@ -168,6 +168,12 @@ Semua dihitung server (API_MOBILE bagian 6 dan 7). Aplikasi menampilkan nilai da
 | Lokasi absen | Izin belum pernah diminta: penjelasan singkat + tombol Izinkan lokasi dulu, baru dialog sistem. Lokasi dibaca dengan akurasi seimbang, batas 10 detik, cadangan lokasi terakhir (maks. 2 menit), lalu dikirim bersama absen. Gagal = alasan jelas + satu tombol: izin ditolak (Izinkan lokasi, atau Buka Pengaturan bila tidak bisa diminta lagi), GPS mati (Nyalakan lokasi: dialog sistem Android), sinyal lemah (Coba lagi), pratinjau web (tidak tersedia). Kembali dari Pengaturan = diperiksa ulang. Absen selalu tetap bisa dikirim; tanpa koordinat server menandai Tanpa lokasi. Sebelum absen, "Di lokasi kerja / Di luar lokasi (± n m)" hanya bila `/me` mengirim koordinat dan radius lokasi kerja (belum dikirim; radius cadangan `settings.attendance_radius_m`). Setelah absen: tanda dan jarak dari server (`location_flag`, `distance_m`). |
 | Uji | Jest + Testing Library, ESLint, TypeScript strict harus bersih sebelum commit (husky) |
 
+Tangkapan revisi 22/10 (API asli `sion_wms_mobile` sesudah migrasi, 24/10/2026, 360 dp, gelap):
+`docs/screenshots/r1022-360-dark-mandor-01-penjatahan.png` (Grade, Perlu Penyiapan, Hilang format
+baru), `-02-g3-sudah-dijatah.png` (G3 yang sudah dijatah sebagian: tanpa tombol Siapkan dulu karena
+`can_prepare` false), `-03-penjatahan-g1-form.png`. Penyiapan dan sorotan notifikasi belum
+tertangkap: data demo tidak punya batch `can_prepare` atau notifikasi `jatah_dari_gudang`.
+
 ## 6. Backlog
 
 - [CAKUPAN] Uji Android di HP fisik (Expo Go/APK preview) untuk semua alur, termasuk pembesaran
