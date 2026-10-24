@@ -118,7 +118,10 @@ function Preparation({ batchId }: { batchId: number }) {
           <Section title="Stok hancur">
             <Card>
               {result.crushed.map((c, i) => (
-                <SummaryRow key={c.id} label={c.item} last={i === result.crushed!.length - 1}>
+                <SummaryRow
+                  key={c.id}
+                  label={typeof c.item === 'string' ? c.item : c.item.name}
+                  last={i === result.crushed!.length - 1}>
                   {`${c.kode_stok ?? ''} ${formatGram(c.gram)}`.trim()}
                 </SummaryRow>
               ))}
@@ -222,6 +225,8 @@ function Preparation({ batchId }: { batchId: number }) {
             <Text variant="bodyStrong" color="danger">
               G1 + hancur melebihi gram masuk
             </Text>
+          ) : !input.g1Gram.trim() ? (
+            <Text color="textSecondary">Isi gram G1 dulu</Text>
           ) : (
             <Susut
               crushedGram={input.crushed.length ? totals.crushedGram : null}

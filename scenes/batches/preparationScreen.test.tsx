@@ -115,6 +115,38 @@ describe('Preparation screen', () => {
     expect(mockSubmit).not.toHaveBeenCalled();
   });
 
+  it('hides the lost figure until G1 is filled', () => {
+    render(<Preparation batchId={14} />);
+    expect(screen.getByText('Isi gram G1 dulu')).toBeTruthy();
+    expect(screen.queryByText(/−3\.000/)).toBeNull();
+  });
+
+  it('renders crushed stock when the server sends item as {id, name}', async () => {
+    mockSubmit.mockResolvedValue(
+      sent({
+        preparation_id: 2,
+        input_gram: '3000.00',
+        output_gram: '2900.00',
+        susut_gram: '100.00',
+        g1_gram: '2900.00',
+        crushed_gram: '80.00',
+        crushed: [{ id: 5, kode_stok: 'PS1', item: { id: 7, name: 'Pecahan' }, gram: '80.00' }],
+        lost_gram: '-20.00',
+        lost_percent: '-0.67',
+        executor_role: 'mandor',
+        batches: [],
+      }),
+    );
+    render(<Preparation batchId={14} />);
+    fireEvent.press(screen.getByText('Tambah susut hancur'));
+    fireEvent.changeText(screen.getByLabelText('Gram hancur'), '80');
+    fireEvent.press(screen.getByText('Pilih item'));
+    fireEvent.press(await screen.findByText('Sudut Hancur'));
+    await fillAndReview('2900');
+    fireEvent.press(await screen.findByText('Ya, simpan'));
+    expect(await screen.findByText('Pecahan')).toBeTruthy();
+  });
+
   it('blocks G1 + crushed above the incoming gram', async () => {
     render(<Preparation batchId={14} />);
     fireEvent.press(screen.getByText('Tambah susut hancur'));

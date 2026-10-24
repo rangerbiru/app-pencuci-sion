@@ -575,7 +575,13 @@ export interface PreparationResult {
   // Revisi 22/10 (bentuk baru)
   g1_gram?: Decimal;
   crushed_gram?: Decimal;
-  crushed?: { id: number; kode_stok: string | null; item: string; gram: Decimal }[];
+  /** `item` datang sebagai {id,name} dari server (docs menulis string); terima keduanya */
+  crushed?: {
+    id: number;
+    kode_stok: string | null;
+    item: string | { id: number; name: string };
+    gram: Decimal;
+  }[];
   /** negatif, mis. "-120.00" */
   lost_gram?: Decimal;
   /** negatif, mis. "-4.00" */
