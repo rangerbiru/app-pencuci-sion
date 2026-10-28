@@ -24,6 +24,7 @@ import { Dialog, ReasonDialog } from '@/components/elements/Dialog';
 import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
+import { batchNotaText } from '@/utils/batchLines';
 
 /** Detail pengajuan: foto besar (ketuk = layar penuh), data, Setujui / Tolak dengan alasan. */
 function ApprovalDetail({ id }: { id: number }) {
@@ -128,7 +129,7 @@ function ApprovalDetail({ id }: { id: number }) {
         ) : null}
         <SummaryRow label="Pcs">{s.pcs == null ? '-' : `${formatPcs(s.pcs)} pcs`}</SummaryRow>
         {s.batch_code ? (
-          <SummaryRow label="Jatah">{`${s.item}, batch ${s.batch_code}`}</SummaryRow>
+          <SummaryRow label="Jatah">{`${s.item}, ${batchNotaText(s.batch_code, s.nota)}`}</SummaryRow>
         ) : null}
         <SummaryRow label="Tanggal kerja">{formatDate(s.work_date)}</SummaryRow>
         <SummaryRow label="Dikirim">{formatDateTime(s.submitted_at)}</SummaryRow>

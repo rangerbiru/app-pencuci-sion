@@ -1,6 +1,6 @@
 import { enqueue } from './queue';
 import { Attendance, Submission, WorkCard, Batch, PreparationResult } from '@/types';
-import type { PreparationPayload } from './batches.service';
+import type { PreparationLinesPayload, PreparationPayload } from './batches.service';
 import { Photo } from '@/utils/photo';
 import { formatGram, formatPcs } from '@/utils/format';
 import { todayJakarta } from '@/utils/date';
@@ -130,12 +130,16 @@ export function submitReceiveBatch(input: ReceiveBatchInput) {
 export function submitPrepareBatch(input: {
   batchId: number;
   batchCode: string;
-  body: PreparationPayload;
+  body: PreparationPayload | PreparationLinesPayload;
 }) {
+  const label =
+    'line_ids' in input.body
+      ? `Penyiapan batch ${input.batchCode}, ${input.body.line_ids.length} baris, ${input.body.outputs.length} hasil`
+      : `Penyiapan batch ${input.batchCode}, G1 ${formatGram(input.body.g1_gram)}`;
   return enqueue<{ data: PreparationResult }>({
     kind: 'prepare_batch',
     path: `/batches/${input.batchId}/preparation`,
-    label: `Penyiapan batch ${input.batchCode}, G1 ${formatGram(input.body.g1_gram)}`,
+    label,
     dedupeKey: `prepare_batch:${input.batchId}`,
     json: true,
     fields: { ...input.body },

@@ -9,6 +9,7 @@ import ProgressBar from '@/components/elements/ProgressBar';
 import Amount from '@/components/elements/Amount';
 import useTheme from '@/hooks/useTheme';
 import BatchFlags from '@/scenes/batches/BatchFlags';
+import { batchNotaText } from '@/utils/batchLines';
 
 /** Jatah aktif: sisa gram besar, progres diambil / target. */
 function RationList({ rations }: { rations: MyRation[] }) {
@@ -25,7 +26,7 @@ function RationList({ rations }: { rations: MyRation[] }) {
               <View style={styles.flex}>
                 <Text variant="bodyStrong">{r.item}</Text>
                 <Text variant="small" color="textSecondary">
-                  Batch {r.batch_code}
+                  {batchNotaText(r.batch_code, r.nota)}
                 </Text>
                 <BatchFlags grade={r.grade} executorRole={r.executor_role} />
               </View>

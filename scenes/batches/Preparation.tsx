@@ -26,6 +26,8 @@ import { Dialog } from '@/components/elements/Dialog';
 import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import { SummaryRow } from '@/scenes/work/SummaryRows';
+import { preparableLines } from '@/utils/batchLines';
+import PreparationLines from './PreparationLines';
 import {
   CrushedLine,
   PreparationErrors,
@@ -152,6 +154,9 @@ function Preparation({ batchId }: { batchId: number }) {
       </Screen>
     );
   }
+
+  // revisi 26/10: batch berisi lines[] G2/G3 disiapkan per baris dengan banyak hasil
+  if (preparableLines(batch).length > 0) return <PreparationLines batch={batch} />;
 
   const inputGram = batch.received_gram ?? batch.remaining_gram ?? '0.00';
   const totals = preparationTotals(inputGram, input.g1Gram, input.crushed);

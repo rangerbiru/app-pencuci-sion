@@ -8,6 +8,7 @@ import Text from '@/components/elements/Text';
 import Button from '@/components/elements/Button';
 import { PhotoThumb } from '@/components/elements/Photo';
 import { TakeMaterialErrors, TakeMaterialValues, validateTakeMaterial } from './takeMaterialForm';
+import { batchNotaText } from '@/utils/batchLines';
 
 export interface TakeMaterialFormProps {
   ration: MyRation;
@@ -48,7 +49,7 @@ function TakeMaterialForm({
         <View style={styles.flex}>
           <Text variant="bodyStrong">{ration.item}</Text>
           <Text variant="small" color="textSecondary">
-            Batch {ration.batch_code}
+            {batchNotaText(ration.batch_code, ration.nota)}
           </Text>
           <Button
             title="Foto ulang"

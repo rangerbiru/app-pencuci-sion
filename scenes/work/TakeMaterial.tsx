@@ -24,6 +24,7 @@ import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import TakeMaterialForm from './TakeMaterialForm';
 import { TakeMaterialErrors, TakeMaterialValues } from './takeMaterialForm';
 import { SummaryRow } from './SummaryRows';
+import { batchNotaText } from '@/utils/batchLines';
 
 type Step = 'pick' | 'photo' | 'form' | 'summary';
 
@@ -140,7 +141,7 @@ function TakeMaterial() {
           <SummaryRow label="Pcs">
             {values.pcs === null ? '-' : `${formatPcs(values.pcs)} pcs`}
           </SummaryRow>
-          <SummaryRow label="Jatah">{`${selected.item}, batch ${selected.batch_code}`}</SummaryRow>
+          <SummaryRow label="Jatah">{`${selected.item}, ${batchNotaText(selected.batch_code, selected.nota)}`}</SummaryRow>
           <SummaryRow label="Sisa jatah setelah disetujui" last>
             {formatGram(subDecimal(selected.remaining_gram, values.weight))}
           </SummaryRow>
@@ -216,7 +217,7 @@ function TakeMaterial() {
                 key={r.batch_assignment_id}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: active }}
-                accessibilityLabel={`${r.item}, batch ${r.batch_code}, sisa ${formatGram(r.remaining_gram)}`}
+                accessibilityLabel={`${r.item}, ${batchNotaText(r.batch_code, r.nota)}, sisa ${formatGram(r.remaining_gram)}`}
                 onPress={() => {
                   setSelected(r);
                   setPickError(null);
@@ -241,7 +242,7 @@ function TakeMaterial() {
                 <View style={styles.flex}>
                   <Text variant="bodyStrong">{r.item}</Text>
                   <Text variant="small" color="textSecondary">
-                    Batch {r.batch_code}
+                    {batchNotaText(r.batch_code, r.nota)}
                   </Text>
                 </View>
                 <View style={styles.right}>

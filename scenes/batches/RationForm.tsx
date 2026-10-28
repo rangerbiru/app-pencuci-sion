@@ -25,7 +25,21 @@ import Icon from '@/components/elements/Icon';
 import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import BatchFlags from './BatchFlags';
-import { GRADE_NOT_READY, RationLineInput, needsPreparation, validateRations } from './rationForm';
+import BatchLines, { LineBadge, lineTitle } from './BatchLines';
+import {
+  GRADE_NOT_READY,
+  LINE_REQUIRED,
+  RationLineInput,
+  needsPreparation,
+  validateRations,
+} from './rationForm';
+import {
+  batchLines,
+  lineItemName,
+  notaText,
+  preparableLines,
+  rationableLines,
+} from '@/utils/batchLines';
 
 /** Penjatahan: buat jatah (box) per pencuci dari batch yang sudah diterima. */
 function RationForm({ batchId }: { batchId: number }) {
@@ -41,6 +55,8 @@ function RationForm({ batchId }: { batchId: number }) {
   const [serverError, setServerError] = useState<string | null>(null);
   // 422 grade_not_ready: pesan server + tombol Siapkan dulu, bukan galat umum
   const [gradeBlocked, setGradeBlocked] = useState<string | null>(null);
+  // revisi 26/10: baris G1 yang dijatahkan (item + nota)
+  const [lineId, setLineId] = useState<number | null>(null);
 
   if (batches.isLoading || team.isLoading) {
     return (
@@ -75,7 +91,24 @@ function RationForm({ batchId }: { batchId: number }) {
   const goPrepare = () =>
     router.replace({ pathname: '/batch/siapkan/[id]', params: { id: String(batch.id) } });
   const canPrepare = batch.can_prepare && isFeatureEnabled('preparation');
-  if (needsPreparation(batch)) {
+  // batch berisi lines[]: yang menentukan baris G1; tanpa lines[] (server lama) tetap per batch
+  const hasLines = batchLines(batch).length > 0;
+  const rationable = rationableLines(batch);
+  const blocked = hasLines ? rationable.length === 0 : needsPreparation(batch);
+  if (blocked && hasLines && preparableLines(batch).length === 0) {
+    return (
+      <Screen title="Penjatahan" subtitle={`${batch.batch_code}, ${batch.item}`} back>
+        <EmptyState
+          icon="check-circle"
+          title="Seluruh gram sudah dijatahkan"
+          message="Tidak ada baris G1 yang tersisa untuk dijatahkan."
+          actionLabel="Kembali"
+          onAction={() => router.back()}
+        />
+      </Screen>
+    );
+  }
+  if (blocked) {
     return (
       <Screen title="Penjatahan" subtitle={`${batch.batch_code}, ${batch.item}`} back>
         <BatchFlags grade={batch.grade} needsPreparation />
@@ -90,8 +123,14 @@ function RationForm({ batchId }: { batchId: number }) {
     );
   }
 
-  const remaining = batch.remaining_gram ?? '0.00';
-  const result = validateRations(lines, remaining);
+  // satu-satunya baris G1 yang bisa dijatah dipilih otomatis; batch lama tanpa lines[] tanpa baris
+  const selectedLine = hasLines
+    ? (rationable.find(l => l.id === lineId) ?? (rationable.length === 1 ? rationable[0] : null))
+    : null;
+  const remaining = (selectedLine?.sisa_dijatah ?? batch.remaining_gram) || '0.00';
+  const result = validateRations(lines, remaining, selectedLine?.id);
+  const lineError =
+    hasLines && !selectedLine ? 'Pilih baris (item dan nota) yang dijatahkan.' : null;
 
   function toggle(workerId: number) {
     setLines(prev =>
@@ -105,7 +144,7 @@ function RationForm({ batchId }: { batchId: number }) {
     setShown(true);
     setServerError(null);
     setGradeBlocked(null);
-    if (!result.ok) return;
+    if (!result.ok || lineError) return;
     try {
       await create({ production_batch_id: batch!.id, lines: result.lines }).unwrap();
       toast.show('Penjatahan disimpan');
@@ -113,7 +152,11 @@ function RationForm({ batchId }: { batchId: number }) {
     } catch (e) {
       const err = toApiError(e);
       if (err.code === GRADE_NOT_READY) setGradeBlocked(err.message);
-      else setServerError(err.message);
+      else {
+        // line_required: pesan server apa adanya; pilihan baris sudah tampil di atas
+        if (err.code === LINE_REQUIRED) setLineId(null);
+        setServerError(err.message);
+      }
     }
   }
 
@@ -132,11 +175,74 @@ function RationForm({ batchId }: { batchId: number }) {
           />
         </BottomBar>
       }>
-      <BatchFlags grade={batch.grade} />
+      {hasLines ? null : <BatchFlags grade={batch.grade} />}
+      {batch.target_hasil ? <BatchLines batch={{ target_hasil: batch.target_hasil }} /> : null}
+      {hasLines ? (
+        <Section
+          title="1. Pilih baris G1"
+          description="Pilih stok (item dan nota) yang dijatahkan. Baris Grade 2/3 harus disiapkan dulu.">
+          <View style={styles.lines}>
+            {batchLines(batch)
+              .filter(l => !l.prepared)
+              .map(l => {
+                const pickable = rationable.some(r => r.id === l.id);
+                const active = selectedLine?.id === l.id;
+                return (
+                  <Pressable
+                    key={l.id}
+                    disabled={!pickable}
+                    onPress={() => {
+                      setLineId(l.id);
+                      setServerError(null);
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: active, disabled: !pickable }}
+                    accessibilityLabel={`${lineTitle(l)}, Grade ${l.grade ?? '-'}, sisa ${formatGram(l.sisa_dijatah ?? l.gram)}${pickable ? '' : ', perlu penyiapan, tidak bisa dipilih'}`}
+                    style={({ pressed }) => [
+                      styles.lineCard,
+                      {
+                        borderColor: active ? colors.fieldFocus : colors.fieldBorder,
+                        borderWidth: active ? 2 : 1,
+                        backgroundColor: active
+                          ? colors.navIndicator
+                          : pressed
+                            ? colors.pressed
+                            : colors.surface,
+                        opacity: pickable ? 1 : 0.55,
+                      },
+                    ]}>
+                    <View style={styles.lineHead}>
+                      <Icon
+                        name={active ? 'check-circle' : 'circle'}
+                        size={20}
+                        color={active ? colors.onNavIndicator : colors.textSecondary}
+                      />
+                      <Text variant="bodyStrong" style={styles.flex}>
+                        {lineItemName(l.item)}
+                      </Text>
+                      <Text variant="bodyStrong">{formatGram(l.sisa_dijatah ?? l.gram)}</Text>
+                    </View>
+                    <Text variant="small" color={active ? 'onNavIndicator' : 'textSecondary'}>
+                      {[notaText(l.nota), l.grade != null ? `Grade ${l.grade}` : null]
+                        .filter(Boolean)
+                        .join(' · ') || 'Tanpa nota'}
+                    </Text>
+                    <LineBadge line={l} />
+                  </Pressable>
+                );
+              })}
+          </View>
+          {shown && lineError ? (
+            <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
+              {lineError}
+            </Text>
+          ) : null}
+        </Section>
+      ) : null}
       <Card style={styles.summary}>
         <View style={styles.flex}>
           <Text variant="small" color="textSecondary">
-            Sisa belum dijatah
+            {selectedLine ? 'Sisa dijatah (baris)' : 'Sisa belum dijatah'}
           </Text>
           <Amount value={remaining} unit="gram" size="l" />
         </View>
@@ -152,7 +258,9 @@ function RationForm({ batchId }: { batchId: number }) {
         </View>
       </Card>
 
-      <Section title="Pilih pencuci" description="Ketuk nama untuk menambah atau menghapus.">
+      <Section
+        title={hasLines ? '2. Pilih pencuci' : 'Pilih pencuci'}
+        description="Ketuk nama untuk menambah atau menghapus.">
         {workers.length === 0 ? (
           <Card>
             <EmptyState
@@ -258,6 +366,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lines: { gap: space.md },
+  lineCard: { borderRadius: radius.card, padding: space.md, gap: space.xs, minHeight: sizes.touch },
+  lineHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
 
 export default RationForm;

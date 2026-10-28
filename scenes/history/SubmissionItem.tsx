@@ -11,6 +11,7 @@ import Icon from '@/components/elements/Icon';
 import Image from '@/components/elements/Image';
 import { PhotoThumb } from '@/components/elements/Photo';
 import { AccordionItem } from '@/components/elements/Accordion';
+import { notaText } from '@/utils/batchLines';
 
 /** "Ambil Bahan" -> "Ambil bahan" (kalimat biasa). */
 function sentence(label: string) {
@@ -112,7 +113,12 @@ function SubmissionItem({
         </>
       }>
       <View style={styles.body}>
-        {s.batch_code ? <Fact label="Batch" value={`${s.batch_code}, ${s.item ?? '-'}`} /> : null}
+        {s.batch_code ? (
+          <Fact
+            label="Batch"
+            value={`${[s.batch_code, notaText(s.nota)].filter(Boolean).join(' · ')}, ${s.item ?? '-'}`}
+          />
+        ) : null}
         <Fact label="Tanggal kerja" value={formatDate(s.work_date)} />
         <Fact label="Dikirim" value={formatDateTime(s.submitted_at)} />
         {s.photo_taken_at ? (

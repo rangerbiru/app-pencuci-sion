@@ -59,4 +59,51 @@ describe('prepare batch offline', () => {
     await submitPrepareBatch({ batchId: 14, batchCode: 'B-MB', body });
     expect(getQueue()).toHaveLength(1);
   });
+
+  it('queues the per-line form (line_ids + outputs) offline and replays it with the same key', async () => {
+    const linesBody = {
+      prepared_at: '2026-10-26',
+      process_type: 'basah' as const,
+      notes: null,
+      line_ids: [31, 32],
+      outputs: [
+        { type: 'main' as const, item_id: 7, gram: '2800.00', pcs: 300 },
+        {
+          type: 'byproduct' as const,
+          item_id: 9,
+          gram: '400.00',
+          pcs: null,
+          group: 'retur' as const,
+        },
+      ],
+    };
+    const res = await submitPrepareBatch({ batchId: 14, batchCode: 'B-MB', body: linesBody });
+    expect(res.status).toBe('queued');
+    if (res.status === 'queued')
+      expect(res.item.label).toBe('Penyiapan batch B-MB, 2 baris, 2 hasil');
+
+    online = true;
+    httpMock.mockResolvedValueOnce({
+      ok: false,
+      status: 0,
+      error: { status: 0, message: 'offline', fieldErrors: {} },
+    } as never);
+    await processQueue();
+    // kiriman ulang membawa key yang sama
+    httpMock.mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      data: { data: { preparation_id: 2, lines: [] } },
+    });
+    await processQueue();
+    const keys = httpMock.mock.calls.map(c => c[0].idempotencyKey);
+    expect(new Set(keys).size).toBe(1);
+    expect(httpMock.mock.calls.at(-1)![0].body).toMatchObject({
+      line_ids: [31, 32],
+      outputs: [
+        { type: 'main', item_id: 7 },
+        { type: 'byproduct', group: 'retur' },
+      ],
+    });
+  });
 });

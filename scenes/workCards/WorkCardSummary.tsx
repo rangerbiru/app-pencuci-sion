@@ -7,6 +7,7 @@ import { formatGram, formatPcs, formatRupiah } from '@/utils/format';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 import Card from '@/components/elements/Card';
+import { batchNotaText } from '@/utils/batchLines';
 
 const GROUP_LABEL: Record<string, string> = {
   utuh: 'Utuh',
@@ -71,6 +72,24 @@ function WorkCardSummary({ card, showWorker }: { card: WorkCard; showWorker?: bo
         <Pair label="Hasil bersih" value={formatGram(card.result.gram)} />
       </View>
 
+      {(card.material.rows ?? []).length > 0 ? (
+        <View style={styles.materials}>
+          {(card.material.rows ?? []).map((r, i) => (
+            <View key={`${r.batch_assignment_id}-${r.batch_line_id ?? i}`} style={styles.material}>
+              <View style={styles.flex}>
+                <Text variant="smallStrong">{r.item}</Text>
+                <Text variant="small" color="textSecondary">
+                  {batchNotaText(r.batch_code, r.nota)}
+                </Text>
+              </View>
+              <Text variant="smallStrong" style={styles.tabular}>
+                {formatGram(r.gram)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {card.result.groups.length > 0 ? (
         <View style={styles.badges}>
           {card.result.groups.map(g => (
@@ -131,6 +150,8 @@ const styles = StyleSheet.create({
   pair: { width: '50%', gap: 2 },
   tabular: { fontVariant: ['tabular-nums'] },
   wage: { gap: 2 },
+  materials: { gap: space.sm },
+  material: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
 
 export default WorkCardSummary;

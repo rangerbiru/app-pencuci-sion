@@ -138,6 +138,9 @@ export interface MyRation {
   ready_for_ration?: boolean;
   needs_preparation?: boolean;
   executor_role?: ExecutorRole | null;
+  /** Revisi 26/10: baris batch jatah ini; `item` sudah item barisnya. null = jatah batch gabungan lama */
+  batch_line_id?: number | null;
+  nota?: string | null;
 }
 
 export type SubmissionType =
@@ -165,6 +168,8 @@ export interface Submission {
   reject_reason: string | null;
   daily_work_card_id: number | null;
   rework_item_id?: number | null;
+  batch_line_id?: number | null;
+  nota?: string | null;
 }
 
 export interface WeighingConfirmation {
@@ -212,6 +217,8 @@ export interface WorkCard {
       item: string;
       gram: Decimal;
       pcs: number | null;
+      batch_line_id?: number | null;
+      nota?: string | null;
     }[];
   };
   pcs_lembab: number | null;
@@ -433,6 +440,27 @@ export interface Batch {
   /** Putaran 2: susut hancur dan hilang (negatif) saat penerimaan */
   receipt_crushed_gram?: Decimal | null;
   receipt_lost_gram?: Decimal | null;
+  /** Revisi 26/10: keterangan hasil yang dituju, mis. "PK2" */
+  target_hasil?: string | null;
+  /** Revisi 26/10: baris batch (nota, item, grade). Server lama tidak mengirimnya. */
+  lines?: BatchLine[];
+}
+
+/** Satu baris batch: satu stok sumber (nota, item, grade) yang tidak pernah dilebur. */
+export interface BatchLine {
+  id: number;
+  /** {id,name}; terima juga string */
+  item: string | { id: number; name: string } | null;
+  grade?: number | null;
+  nota?: string | null;
+  gram?: Decimal | null;
+  nilai_hpp?: Decimal | null;
+  hpp_per_gram?: Decimal | null;
+  /** gram yang masih bisa dijatahkan */
+  sisa_dijatah?: Decimal | null;
+  needs_preparation?: boolean;
+  /** sudah disiapkan (diganti baris G1 hasilnya) */
+  prepared?: boolean;
 }
 
 /** Pelaksana penjatahan/penyiapan: gudang (Admin web) atau mandor (Mandor / Kepala Pencuci) */
@@ -446,6 +474,7 @@ export interface RationBatch extends Batch {
     modal_bahan: Decimal | null;
     status: Status;
     executor_role?: ExecutorRole | null;
+    batch_line_id?: number | null;
   }[];
 }
 
@@ -587,7 +616,22 @@ export interface PreparationResult {
   /** negatif, mis. "-4.00" */
   lost_percent?: Decimal;
   executor_role?: ExecutorRole | null;
+  /** Revisi 24/10: semua hasil (utama dan sampingan) */
+  outputs?: {
+    id: number;
+    kode_stok: string | null;
+    item: string | { id: number; name: string };
+    type: 'main' | 'byproduct';
+    group: PreparationGroup | null;
+    gram: Decimal;
+    pcs: number | null;
+  }[];
+  /** Revisi 26/10 (penyiapan per baris): baris G1 baru di batch yang sama */
+  lines?: BatchLine[];
 }
+
+/** Grup tujuan hasil sampingan */
+export type PreparationGroup = 'layak_jual' | 'retur' | 'layak_produksi';
 
 // ---------- Tahap 15D: notifikasi ----------
 

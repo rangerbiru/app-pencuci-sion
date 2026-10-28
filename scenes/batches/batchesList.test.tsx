@@ -111,4 +111,75 @@ describe('Batches > Penjatahan', () => {
     expect(screen.queryByText('Buat penjatahan')).toBeNull();
     expect(screen.getByText(/sebagian sudah dijatah/)).toBeTruthy();
   });
+
+  it('lists the batch lines with nota, grade, sisa dijatah, status badges and target_hasil', () => {
+    mockRations = [
+      batch({
+        id: 4,
+        batch_code: 'B-4',
+        grade: 2,
+        ready_for_ration: false,
+        needs_preparation: true,
+        can_prepare: true,
+        target_hasil: 'PK2',
+        lines: [
+          {
+            id: 31,
+            item: { id: 5, name: 'Patahan A' },
+            grade: 1,
+            nota: 'NP-001',
+            gram: '1000.00',
+            sisa_dijatah: '800.00',
+            needs_preparation: false,
+            prepared: false,
+          },
+          {
+            id: 32,
+            item: { id: 6, name: 'Patahan B' },
+            grade: 2,
+            nota: 'NP-002',
+            gram: '2000.00',
+            sisa_dijatah: '2000.00',
+            needs_preparation: true,
+            prepared: false,
+          },
+        ],
+      }),
+    ];
+    render(<Batches initialTab="jatah" />);
+    expect(screen.getByText('Patahan A')).toBeTruthy();
+    expect(screen.getByText('Patahan B')).toBeTruthy();
+    expect(screen.getByText('Nota NP-001 · Grade 1')).toBeTruthy();
+    expect(screen.getByText('Nota NP-002 · Grade 2')).toBeTruthy();
+    expect(screen.getByText('Siap jatah')).toBeTruthy();
+    // satu di bendera batch, satu di baris G2
+    expect(screen.getAllByText('Perlu Penyiapan')).toHaveLength(2);
+    expect(screen.getByText('PK2')).toBeTruthy();
+    expect(screen.getByText('800 gr')).toBeTruthy();
+    // batch campur grade: baris G1 masih bisa dijatah dan baris G2 masih bisa disiapkan
+    expect(screen.getByText('Buat penjatahan')).toBeTruthy();
+    expect(screen.getByText('Penyiapan')).toBeTruthy();
+  });
+
+  it('does not crash on lines with missing fields', () => {
+    mockRations = [
+      batch({
+        id: 5,
+        batch_code: 'B-5',
+        lines: [
+          { id: 1, item: null },
+          { id: 2, item: { id: 9 }, grade: null, gram: null },
+        ],
+      }),
+    ];
+    render(<Batches initialTab="jatah" />);
+    expect(screen.getAllByText('Tanpa nota').length).toBe(2);
+  });
+
+  it('keeps old servers working: no lines, no line section', () => {
+    mockRations = [batch({ id: 6, batch_code: 'B-6', grade: 1, ready_for_ration: true })];
+    render(<Batches initialTab="jatah" />);
+    expect(screen.queryByText('Siap jatah')).toBeNull();
+    expect(screen.getByText('Buat penjatahan')).toBeTruthy();
+  });
 });

@@ -23,6 +23,8 @@ import Segmented from '@/components/elements/Segmented';
 import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import BatchFlags from './BatchFlags';
+import BatchLines from './BatchLines';
+import { batchLines, preparableLines, rationableLines } from '@/utils/batchLines';
 import { needsPreparation } from './rationForm';
 import { batchSusut } from './batchSusut';
 import Susut from '@/components/elements/Susut';
@@ -92,6 +94,7 @@ function Batches({
                   <Badge status={b.status} kind="batch" />
                 </View>
                 <BatchFlags grade={b.grade} needsPreparation={needsPreparation(b)} />
+                <BatchLines batch={b} />
                 <View>
                   <Text variant="small" color="textSecondary">
                     Dikirim
@@ -125,9 +128,16 @@ function Batches({
           {[...rations.data]
             .sort((a, z) => Number(z.id === highlightBatchId) - Number(a.id === highlightBatchId))
             .map(b => {
-              const notReady = needsPreparation(b);
-              const canRation =
-                !notReady && b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
+              const hasLines = batchLines(b).length > 0;
+              // batch campur grade: yang menentukan baris G1 yang masih ada sisanya, bukan batch
+              const notReady = hasLines
+                ? preparableLines(b).length > 0 && rationableLines(b).length === 0
+                : needsPreparation(b);
+              const hasRemaining =
+                b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
+              const canRation = hasLines
+                ? rationableLines(b).length > 0
+                : !notReady && hasRemaining;
               return (
                 <Card
                   key={b.id}
@@ -144,7 +154,8 @@ function Batches({
                     </View>
                     <Badge status={b.status} kind="batch" />
                   </View>
-                  <BatchFlags grade={b.grade} needsPreparation={notReady} />
+                  <BatchFlags grade={b.grade} needsPreparation={needsPreparation(b)} />
+                  <BatchLines batch={b} />
                   {batchSusut(b) ? <Susut {...batchSusut(b)!} /> : null}
                   <View style={styles.row}>
                     <View style={styles.flex}>

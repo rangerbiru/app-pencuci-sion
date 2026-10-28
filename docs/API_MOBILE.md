@@ -52,6 +52,7 @@ Beberapa 422 juga membawa `code` (revisi 22/10) supaya aplikasi bisa memilih tin
 
 | `code` | Kapan |
 |---|---|
+| `line_required` | POST /rations ke batch yang berisi lebih dari satu baris tanpa `lines[].batch_line_id` (revisi 26/10): "Batch B-xxx berisi N baris. Pilih baris (item dan nota) yang dijatahkan." Tampilkan pilihan baris dari `lines[]` batch itu. |
 | `grade_not_ready` | POST /rations dari batch yang belum G1: "Stok Grade 2/3 harus melalui Penyiapan dulu sebelum dijatahkan ke pencuci." Tampilkan tombol Penyiapan (POST /batches/{id}/preparation). |
 
 ### Cakupan data per peran
@@ -212,11 +213,15 @@ Alurnya: ambil bahan dan serah hasil lembab **diajukan** Pencuci, lalu **disetuj
       "grade": 1,
       "ready_for_ration": true,
       "needs_preparation": false,
-      "executor_role": "mandor"
+      "executor_role": "mandor",
+      "batch_line_id": 31,
+      "nota": "NP-001"
     }
   ]
 }
 ```
+
+**Revisi 26/10 (field tambahan):** `item` kini item BARIS batch jatah ini (bukan item pertama batch), `batch_line_id` dan `nota` menyebut baris itu (`null` untuk jatah batch gabungan lama sebelum baris batch), dan `grade`/`ready_for_ration`/`needs_preparation` memakai grade barisnya, jadi jatah G1 dari batch campur grade tidak lagi tampil "Perlu Penyiapan". Baris `material.rows[]` kartu kerja dan objek pengajuan juga membawa `batch_line_id` dan `nota`, dan `item` selalu item barisnya.
 
 `remaining_gram` = target - sudah masuk kartu - pengajuan yang masih menunggu. Jatah dihitung dalam gram; pcs hanya dicatat. Revisi 22/10 (field tambahan): `grade`, `ready_for_ration`, `needs_preparation` dari batch jatah, dan `executor_role` (`gudang`/`mandor`). Jatah G2/G3 yang sudah terbuka sebelum revisi tetap bisa diambil sampai selesai (J4).
 
@@ -508,6 +513,20 @@ Semua endpoint di bagian ini khusus Kepala Pencuci dan Mandor (pencuci 403), kec
 }
 ```
 
+**Revisi 26/10 (baris batch, tambahan):** satu batch = satu kode batch berisi banyak baris. Setiap baris satu stok sumber (nota, item, grade) dan tidak pernah dilebur; HPP, susut, dan hasil dihitung per baris. Objek batch punya `target_hasil` (keterangan, mis. "PK2") dan `lines[]`:
+
+```json
+"target_hasil": "PK2",
+"lines": [
+  { "id": 31, "item": { "id": 5, "name": "Patahan A" }, "grade": 1, "nota": "NP-001", "gram": "1000.00",
+    "nilai_hpp": "6000000.00", "hpp_per_gram": "6000.00", "sisa_dijatah": "1000.00", "needs_preparation": false, "prepared": false },
+  { "id": 32, "item": { "id": 6, "name": "Patahan B" }, "grade": 2, "nota": "NP-002", "gram": "2000.00",
+    "nilai_hpp": "10000000.00", "hpp_per_gram": "5000.00", "sisa_dijatah": "2000.00", "needs_preparation": true, "prepared": false }
+]
+```
+
+`sisa_dijatah` = gram baris yang bisa dijatahkan (gram baris - susut penerimaan bagian baris - jatah yang sudah ada). `prepared: true` = baris sudah disiapkan Mandor (diganti baris G1 hasilnya, tidak lagi berlaku). Field batch lama (`item`, `grades`, `sent_gram`, `nilai_hpp`, `remaining_gram`, `ready_for_ration`, ...) tetap ada; `item` = item baris pertama, `ready_for_ration` = tidak ada baris yang masih Perlu Penyiapan, dan `can_prepare` juga `true` kalau ada baris G2/G3 yang bisa disiapkan.
+
 Status batch: `assigned` Diserahkan (belum diterima), `received` Diterima, `in_progress` Berjalan, `completed` Selesai. `remaining_gram` = gram diterima - gram yang sudah dijatahkan.
 
 ### Batch masuk dan penerimaan (B1)
@@ -524,7 +543,9 @@ Penjatahan dari batch yang belum diterima ditolak (web maupun aplikasi).
 | Endpoint | Isi |
 |---|---|
 | GET /rations | Batch yang sudah diterima (Diterima atau Berjalan) dengan `assignments[]` (`id`, `worker`, `target_gram`, `modal_bahan`, `status`, `executor_role`). |
-| POST /rations | `production_batch_id`, `lines[]` (`pencuci_id`, `target_qty`), validasi sama dengan web. Pencuci harus anggota tim; total tidak boleh melebihi `remaining_gram`. 201 dengan objek batch. **Revisi 22/10:** hanya batch G1 (`ready_for_ration` = true); batch G2/G3 ditolak 422 `code` = `grade_not_ready`. |
+| POST /rations | `production_batch_id`, `lines[]` (`pencuci_id`, `target_qty`, **`batch_line_id`** (revisi 26/10)), validasi sama dengan web. Pencuci harus anggota tim; total tidak boleh melebihi `remaining_gram`. 201 dengan objek batch. **Revisi 22/10:** hanya batch G1 (`ready_for_ration` = true); batch G2/G3 ditolak 422 `code` = `grade_not_ready`. |
+
+**Revisi 26/10, jatah per baris:** `lines[].batch_line_id` memilih baris batch (G1) yang dijatahkan; satu pencuci boleh dapat jatah dari beberapa baris (kirim beberapa `lines[]`). Modal bahan dihitung dari HPP baris itu, bukan rata-rata batch. Tanpa `batch_line_id` tetap diterima **hanya** untuk batch satu baris (kontrak lama tetap jalan). Batch berisi banyak baris tanpa `batch_line_id`: 422 `code` = `line_required`. Baris G2/G3: 422 `grade_not_ready`. Total jatah satu baris tidak boleh melebihi `sisa_dijatah`. `assignments[]` di GET /rations punya `batch_line_id` (`null` untuk jatah batch gabungan lama).
 
 **Revisi 22/10, field tambahan di objek batch** (GET /batches/incoming, GET /rations, POST /rations, `batches[]` penyiapan):
 
@@ -540,18 +561,71 @@ Penjatahan dari batch yang belum diterima ditolak (web maupun aplikasi).
 
 ### Penyiapan di rumah pencucian (B3)
 
-POST /batches/{id}/preparation: `prepared_at`, `process_type` (`kering`/`basah`), `notes`, `outputs[]` (`item_id` bahan utama atau sampingan, `weight`, `jumlah_keping`). Hanya batch Cuci Langsung (semua sumber hasil grading G2/G3 ber-SPK Kirim Pencucian) yang sudah diterima dan belum dijatahkan (`can_prepare`). Dicatat lewat service penyiapan gudang (HPP batch dibagi ke hasil dengan aturan alokasi penyiapan, susut = masuk - hasil). Tiap hasil langsung menjadi batch baru `{kode}-P{n}` untuk Mandor yang sama, berstatus Diterima; batch asal menjadi Selesai. Respons 201: `preparation_id`, `input_gram`, `output_gram`, `susut_gram`, `batches[]`.
+**Revisi 26/10, penyiapan per baris (disarankan untuk batch banyak baris):** POST /batches/{id}/preparation dengan `line_ids[]` (baris G2/G3 batch itu, grade harus sama; item dan nota boleh berbeda), `prepared_at`, `process_type`, `notes`, dan `outputs[]` (`type` = `main`/`byproduct`, `item_id`, `gram`, `pcs`, `group`). Aturan HPP sama dengan penyiapan gudang (dibagi dengan bobot Sesi Grading). Hasil utama G1 menjadi **baris baru di batch yang sama** (membawa item hasilnya dan nota asalnya); baris yang disiapkan ditandai `prepared`. Respons 201 sama seperti di bawah, dengan `batches` kosong dan `lines[]` (`id`, `item`, `grade`, `nota`, `gram`) baris G1 baru. Bentuk lama (tanpa `line_ids`) tetap diterima untuk batch yang seluruh barisnya G2/G3 dan belum dijatahkan, dengan perilaku lama (batch baru `{kode}-P{n}`).
+
+POST /batches/{id}/preparation (bentuk lama): `prepared_at`, `process_type` (`kering`/`basah`), `notes`, `outputs[]` (`item_id` bahan utama atau sampingan, `weight`, `jumlah_keping`). Hanya batch Cuci Langsung (semua sumber hasil grading G2/G3 ber-SPK Kirim Pencucian) yang sudah diterima dan belum dijatahkan (`can_prepare`). Dicatat lewat service penyiapan gudang (HPP batch dibagi ke hasil dengan aturan alokasi penyiapan, susut = masuk - hasil). Tiap hasil langsung menjadi batch baru `{kode}-P{n}` untuk Mandor yang sama, berstatus Diterima; batch asal menjadi Selesai. Respons 201: `preparation_id`, `input_gram`, `output_gram`, `susut_gram`, `batches[]`.
 
 **Revisi 22/10 (bentuk baru, disarankan):** kirim `g1_gram` (gram G1 hasil, ditimbang), `g1_item_id` (opsional, bawaan item batch), `g1_pcs`, dan `crushed[]` (susut hancur: `item_id`, `gram`, `pcs`; boleh kosong). `outputs[]` lama tetap diterima kalau `g1_gram` tidak dikirim. Penyiapan berlaku untuk **semua batch yang belum G1** (`can_prepare`), tidak lagi hanya Cuci Langsung. Aturannya:
 
 - G1 + hancur tidak boleh melebihi gram masuk (gram diterima batch).
-- Seluruh nilai HPP batch masuk ke G1 hasil, dan hanya G1 yang menjadi batch baru `{kode}-P1`, langsung siap dijatahkan.
-- Tiap baris hancur menjadi stok sendiri (kode `PS`) di Grup Stok Jual dengan HPP 0. Item boleh tanpa harga.
+- Nilai HPP batch dibagi ke hasil dengan bobot Sesi Grading sejak revisi 24/10 (lihat di bawah); hanya G1 yang menjadi batch baru `{kode}-P1`, langsung siap dijatahkan.
+- Tiap baris hancur menjadi stok sendiri (kode `PS`) di Grup Stok Jual. Item tanpa harga mendapat HPP 0.
 - Susut hilang = masuk - G1 - hancur.
 
 G1 + hancur melebihi gram masuk dijawab **422** tanpa menyimpan apa pun, mis. `{"message":"G1 hasil (3.900,00 gr) + susut hancur (300,00 gr) melebihi berat masuk (4.000,00 gr). Periksa timbangannya.","errors":{"g1.weight":["..."]}}`. Header `Idempotency-Key` berlaku: kiriman ulang dengan key yang sama membalas respons pertama dan tidak membuat batch `-P1` kedua. Batch lama tanpa rincian hancur dan hilang tetap mengirim `receipt_shrink_gram` (angka lama), dengan `receipt_crushed_gram` dan `receipt_lost_gram` `null` sampai batch diterima.
 
 Respons 201 menambah field `g1_gram`, `crushed_gram`, `crushed[]` (`id`, `kode_stok`, `item`, `gram`), `lost_gram` (negatif, mis. `"-120.00"`), `lost_percent` (negatif, mis. `"-4.00"`), dan `executor_role`. Field lama (`input_gram`, `output_gram`, `susut_gram`, `batches[]`) tetap ada. Mandor di HP **tidak mencetak label** (J5); tampilkan kode stok dan gram di layar. Pengguna selain Mandor dan Kepala Pencuci tim batch itu: 403.
+
+**Revisi 24/10 (Putaran 2): banyak masukan dan banyak hasil.** Bentuk baru, ditambahkan di samping bentuk lama (keduanya diterima; yang lama dipetakan ke satu masukan + satu hasil utama + hasil sampingan Jual).
+
+Bentuk baru dikenali dari adanya `inputs[]` atau `outputs[]` yang berisi `type`/`gram`:
+
+| Field | Isi |
+|---|---|
+| `inputs[]` | Batch yang disiapkan bersama: `batch_id`, `gram` (opsional; batch diambil utuh, jadi harus sama dengan gram diterima). Kosong = batch di URL. Semua batch harus milik Mandor/tim yang sama, sudah diterima, belum dijatahkan, dan **gradenya sama** (campur grade 422). Batch Mandor lain 403. |
+| `outputs[]` | `item_id` (item hasil boleh berbeda dari item batch), `type` (`main` = Hasil utama G1, `byproduct` = hasil sampingan), `gram`, `pcs` (opsional), `group` (hanya `byproduct`: `layak_jual` bawaan, `retur`, `layak_produksi`). Minimal satu `main`. |
+
+Aturan: total `gram` hasil tidak boleh melebihi total gram masuk (422). Susut hilang = masuk - semua hasil, dijawab di `lost_gram` (negatif) dan `lost_percent`. **HPP** batch masuk dibagi ke **semua hasil** dengan bobot Sesi Grading (Harga Bahan Pencuci G1 item x gram, porsi 4 desimal, baris terakhir menerima sisa); item tanpa harga mendapat HPP 0, hasil utama wajib punya harga (422 kalau tidak). Tiap `main` menjadi batch baru `{kode batch pertama}-P{n}` (Diterima); `byproduct` menjadi stok sendiri di grup tujuannya. Semua batch asal menjadi Selesai dan tercatat di log aktivitas. Header `Idempotency-Key` tetap berlaku.
+
+Contoh permintaan:
+
+```json
+{
+  "prepared_at": "2026-10-24",
+  "process_type": "kering",
+  "inputs": [{"batch_id": 41}, {"batch_id": 43}],
+  "outputs": [
+    {"item_id": 7, "type": "main", "gram": 2800, "pcs": 300},
+    {"item_id": 9, "type": "byproduct", "gram": 400, "group": "retur"}
+  ]
+}
+```
+
+Respons 201 (field lama tetap ada; `outputs[]` baru):
+
+```json
+{
+  "data": {
+    "preparation_id": 12,
+    "input_gram": "6000.00",
+    "output_gram": "3200.00",
+    "susut_gram": "2800.00",
+    "g1_gram": "2800.00",
+    "crushed_gram": "400.00",
+    "crushed": [{"id": 31, "kode_stok": "PS2610-00031", "item": {"id": 9, "name": "Sesetan"}, "gram": "400.00"}],
+    "lost_gram": "-2800.00",
+    "lost_percent": "-46.70",
+    "executor_role": "mandor",
+    "outputs": [
+      {"id": 30, "kode_stok": "PS2610-00030", "item": {"id": 7, "name": "PK2 Bahan"}, "type": "main", "group": null, "gram": "2800.00", "pcs": 300},
+      {"id": 31, "kode_stok": "PS2610-00031", "item": {"id": 9, "name": "Sesetan"}, "type": "byproduct", "group": "retur", "gram": "400.00", "pcs": null}
+    ],
+    "batches": [{"batch_code": "B-M1-P1", "status": {"code": "received", "label": "Diterima"}}]
+  }
+}
+```
+
+`GET /items?crushed=1` tetap daftar item hancur untuk baris `byproduct` (Sesetan, Perutan, Hancuran, Pecahan, Bulu/Sesetan); item lain boleh dipilih juga. Aplikasi lama (`g1_gram` + `crushed[]`) tidak perlu diubah, tetapi HPP-nya kini dibagi dengan bobot yang sama, jadi nilai HPP G1 bisa lebih kecil dari sebelumnya kalau hasil sampingan berharga.
 
 ### Kerja ulang hasil belum standar (B4)
 

@@ -1,6 +1,6 @@
 import { api, unwrapData } from './api/api';
 import { http } from './api/http';
-import { Batch, Container, Item, Paginated, RationBatch } from '@/types';
+import { Batch, Container, Item, Paginated, PreparationGroup, RationBatch } from '@/types';
 
 export interface PreparationPayload {
   prepared_at: string;
@@ -11,6 +11,22 @@ export interface PreparationPayload {
   g1_pcs?: number | null;
   /** susut hancur, boleh kosong */
   crushed: { item_id: number; gram: string; pcs?: number | null }[];
+}
+
+/** Revisi 26/10: penyiapan per baris G2/G3 (grade sama), banyak hasil. */
+export interface PreparationLinesPayload {
+  prepared_at: string;
+  process_type: 'kering' | 'basah';
+  notes?: string | null;
+  line_ids: number[];
+  outputs: {
+    type: 'main' | 'byproduct';
+    item_id: number;
+    gram: string;
+    pcs?: number | null;
+    /** hanya byproduct */
+    group?: PreparationGroup;
+  }[];
 }
 
 export const batchesApi = api.injectEndpoints({
@@ -27,7 +43,10 @@ export const batchesApi = api.injectEndpoints({
     }),
     createRations: build.mutation<
       RationBatch,
-      { production_batch_id: number; lines: { pencuci_id: number; target_qty: string }[] }
+      {
+        production_batch_id: number;
+        lines: { pencuci_id: number; target_qty: string; batch_line_id?: number }[];
+      }
     >({
       query: body => ({ path: '/rations', method: 'POST', body }),
       transformResponse: unwrapData<RationBatch>,
