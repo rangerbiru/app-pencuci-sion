@@ -35,9 +35,10 @@ import {
 } from './rationForm';
 import {
   batchLines,
+  lineGradeText,
   lineItemName,
+  mustPrepareLines,
   notaText,
-  preparableLines,
   rationableLines,
 } from '@/utils/batchLines';
 
@@ -95,7 +96,7 @@ function RationForm({ batchId }: { batchId: number }) {
   const hasLines = batchLines(batch).length > 0;
   const rationable = rationableLines(batch);
   const blocked = hasLines ? rationable.length === 0 : needsPreparation(batch);
-  if (blocked && hasLines && preparableLines(batch).length === 0) {
+  if (blocked && hasLines && mustPrepareLines(batch).length === 0) {
     return (
       <Screen title="Penjatahan" subtitle={`${batch.batch_code}, ${batch.item}`} back>
         <EmptyState
@@ -197,7 +198,7 @@ function RationForm({ batchId }: { batchId: number }) {
                     }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active, disabled: !pickable }}
-                    accessibilityLabel={`${lineTitle(l)}, Grade ${l.grade ?? '-'}, sisa ${formatGram(l.sisa_dijatah ?? l.gram)}${pickable ? '' : ', perlu penyiapan, tidak bisa dipilih'}`}
+                    accessibilityLabel={`${lineTitle(l)}, ${lineGradeText(l) ?? 'tanpa grade'}, sisa ${formatGram(l.sisa_dijatah ?? l.gram)}${pickable ? '' : ', perlu penyiapan, tidak bisa dipilih'}`}
                     style={({ pressed }) => [
                       styles.lineCard,
                       {
@@ -223,9 +224,8 @@ function RationForm({ batchId }: { batchId: number }) {
                       <Text variant="bodyStrong">{formatGram(l.sisa_dijatah ?? l.gram)}</Text>
                     </View>
                     <Text variant="small" color={active ? 'onNavIndicator' : 'textSecondary'}>
-                      {[notaText(l.nota), l.grade != null ? `Grade ${l.grade}` : null]
-                        .filter(Boolean)
-                        .join(' · ') || 'Tanpa nota'}
+                      {[notaText(l.nota), lineGradeText(l)].filter(Boolean).join(' · ') ||
+                        'Tanpa nota'}
                     </Text>
                     <LineBadge line={l} />
                   </Pressable>

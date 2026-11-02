@@ -1,8 +1,10 @@
 import {
   batchNotaText,
   isRationableLine,
+  lineGradeText,
   lineItemName,
   lineNeedsPreparation,
+  mustPrepareLines,
   preparableLines,
   rationableLines,
 } from './batchLines';
@@ -49,5 +51,41 @@ describe('batch lines helpers', () => {
     expect(batchNotaText('B-1', 'NP-001')).toBe('Batch B-1 · Nota NP-001');
     expect(batchNotaText('B-1', null)).toBe('Batch B-1');
     expect(batchNotaText('B-1', '  ')).toBe('Batch B-1');
+  });
+});
+
+describe('lineGradeText (revisi 30/10 baris sampingan)', () => {
+  it('baris sampingan tampil "Sampingan" walau grade null', () => {
+    expect(lineGradeText({ grade: 3, is_byproduct: true })).toBe('G3 · Sampingan');
+  });
+  it('baris biasa tampil Grade n, tanpa grade = null', () => {
+    expect(lineGradeText({ grade: 1 })).toBe('Grade 1');
+    expect(lineGradeText({ grade: null })).toBeNull();
+  });
+  it('baris sampingan langsung boleh dijatahkan', () => {
+    const line = {
+      id: 1,
+      item: 'X',
+      grade: null,
+      is_byproduct: true,
+      needs_preparation: false,
+      sisa_dijatah: '500',
+    };
+    expect(isRationableLine(line)).toBe(true);
+  });
+  it('sampingan bisa dijatah dan disiapkan lagi; G3 biasa hanya perlu penyiapan', () => {
+    const by = {
+      id: 1,
+      item: 'X',
+      grade: 3,
+      is_byproduct: true,
+      needs_preparation: false,
+      sisa_dijatah: '500',
+    };
+    const g3 = { id: 2, item: 'Y', grade: 3, needs_preparation: true, sisa_dijatah: '500' };
+    const batch = { lines: [by, g3] };
+    expect(rationableLines(batch).map(l => l.id)).toEqual([1]);
+    expect(preparableLines(batch).map(l => l.id)).toEqual([1, 2]);
+    expect(mustPrepareLines(batch).map(l => l.id)).toEqual([2]);
   });
 });

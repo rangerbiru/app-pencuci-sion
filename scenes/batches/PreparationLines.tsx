@@ -10,7 +10,7 @@ import { executorText } from '@/utils/executor';
 import { formatLostGram } from '@/utils/susut';
 import { formatGram } from '@/utils/format';
 import { jakarta } from '@/utils/date';
-import { lineItemName, notaText, preparableLines } from '@/utils/batchLines';
+import { lineGradeText, lineItemName, notaText, preparableLines } from '@/utils/batchLines';
 import Susut from '@/components/elements/Susut';
 import type { PreparationResult, RationBatch } from '@/types';
 import Screen from '@/components/layouts/Screen';
@@ -218,7 +218,7 @@ function PreparationLines({ batch }: { batch: RationBatch }) {
                 onPress={() => toggleLine(l.id)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: active, disabled: !allowed }}
-                accessibilityLabel={`${lineItemName(l.item)}, ${notaText(l.nota) ?? 'tanpa nota'}, Grade ${l.grade ?? '-'}, ${formatGram(lineInputGram(l))}${allowed ? '' : ', gradenya berbeda'}`}
+                accessibilityLabel={`${lineItemName(l.item)}, ${notaText(l.nota) ?? 'tanpa nota'}, ${lineGradeText(l) ?? 'tanpa grade'}, ${formatGram(lineInputGram(l))}${allowed ? '' : ', gradenya berbeda'}`}
                 style={({ pressed }) => [
                   styles.lineCard,
                   {
@@ -244,9 +244,7 @@ function PreparationLines({ batch }: { batch: RationBatch }) {
                   <Text variant="bodyStrong">{formatGram(lineInputGram(l))}</Text>
                 </View>
                 <Text variant="small" color={active ? 'onNavIndicator' : 'textSecondary'}>
-                  {[notaText(l.nota), l.grade != null ? `Grade ${l.grade}` : null]
-                    .filter(Boolean)
-                    .join(' · ') || 'Tanpa nota'}
+                  {[notaText(l.nota), lineGradeText(l)].filter(Boolean).join(' · ') || 'Tanpa nota'}
                 </Text>
                 <LineBadge line={l} />
               </Pressable>

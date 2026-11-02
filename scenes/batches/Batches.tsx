@@ -24,7 +24,12 @@ import { SkeletonRows } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import BatchFlags from './BatchFlags';
 import BatchLines from './BatchLines';
-import { batchLines, preparableLines, rationableLines } from '@/utils/batchLines';
+import {
+  batchLines,
+  isPreparableByproduct,
+  mustPrepareLines,
+  rationableLines,
+} from '@/utils/batchLines';
 import { needsPreparation } from './rationForm';
 import { batchSusut } from './batchSusut';
 import Susut from '@/components/elements/Susut';
@@ -131,8 +136,9 @@ function Batches({
               const hasLines = batchLines(b).length > 0;
               // batch campur grade: yang menentukan baris G1 yang masih ada sisanya, bukan batch
               const notReady = hasLines
-                ? preparableLines(b).length > 0 && rationableLines(b).length === 0
+                ? mustPrepareLines(b).length > 0 && rationableLines(b).length === 0
                 : needsPreparation(b);
+              const hasByproduct = batchLines(b).some(isPreparableByproduct);
               const hasRemaining =
                 b.remaining_gram !== null && compareDecimal(b.remaining_gram, '0') > 0;
               const canRation = hasLines
@@ -200,7 +206,9 @@ function Batches({
                   ) : null}
                   {b.can_prepare && isFeatureEnabled('preparation') ? (
                     <Button
-                      title={notReady ? 'Siapkan dulu' : 'Penyiapan'}
+                      title={
+                        notReady ? 'Siapkan dulu' : hasByproduct ? 'Siapkan lagi' : 'Penyiapan'
+                      }
                       variant="secondary"
                       icon="layers"
                       onPress={() =>

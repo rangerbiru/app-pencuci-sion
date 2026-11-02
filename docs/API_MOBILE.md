@@ -525,6 +525,13 @@ Semua endpoint di bagian ini khusus Kepala Pencuci dan Mandor (pencuci 403), kec
 ]
 ```
 
+**Revisi 30/10, baris sampingan (M1):** `lines[]` punya `is_byproduct` (bool). Baris dari hasil sampingan penyiapan bergrup Produksi selalu `grade` = 3 dengan `is_byproduct` = true (tampilkan "G3 · Sampingan"), `needs_preparation` = false, dan batch yang hanya berisi baris itu `ready_for_ration` = true. Baris itu boleh langsung dijatahkan, dan juga boleh disiapkan lagi lewat POST /batches/{id}/preparation (`can_prepare` = true) selama belum dijatahkan. G2/G3 bukan sampingan tetap wajib disiapkan (422 `grade_not_ready`). `GET /me/rations` dan `GET /rations` juga membawa `is_byproduct`.
+
+```json
+{ "id": 41, "item": { "id": 7, "name": "Sesetan" }, "grade": 3, "is_byproduct": true, "nota": "NP-002",
+  "gram": "300.00", "sisa_dijatah": "300.00", "needs_preparation": false, "prepared": false }
+```
+
 `sisa_dijatah` = gram baris yang bisa dijatahkan (gram baris - susut penerimaan bagian baris - jatah yang sudah ada). `prepared: true` = baris sudah disiapkan Mandor (diganti baris G1 hasilnya, tidak lagi berlaku). Field batch lama (`item`, `grades`, `sent_gram`, `nilai_hpp`, `remaining_gram`, `ready_for_ration`, ...) tetap ada; `item` = item baris pertama, `ready_for_ration` = tidak ada baris yang masih Perlu Penyiapan, dan `can_prepare` juga `true` kalau ada baris G2/G3 yang bisa disiapkan.
 
 Status batch: `assigned` Diserahkan (belum diterima), `received` Diterima, `in_progress` Berjalan, `completed` Selesai. `remaining_gram` = gram diterima - gram yang sudah dijatahkan.

@@ -141,6 +141,8 @@ export interface MyRation {
   /** Revisi 26/10: baris batch jatah ini; `item` sudah item barisnya. null = jatah batch gabungan lama */
   batch_line_id?: number | null;
   nota?: string | null;
+  /** Revisi 30/10: jatah dari baris sampingan hasil penyiapan; `grade` null */
+  is_byproduct?: boolean;
 }
 
 export type SubmissionType =
@@ -461,6 +463,8 @@ export interface BatchLine {
   needs_preparation?: boolean;
   /** sudah disiapkan (diganti baris G1 hasilnya) */
   prepared?: boolean;
+  /** Revisi 30/10: baris hasil sampingan penyiapan (grade null, langsung boleh dijatah) */
+  is_byproduct?: boolean;
 }
 
 /** Pelaksana penjatahan/penyiapan: gudang (Admin web) atau mandor (Mandor / Kepala Pencuci) */
@@ -475,6 +479,7 @@ export interface RationBatch extends Batch {
     status: Status;
     executor_role?: ExecutorRole | null;
     batch_line_id?: number | null;
+    is_byproduct?: boolean;
   }[];
 }
 

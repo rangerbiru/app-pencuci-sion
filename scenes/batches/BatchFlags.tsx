@@ -5,18 +5,21 @@ import Badge from '@/components/elements/Badge';
 
 export interface BatchFlagsProps {
   grade?: number | null;
+  /** jatah dari baris sampingan: tampil "Sampingan" menggantikan grade */
+  byproduct?: boolean;
   needsPreparation?: boolean;
   /** jatah yang dibuat gudang diberi penanda "Dari Gudang" */
   executorRole?: ExecutorRole | null;
 }
 
 /** Penanda batch/stok/jatah: grade, Perlu Penyiapan, Dari Gudang. Kosong bila tidak ada. */
-function BatchFlags({ grade, needsPreparation, executorRole }: BatchFlagsProps) {
-  const hasGrade = grade !== null && grade !== undefined;
-  if (!hasGrade && !needsPreparation && executorRole !== 'gudang') return null;
+function BatchFlags({ grade, byproduct, needsPreparation, executorRole }: BatchFlagsProps) {
+  const hasGrade = !byproduct && grade !== null && grade !== undefined;
+  if (!hasGrade && !byproduct && !needsPreparation && executorRole !== 'gudang') return null;
   return (
     <View style={styles.row}>
       {hasGrade ? <Badge label={`Grade ${grade}`} tone="neutral" icon="tag" /> : null}
+      {byproduct ? <Badge label="G3 · Sampingan" tone="neutral" icon="tag" /> : null}
       {needsPreparation ? (
         <Badge label="Perlu Penyiapan" tone="gold" icon="alert-triangle" />
       ) : null}

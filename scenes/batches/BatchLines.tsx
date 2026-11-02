@@ -3,7 +3,13 @@ import useTheme from '@/hooks/useTheme';
 import { radius, space } from '@/theme';
 import type { Batch, BatchLine } from '@/types';
 import { formatGram } from '@/utils/format';
-import { batchLines, lineItemName, lineNeedsPreparation, notaText } from '@/utils/batchLines';
+import {
+  batchLines,
+  lineGradeText,
+  lineItemName,
+  lineNeedsPreparation,
+  notaText,
+} from '@/utils/batchLines';
 import Text from '@/components/elements/Text';
 import Badge from '@/components/elements/Badge';
 
@@ -40,7 +46,7 @@ function BatchLines({ batch }: { batch: Pick<Batch, 'lines' | 'target_hasil'> })
       {lines.map(line => (
         <View
           key={line.id}
-          accessibilityLabel={`${lineTitle(line)}, grade ${line.grade ?? '-'}, ${formatGram(line.gram)}`}
+          accessibilityLabel={`${lineTitle(line)}, ${lineGradeText(line) ?? 'tanpa grade'}, ${formatGram(line.gram)}`}
           style={[styles.line, { borderColor: colors.border, opacity: line.prepared ? 0.6 : 1 }]}>
           <View style={styles.head}>
             <Text variant="bodyStrong" style={styles.flex}>
@@ -51,9 +57,7 @@ function BatchLines({ batch }: { batch: Pick<Batch, 'lines' | 'target_hasil'> })
             </Text>
           </View>
           <Text variant="small" color="textSecondary">
-            {[notaText(line.nota), line.grade != null ? `Grade ${line.grade}` : null]
-              .filter(Boolean)
-              .join(' · ') || 'Tanpa nota'}
+            {[notaText(line.nota), lineGradeText(line)].filter(Boolean).join(' · ') || 'Tanpa nota'}
           </Text>
           <View style={styles.foot}>
             <LineBadge line={line} />

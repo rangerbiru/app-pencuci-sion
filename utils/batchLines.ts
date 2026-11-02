@@ -7,6 +7,12 @@ export function lineItemName(item: BatchLine['item'] | undefined): string {
   return typeof item === 'string' ? item : (item.name ?? '-');
 }
 
+/** "G3 · Sampingan" untuk baris hasil sampingan, "Grade n" bila ada, selain itu null. */
+export function lineGradeText(line: Pick<BatchLine, 'grade' | 'is_byproduct'>): string | null {
+  if (line.is_byproduct) return `G${line.grade ?? 3} · Sampingan`;
+  return line.grade != null ? `Grade ${line.grade}` : null;
+}
+
 /** Baris masih perlu Penyiapan (G2/G3). Server lama tanpa `needs_preparation`: turun dari grade. */
 export function lineNeedsPreparation(line: BatchLine): boolean {
   if (line.prepared) return false;
@@ -33,8 +39,18 @@ export function rationableLines(batch: Pick<Batch, 'lines'>): BatchLine[] {
   return batchLines(batch).filter(isRationableLine);
 }
 
-/** Baris G2/G3 yang bisa dipilih untuk Penyiapan per baris. */
+/** Baris sampingan yang belum disiapkan: sudah boleh dijatah, boleh juga disiapkan lagi. */
+export function isPreparableByproduct(line: BatchLine): boolean {
+  return line.is_byproduct === true && !line.prepared;
+}
+
+/** Baris G2/G3 yang bisa dipilih untuk Penyiapan per baris (termasuk "Siapkan lagi" sampingan). */
 export function preparableLines(batch: Pick<Batch, 'lines'>): BatchLine[] {
+  return batchLines(batch).filter(l => lineNeedsPreparation(l) || isPreparableByproduct(l));
+}
+
+/** Perlu Penyiapan sungguhan: G2/G3 non-sampingan yang wajib disiapkan sebelum dijatah. */
+export function mustPrepareLines(batch: Pick<Batch, 'lines'>): BatchLine[] {
   return batchLines(batch).filter(lineNeedsPreparation);
 }
 

@@ -28,7 +28,11 @@ function RationList({ rations }: { rations: MyRation[] }) {
                 <Text variant="small" color="textSecondary">
                   {batchNotaText(r.batch_code, r.nota)}
                 </Text>
-                <BatchFlags grade={r.grade} executorRole={r.executor_role} />
+                <BatchFlags
+                  grade={r.grade}
+                  byproduct={r.is_byproduct}
+                  executorRole={r.executor_role}
+                />
               </View>
               <Badge status={r.status} kind="assignment" />
             </View>
