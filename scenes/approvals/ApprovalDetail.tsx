@@ -139,7 +139,7 @@ function ApprovalDetail({ id }: { id: number }) {
       </Card>
       {s.ration ? (
         <Card>
-          <SummaryRow label="Target jatah">{formatGram(s.ration.target_gram)}</SummaryRow>
+          <SummaryRow label="Gram Jatah">{formatGram(s.ration.target_gram)}</SummaryRow>
           <SummaryRow label="Sudah masuk kartu">{formatGram(s.ration.taken_gram)}</SummaryRow>
           {s.ration.pending_other_gram && s.ration.pending_other_gram !== '0.00' ? (
             <SummaryRow label="Pengajuan lain menunggu">

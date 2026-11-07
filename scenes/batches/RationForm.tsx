@@ -12,7 +12,7 @@ import {
 } from '@/services';
 import { formatGram } from '@/utils/format';
 import { isFeatureEnabled } from '@/utils/config';
-import { compareDecimal, subDecimal } from '@/utils/decimal';
+import { compareDecimal, parseUserDecimal, subDecimal } from '@/utils/decimal';
 import Screen from '@/components/layouts/Screen';
 import Card from '@/components/elements/Card';
 import Section from '@/components/elements/Section';
@@ -25,18 +25,21 @@ import Icon from '@/components/elements/Icon';
 import { SkeletonDetail } from '@/components/elements/Skeleton';
 import { EmptyState, ErrorState } from '@/components/elements/StateViews';
 import BatchFlags from './BatchFlags';
-import BatchLines, { LineBadge, lineTitle } from './BatchLines';
+import BatchLines, { Komposisi, LineBadge, lineTitle } from './BatchLines';
+import WorkerPicker from './WorkerPicker';
 import {
   GRADE_NOT_READY,
   LINE_REQUIRED,
   RationLineInput,
   needsPreparation,
+  rowErrorsFromServer,
   validateRations,
 } from './rationForm';
 import {
   batchLines,
   lineGradeText,
-  lineItemName,
+  lineName,
+  perkiraanHasil,
   mustPrepareLines,
   notaText,
   rationableLines,
@@ -51,7 +54,9 @@ function RationForm({ batchId }: { batchId: number }) {
   const [create, state] = useCreateRationsMutation();
   const batch = batches.data?.find(b => b.id === batchId);
   const workers = (team.data ?? []).filter(m => m.role.code === 'pencuci');
-  const [lines, setLines] = useState<RationLineInput[]>([]);
+  const [lines, setLines] = useState<RationLineInput[]>([{ workerId: null, gram: '' }]);
+  // 422 per baris dari server (allocations.N.*)
+  const [rowServerErrors, setRowServerErrors] = useState<Record<number, string>>({});
   const [shown, setShown] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   // 422 grade_not_ready: pesan server + tombol Siapkan dulu, bukan galat umum
@@ -133,21 +138,33 @@ function RationForm({ batchId }: { batchId: number }) {
   const lineError =
     hasLines && !selectedLine ? 'Pilih baris (item dan nota) yang dijatahkan.' : null;
 
-  function toggle(workerId: number) {
-    setLines(prev =>
-      prev.some(l => l.workerId === workerId)
-        ? prev.filter(l => l.workerId !== workerId)
-        : [...prev, { workerId, gram: '' }],
-    );
+  function updateRow(i: number, patch: Partial<RationLineInput>) {
+    setRowServerErrors({});
+    setLines(prev => prev.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  }
+
+  function removeRow(i: number) {
+    setRowServerErrors({});
+    setLines(prev => prev.filter((_, j) => j !== i));
   }
 
   async function save() {
     setShown(true);
     setServerError(null);
     setGradeBlocked(null);
+    setRowServerErrors({});
     if (!result.ok || lineError) return;
     try {
-      await create({ production_batch_id: batch!.id, lines: result.lines }).unwrap();
+      // stok gabungan: bentuk split baru; batch lama tetap bentuk lama
+      await create(
+        selectedLine?.stok_gabungan
+          ? {
+              production_batch_id: batch!.id,
+              batch_line_id: selectedLine.id,
+              allocations: result.allocations,
+            }
+          : { production_batch_id: batch!.id, lines: result.lines },
+      ).unwrap();
       toast.show('Penjatahan disimpan');
       router.back();
     } catch (e) {
@@ -156,7 +173,10 @@ function RationForm({ batchId }: { batchId: number }) {
       else {
         // line_required: pesan server apa adanya; pilihan baris sudah tampil di atas
         if (err.code === LINE_REQUIRED) setLineId(null);
-        setServerError(err.message);
+        const rows = rowErrorsFromServer(err.fieldErrors);
+        setRowServerErrors(rows);
+        // pesan umum hanya bila tidak ada pesan per baris
+        setServerError(Object.keys(rows).length > 0 ? null : err.message);
       }
     }
   }
@@ -219,15 +239,17 @@ function RationForm({ batchId }: { batchId: number }) {
                         color={active ? colors.onNavIndicator : colors.textSecondary}
                       />
                       <Text variant="bodyStrong" style={styles.flex}>
-                        {lineItemName(l.item)}
+                        {lineName(l)}
                       </Text>
                       <Text variant="bodyStrong">{formatGram(l.sisa_dijatah ?? l.gram)}</Text>
                     </View>
                     <Text variant="small" color={active ? 'onNavIndicator' : 'textSecondary'}>
-                      {[notaText(l.nota), lineGradeText(l)].filter(Boolean).join(' · ') ||
-                        'Tanpa nota'}
+                      {[l.stok_gabungan ? null : notaText(l.nota), lineGradeText(l)]
+                        .filter(Boolean)
+                        .join(' · ') || 'Tanpa nota'}
                     </Text>
                     <LineBadge line={l} />
+                    <Komposisi line={l} />
                   </Pressable>
                 );
               })}
@@ -248,6 +270,16 @@ function RationForm({ batchId }: { batchId: number }) {
         </View>
         <View style={styles.flex}>
           <Text variant="small" color="textSecondary">
+            Total dijatah
+          </Text>
+          <Text
+            variant="numberM"
+            color={compareDecimal(result.total, remaining) > 0 ? 'danger' : 'text'}>
+            {formatGram(result.total)}
+          </Text>
+        </View>
+        <View style={styles.flex}>
+          <Text variant="small" color="textSecondary">
             Sisa setelah ini
           </Text>
           <Text
@@ -259,8 +291,8 @@ function RationForm({ batchId }: { batchId: number }) {
       </Card>
 
       <Section
-        title={hasLines ? '2. Pilih pencuci' : 'Pilih pencuci'}
-        description="Ketuk nama untuk menambah atau menghapus.">
+        title={hasLines ? '2. Isi pencuci dan Gram Jatah' : 'Isi pencuci dan Gram Jatah'}
+        description="Satu baris per pencuci. Total tidak boleh melebihi sisa.">
         {workers.length === 0 ? (
           <Card>
             <EmptyState
@@ -270,61 +302,65 @@ function RationForm({ batchId }: { batchId: number }) {
             />
           </Card>
         ) : (
-          <View style={styles.chips}>
-            {workers.map(w => {
-              const active = lines.some(l => l.workerId === w.id);
+          <View style={styles.lines}>
+            {lines.map((l, i) => {
+              const est = perkiraanHasil(
+                parseUserDecimal(l.gram),
+                selectedLine?.perkiraan_rendemen,
+              );
+              const rowError = shown
+                ? (result.errors[i] ?? rowServerErrors[i])
+                : rowServerErrors[i];
               return (
-                <Pressable
-                  key={w.id}
-                  onPress={() => toggle(w.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: active }}
-                  accessibilityLabel={w.name}
-                  style={({ pressed }) => [
-                    styles.chip,
-                    {
-                      borderColor: active ? colors.fieldFocus : colors.fieldBorder,
-                      backgroundColor: active
-                        ? colors.navIndicator
-                        : pressed
-                          ? colors.pressed
-                          : colors.surface,
-                    },
-                  ]}>
-                  <Icon
-                    name={active ? 'check-square' : 'square'}
-                    size={18}
-                    color={active ? colors.onNavIndicator : colors.textSecondary}
+                <Card key={i} style={styles.rowCard}>
+                  <View style={styles.rowHead}>
+                    <View style={styles.flex}>
+                      <WorkerPicker
+                        label="Nama Pencuci"
+                        workers={workers}
+                        value={l.workerId}
+                        usedIds={lines.map(x => x.workerId).filter((x): x is number => x !== null)}
+                        onChange={id => updateRow(i, { workerId: id })}
+                      />
+                    </View>
+                    {lines.length > 1 ? (
+                      <Pressable
+                        onPress={() => removeRow(i)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Hapus baris pencuci ${i + 1}`}
+                        hitSlop={8}
+                        style={styles.remove}>
+                        <Icon name="trash-2" size={20} color={colors.danger} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <GramInput
+                    label="Gram Jatah"
+                    value={l.gram}
+                    onChangeValue={g => updateRow(i, { gram: g })}
+                    placeholder="0"
+                    error={rowError}
                   />
-                  <Text variant="bodyStrong">{w.name}</Text>
-                </Pressable>
+                  {selectedLine?.stok_gabungan ? (
+                    <Text variant="small" color="textSecondary">
+                      Perkiraan hasil:{' '}
+                      <Text variant="smallStrong">{est ? formatGram(est) : '–'}</Text>
+                      {est == null && selectedLine.perkiraan_rendemen_catatan
+                        ? ` (${selectedLine.perkiraan_rendemen_catatan})`
+                        : ''}
+                    </Text>
+                  ) : null}
+                </Card>
               );
             })}
+            <Button
+              title="+ Tambah pencuci"
+              variant="secondary"
+              onPress={() => setLines(prev => [...prev, { workerId: null, gram: '' }])}
+            />
           </View>
         )}
       </Section>
-
-      {lines.length > 0 ? (
-        <Section title="Target gram per pencuci">
-          <View style={styles.lines}>
-            {lines.map((l, i) => {
-              const w = workers.find(x => x.id === l.workerId);
-              return (
-                <GramInput
-                  key={l.workerId ?? i}
-                  label={w?.name ?? 'Pencuci'}
-                  value={l.gram}
-                  onChangeValue={g =>
-                    setLines(prev => prev.map((x, j) => (j === i ? { ...x, gram: g } : x)))
-                  }
-                  placeholder="0"
-                  error={shown ? result.errors[i] : undefined}
-                />
-              );
-            })}
-          </View>
-        </Section>
-      ) : null}
 
       {shown && result.totalError ? (
         <Text variant="smallStrong" color="danger" accessibilityLiveRegion="polite">
@@ -355,19 +391,17 @@ function RationForm({ batchId }: { batchId: number }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   summary: { flexDirection: 'row', gap: space.md },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    minHeight: sizes.touch,
-    paddingHorizontal: space.lg,
-    borderRadius: radius.button,
-    borderWidth: 1,
-  },
   lines: { gap: space.md },
   lineCard: { borderRadius: radius.card, padding: space.md, gap: space.xs, minHeight: sizes.touch },
   lineHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  rowHead: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+  rowCard: { gap: space.md },
+  remove: {
+    minHeight: sizes.input,
+    minWidth: sizes.touch,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default RationForm;

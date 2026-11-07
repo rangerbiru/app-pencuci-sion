@@ -7,6 +7,24 @@ export function lineItemName(item: BatchLine['item'] | undefined): string {
   return typeof item === 'string' ? item : (item.name ?? '-');
 }
 
+/** Judul stok: `nama` untuk stok gabungan, selain itu nama item baris. */
+export function lineName(line: Pick<BatchLine, 'item' | 'nama' | 'stok_gabungan'>): string {
+  if (line.stok_gabungan && line.nama && line.nama.trim()) return line.nama.trim();
+  return lineItemName(line.item);
+}
+
+/** Perkiraan hasil = gram x rendemen (0..1), "2 desimal"; null bila rendemen atau gram kosong. */
+export function perkiraanHasil(
+  gram: string | null | undefined,
+  rendemen: string | null | undefined,
+): string | null {
+  if (!gram || rendemen == null || rendemen === '') return null;
+  const g = Number(gram);
+  const r = Number(rendemen);
+  if (!Number.isFinite(g) || !Number.isFinite(r)) return null;
+  return (Math.round(g * r * 100) / 100).toFixed(2);
+}
+
 /** "G3 · Sampingan" untuk baris hasil sampingan, "Grade n" bila ada, selain itu null. */
 export function lineGradeText(line: Pick<BatchLine, 'grade' | 'is_byproduct'>): string | null {
   if (line.is_byproduct) return `G${line.grade ?? 3} · Sampingan`;

@@ -64,6 +64,12 @@
         "simulator": false,
         "buildConfiguration": "Release"
       }
+    },
+    "apk": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {

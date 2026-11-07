@@ -43,10 +43,16 @@ export const batchesApi = api.injectEndpoints({
     }),
     createRations: build.mutation<
       RationBatch,
-      {
-        production_batch_id: number;
-        lines: { pencuci_id: number; target_qty: string; batch_line_id?: number }[];
-      }
+      | {
+          production_batch_id: number;
+          lines: { pencuci_id: number; target_qty: string; batch_line_id?: number }[];
+        }
+      // revisi 7/11: stok gabungan, beberapa pencuci dalam satu permintaan
+      | {
+          production_batch_id: number;
+          batch_line_id: number;
+          allocations: { washer_id: number; gram: number }[];
+        }
     >({
       query: body => ({ path: '/rations', method: 'POST', body }),
       transformResponse: unwrapData<RationBatch>,

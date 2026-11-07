@@ -86,6 +86,7 @@ describe('RationForm grade gate', () => {
       unwrap: () => Promise.reject(httpError(422, { message: msg, code: 'grade_not_ready' })),
     });
     render(<RationForm batchId={14} />);
+    fireEvent.press(screen.getByLabelText(/^Nama Pencuci: /));
     fireEvent.press(screen.getByText('Siti'));
     fireEvent.changeText(screen.getByPlaceholderText('0'), '500');
     fireEvent.press(screen.getByText('Simpan penjatahan'));

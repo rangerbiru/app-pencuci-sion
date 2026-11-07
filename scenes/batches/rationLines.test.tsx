@@ -19,11 +19,12 @@ jest.mock('@/components/elements/Toast', () => ({ useToast: () => ({ show: jest.
 
 const mockCreate = jest.fn();
 let mockBatch: Record<string, unknown>;
+const mockTeam: { id: number; name: string; role: { code: string; label: string } }[] = [];
 jest.mock('@/services', () => ({
   toApiError: (e: unknown) => e,
   useGetRationBatchesQuery: () => ({ data: [mockBatch], isLoading: false, error: undefined }),
   useGetTeamQuery: () => ({
-    data: [{ id: 5, name: 'Siti', role: { code: 'pencuci', label: 'Pencuci' } }],
+    data: mockTeam,
     isLoading: false,
     error: undefined,
   }),
@@ -67,8 +68,17 @@ const base = {
   assignments: [],
 };
 
+function pickWorker(name: string, index = 0) {
+  fireEvent.press(screen.getAllByLabelText(/^Nama Pencuci: /)[index]);
+  fireEvent.press(screen.getByText(name));
+}
+
 jest.setTimeout(20000);
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockTeam.length = 0;
+  mockTeam.push({ id: 5, name: 'Siti', role: { code: 'pencuci', label: 'Pencuci' } });
+});
 
 describe('RationForm per line', () => {
   it('picks the G1 line first, then the worker, and sends batch_line_id', async () => {
@@ -77,8 +87,8 @@ describe('RationForm per line', () => {
     render(<RationForm batchId={14} />);
     expect(screen.getByText('Patahan A')).toBeTruthy();
     expect(screen.getByText('Patahan B')).toBeTruthy();
-    fireEvent.press(screen.getByText('Siti'));
-    fireEvent.changeText(screen.getByPlaceholderText('0'), '500');
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '500');
     // belum memilih baris: tidak terkirim
     fireEvent.press(screen.getByText('Simpan penjatahan'));
     expect(await screen.findByText('Pilih baris (item dan nota) yang dijatahkan.')).toBeTruthy();
@@ -106,8 +116,8 @@ describe('RationForm per line', () => {
   it('caps the total at the line sisa_dijatah', async () => {
     mockBatch = { ...base, lines: [g1b] };
     render(<RationForm batchId={14} />);
-    fireEvent.press(screen.getByText('Siti'));
-    fireEvent.changeText(screen.getByPlaceholderText('0'), '700');
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '700');
     fireEvent.press(screen.getByText('Simpan penjatahan'));
     expect(await screen.findByText(/melebihi sisa baris/)).toBeTruthy();
     expect(mockCreate).not.toHaveBeenCalled();
@@ -121,8 +131,8 @@ describe('RationForm per line', () => {
     });
     render(<RationForm batchId={14} />);
     fireEvent.press(screen.getByLabelText(/^Patahan A · Nota NP-001/));
-    fireEvent.press(screen.getByText('Siti'));
-    fireEvent.changeText(screen.getByPlaceholderText('0'), '500');
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '500');
     fireEvent.press(screen.getByText('Simpan penjatahan'));
     expect(await screen.findByText(msg)).toBeTruthy();
   });
@@ -134,8 +144,8 @@ describe('RationForm per line', () => {
       unwrap: () => Promise.reject(httpError(422, { message: msg, code: 'grade_not_ready' })),
     });
     render(<RationForm batchId={14} />);
-    fireEvent.press(screen.getByText('Siti'));
-    fireEvent.changeText(screen.getByPlaceholderText('0'), '500');
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '500');
     fireEvent.press(screen.getByText('Simpan penjatahan'));
     expect(await screen.findByText(msg)).toBeTruthy();
     expect(screen.getAllByText('Siapkan dulu').length).toBeGreaterThan(0);
@@ -146,8 +156,8 @@ describe('RationForm per line', () => {
     mockCreate.mockReturnValue({ unwrap: () => Promise.resolve({}) });
     render(<RationForm batchId={14} />);
     expect(screen.queryByText('1. Pilih baris G1')).toBeNull();
-    fireEvent.press(screen.getByText('Siti'));
-    fireEvent.changeText(screen.getByPlaceholderText('0'), '500');
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '500');
     fireEvent.press(screen.getByText('Simpan penjatahan'));
     await waitFor(() => expect(mockCreate).toHaveBeenCalled());
     expect(mockCreate.mock.calls[0][0].lines).toEqual([{ pencuci_id: 5, target_qty: '500.00' }]);
@@ -158,6 +168,111 @@ describe('RationForm per line', () => {
     render(<RationForm batchId={14} />);
     expect(screen.getByText('Stok belum G1')).toBeTruthy();
     expect(screen.queryByText('Simpan penjatahan')).toBeNull();
+  });
+});
+
+const gabungan = {
+  id: 120,
+  item: { id: 5, name: 'Patahan A' },
+  nama: 'PK2 Bulu Sedang Kapas',
+  stok_gabungan: true,
+  grade: 1,
+  gram: '1000.00',
+  sisa_dijatah: '1000.00',
+  needs_preparation: false,
+  prepared: false,
+  perkiraan_rendemen: '0.8000',
+  perkiraan_rendemen_catatan: null,
+  komposisi: [
+    { item: { id: 5, name: 'Patahan A' }, nota: 'NP-001', gram: '600.00' },
+    { item: { id: 6, name: 'Patahan B' }, nota: 'NP-002', gram: '400.00' },
+  ],
+};
+
+describe('RationForm stok gabungan (split)', () => {
+  beforeEach(() => {
+    mockBatch = { ...base, ready_for_ration: true, needs_preparation: false, lines: [gabungan] };
+  });
+
+  it('shows nama as title and opens the komposisi', () => {
+    render(<RationForm batchId={14} />);
+    expect(screen.getByText('PK2 Bulu Sedang Kapas')).toBeTruthy();
+    expect(screen.queryByText(/NP-002/)).toBeNull();
+    fireEvent.press(screen.getByLabelText('Rincian komposisi, 2 sumber'));
+    expect(screen.getByText('Patahan B · Nota NP-002')).toBeTruthy();
+  });
+
+  it('sends one allocations request for 3 washers and shows the live total', async () => {
+    mockTeam.push(
+      { id: 6, name: 'Budi', role: { code: 'pencuci', label: 'Pencuci' } },
+      { id: 7, name: 'Cici', role: { code: 'pencuci', label: 'Pencuci' } },
+    );
+    mockCreate.mockReturnValue({ unwrap: () => Promise.resolve({}) });
+    render(<RationForm batchId={14} />);
+    fireEvent.press(screen.getByText('+ Tambah pencuci'));
+    fireEvent.press(screen.getByText('+ Tambah pencuci'));
+    pickWorker('Siti', 0);
+    pickWorker('Budi', 1);
+    pickWorker('Cici', 2);
+    const inputs = screen.getAllByPlaceholderText('0');
+    fireEvent.changeText(inputs[0], '400');
+    fireEvent.changeText(inputs[1], '350');
+    fireEvent.changeText(inputs[2], '250');
+    expect(screen.getAllByText(/320,00\s?gr|320\s?gr/).length).toBeGreaterThan(0);
+    fireEvent.press(screen.getByText('Simpan penjatahan'));
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1));
+    expect(mockCreate.mock.calls[0][0]).toEqual({
+      production_batch_id: 14,
+      batch_line_id: 120,
+      allocations: [
+        { washer_id: 5, gram: 400 },
+        { washer_id: 6, gram: 350 },
+        { washer_id: 7, gram: 250 },
+      ],
+    });
+  });
+
+  it('shows a dash and the catatan when rendemen is null', () => {
+    mockBatch = {
+      ...mockBatch,
+      lines: [
+        {
+          ...gabungan,
+          perkiraan_rendemen: null,
+          perkiraan_rendemen_catatan: 'data cuci belum cukup',
+        },
+      ],
+    };
+    render(<RationForm batchId={14} />);
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '100');
+    expect(screen.getByText(/data cuci belum cukup/)).toBeTruthy();
+  });
+
+  it('blocks a total above sisa_dijatah', async () => {
+    render(<RationForm batchId={14} />);
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '1200');
+    fireEvent.press(screen.getByText('Simpan penjatahan'));
+    expect(await screen.findByText(/melebihi sisa baris/)).toBeTruthy();
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('shows the server error on the right row', async () => {
+    mockCreate.mockReturnValue({
+      unwrap: () =>
+        Promise.reject(
+          httpError(422, {
+            message: 'Pencuci bukan anggota tim.',
+            errors: { 'allocations.0.washer_id': ['Pencuci bukan anggota tim.'] },
+          }),
+        ),
+    });
+    render(<RationForm batchId={14} />);
+    pickWorker('Siti');
+    fireEvent.changeText(screen.getAllByPlaceholderText('0')[0], '100');
+    fireEvent.press(screen.getByText('Simpan penjatahan'));
+    expect(await screen.findByText('Pencuci bukan anggota tim.')).toBeTruthy();
   });
 });
 

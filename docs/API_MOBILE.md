@@ -532,6 +532,16 @@ Semua endpoint di bagian ini khusus Kepala Pencuci dan Mandor (pencuci 403), kec
   "gram": "300.00", "sisa_dijatah": "300.00", "needs_preparation": false, "prepared": false }
 ```
 
+**Revisi 4/11, Grup Bahan Pencucian (N6):** satu batch boleh berisi beberapa grup. `lines[]` punya `grup_bahan` (`{id, nama, target_hasil}`, atau `null` untuk baris tanpa grup dan batch lama), dibekukan saat batch terbit mengikuti grup item. Objek batch punya `grup_bahan_list[]` (grup yang ada di barisnya, urut seperti master). `target_hasil` batch menjadi ringkasan target semua grup (mis. "PK2, Kecil"); batch lama tetap membawa nilai lamanya. `GET /me/rations` juga membawa `grup_bahan` per jatah. Semuanya tambahan, field lama tetap.
+
+```json
+{ "id": 41, "item": { "id": 7, "name": "Sudut bulu Sedang.Kapas" }, "grade": 1, "is_byproduct": false,
+  "grup_bahan": { "id": 2, "nama": "PK2 Bulu Sedang Kapas", "target_hasil": "PK2" }, "nota": "NP-002",
+  "gram": "1000.00", "sisa_dijatah": "1000.00", "needs_preparation": false, "prepared": false }
+```
+
+**Catatan untuk tim mobile:** tampilkan label grup (`grup_bahan.nama`) di kartu batch (satu label per `grup_bahan_list[]`) dan di pilihan baris penjatahan (`lines[]`). Baris dengan `grup_bahan` null tampil "Tanpa grup" atau tanpa label. Jangan mengandalkan `target_hasil` batch untuk satu grup: pakai `grup_bahan.target_hasil` per baris.
+
 `sisa_dijatah` = gram baris yang bisa dijatahkan (gram baris - susut penerimaan bagian baris - jatah yang sudah ada). `prepared: true` = baris sudah disiapkan Mandor (diganti baris G1 hasilnya, tidak lagi berlaku). Field batch lama (`item`, `grades`, `sent_gram`, `nilai_hpp`, `remaining_gram`, `ready_for_ration`, ...) tetap ada; `item` = item baris pertama, `ready_for_ration` = tidak ada baris yang masih Perlu Penyiapan, dan `can_prepare` juga `true` kalau ada baris G2/G3 yang bisa disiapkan.
 
 Status batch: `assigned` Diserahkan (belum diterima), `received` Diterima, `in_progress` Berjalan, `completed` Selesai. `remaining_gram` = gram diterima - gram yang sudah dijatahkan.
@@ -4853,3 +4863,56 @@ Status 200.
   }
 }
 ```
+
+
+## Perubahan Revisi 7/11 Putaran 2 (stok gabungan dan split penjatahan)
+
+Semua tambahan; field lama tidak berubah dan tidak ada yang dihapus. Aplikasi lama tetap jalan.
+
+### `GET /api/v1/rations` dan data batch: `lines[]` (tambahan)
+
+Batch baru memakai **stok gabungan**: satu baris = satu stok per Grup Bahan Pencucian dan grade (atau per item dan grade untuk stok tanpa grup). Batch lama tetap satu baris per sumber.
+
+| Field | Isi |
+|---|---|
+| `nama` | Nama grup (atau nama item bila tanpa grup) |
+| `stok_gabungan` | `true` untuk batch baru |
+| `komposisi[]` | Sumber penyusun: `item {id,name}`, `nota`, `nota_id`, `grade`, `gram`, `nilai_hpp` (string desimal) |
+| `perkiraan_rendemen` | Rendemen grup 0..1 (string desimal), `null` bila data cuci belum cukup |
+| `perkiraan_rendemen_catatan` | `null` atau `"data cuci belum cukup"` |
+
+`id`, `item` (item wakil), `grup_bahan`, `grade`, `gram`, `sisa_dijatah`, `hpp_per_gram` (HPP/gr gabungan), `nilai_hpp`, `nota` ada seperti sebelumnya.
+
+### `POST /api/v1/rations`: bentuk split (baru) dan bentuk lama
+
+Bentuk baru, beberapa pencuci untuk satu stok dalam satu permintaan (semua atau tidak sama sekali):
+
+```json
+{
+  "production_batch_id": 41,
+  "batch_line_id": 120,
+  "allocations": [
+    {"washer_id": 7, "gram": 400},
+    {"washer_id": 8, "gram": 350},
+    {"washer_id": 9, "gram": 250}
+  ]
+}
+```
+
+Bentuk lama tetap diterima dan bisa dicampur:
+
+```json
+{"production_batch_id": 41, "lines": [{"pencuci_id": 7, "target_qty": 400, "batch_line_id": 120}]}
+```
+
+Aturan sama: pencuci harus anggota tim, total gram per stok tidak boleh melebihi sisa (422 dengan pesan), stok G2/G3 non-sampingan tetap Perlu Penyiapan (`code` `grade_not_ready`), batch banyak baris wajib `batch_line_id` (`line_required`).
+
+### Daftar perubahan untuk tim mobile
+
+1. Tampilkan `nama` (bukan `item.name`) sebagai judul stok untuk batch dengan `stok_gabungan = true`; `komposisi[]` untuk rincian yang bisa dibuka.
+2. Layar jatah: pilih stok, lalu tambah banyak baris pencuci + gram (bentuk `allocations`), tampilkan total dan sisa stok langsung.
+3. Perkiraan hasil per baris = gram x `perkiraan_rendemen` (tampil "-" bila `null`). Hanya rekomendasi.
+4. Label "Target Qty" diganti **"Gram Jatah"** di layar.
+5. Tidak ada endpoint baru dan tidak ada field yang dihapus.
+
+Catatan Putaran 2b: stok gabungan dipecah per kategori upah bahan. `nama` bisa berbentuk `"<Grup> · <kategori upah>"` bila anggota grup punya lebih dari satu kategori; satu grup + grade bisa menghasilkan lebih dari satu baris `lines[]`.

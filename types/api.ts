@@ -446,6 +446,25 @@ export interface Batch {
   target_hasil?: string | null;
   /** Revisi 26/10: baris batch (nota, item, grade). Server lama tidak mengirimnya. */
   lines?: BatchLine[];
+  /** Revisi 4/11: grup bahan pencucian yang ada di baris batch (urut seperti master) */
+  grup_bahan_list?: GrupBahan[];
+}
+
+/** Grup Bahan Pencucian (revisi 4/11). */
+export interface GrupBahan {
+  id: number;
+  nama: string;
+  target_hasil?: string | null;
+}
+
+/** Sumber penyusun satu stok gabungan (revisi 7/11 Putaran 2). */
+export interface KomposisiSumber {
+  item: { id: number; name: string } | string | null;
+  nota?: string | null;
+  nota_id?: number | null;
+  grade?: number | null;
+  gram?: Decimal | null;
+  nilai_hpp?: Decimal | null;
 }
 
 /** Satu baris batch: satu stok sumber (nota, item, grade) yang tidak pernah dilebur. */
@@ -465,6 +484,15 @@ export interface BatchLine {
   prepared?: boolean;
   /** Revisi 30/10: baris hasil sampingan penyiapan (grade null, langsung boleh dijatah) */
   is_byproduct?: boolean;
+  /** Revisi 4/11: null untuk baris tanpa grup dan batch lama */
+  grup_bahan?: GrupBahan | null;
+  /** Revisi 7/11: stok gabungan per grup + grade; `nama` jadi judul, `komposisi` rinciannya */
+  stok_gabungan?: boolean;
+  nama?: string | null;
+  komposisi?: KomposisiSumber[];
+  /** rendemen grup 0..1 (string desimal), null bila data cuci belum cukup */
+  perkiraan_rendemen?: string | null;
+  perkiraan_rendemen_catatan?: string | null;
 }
 
 /** Pelaksana penjatahan/penyiapan: gudang (Admin web) atau mandor (Mandor / Kepala Pencuci) */

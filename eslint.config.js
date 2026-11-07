@@ -6,6 +6,18 @@ module.exports = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/*', '.playwright-mcp/**'],
+  },
+  {
+    // skrip Node (CommonJS)
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        __dirname: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
   },
 ]);
